@@ -21,7 +21,7 @@
     #define T_neq 1016
     #define T_string 1017
     int lineno = 1;
-    int nested_comment = 0;
+    int is_balanced = 0;
 
     void yyerror(const char msg []) {
         fprintf(stderr, "Error, line %d: %s\n", lineno, msg);
@@ -70,17 +70,16 @@ ESC [ntr0\'\"\\]
 
  /* Comments */
 \-\-.*\n? { ++lineno; }
-"(*" { BEGIN(COMMENT); }
-<COMMENT>"(*" { ++nested_comment; }
-<COMMENT>"*)" { if (nested_comment) --nested_comment; else BEGIN(INITIAL); }
-<COMMENT>\n { ++lineno; }
- /* Stars not followed by stars or parenthesis */
-<COMMENT>"*"+[^*)\n]* { /* nothing */ }
- /* Parenthesis not followed by star */
-<COMMENT>"("+[^*\n]*  { /* nothing */ }
- /* Anything that is not a star or parentesis */
-<COMMENT>[^(*\n]+     { /* nothing */ }
-<COMMENT><<EOF>> { yyerror("Unfinished comment"); }
+"(*" {++is_balanced;  BEGIN(COMMENT); }
+<COMMENT>"(*" {  ++is_balanced; }
+<COMMENT>"*)" {  --is_balanced; if(is_balanced == 0) { BEGIN(INITIAL);} }
+<COMMENT>\n { lineno++; }
+<COMMENT>"*" { /* nothing */ }
+<COMMENT>"(" { /* nothing */ }
+<COMMENT>")" { /* nothing */ }
+<COMMENT>[^\(\)*\n]+ { /* nothing */ }
+<COMMENT><<EOF>> {yyerror("Unfinished comment"); }
+
 
 {D}+({L}|_)+ { yyerror("Illegal character"); }
 
