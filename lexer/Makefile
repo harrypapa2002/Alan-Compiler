@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wall
-alanc: lexer.o 
+lexer: lexer.o 
 	$(CC) $(CFLAGS) -o $@ $^ -lfl
 lexer.c: lexer.l 
 	flex -s -o $@ $<

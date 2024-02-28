@@ -22,25 +22,24 @@
     #define T_string 1017
     int lineno = 1;
     int is_balanced = 0;
-    void ERROR(const char msg []) {
+
+    void yyerror(const char msg []) {
         fprintf(stderr, "Error, line %d: %s\n", lineno, msg);
         exit(1);
     }
 %}
 
-L [A-Za-z] 
-hex [a-f0-9]
+L [a-zA-Z] 
 D [0-9]
+H [a-fA-F0-9]
 W [ \t\r] 
+ESC [ntr0\'\"\\]
 
 %x COMMENT
-%x STRING
-%x ICOMMENT
 
 %%
 
-
-
+ /* Keywords */
 "byte" { return T_byte; }
 "else" { return T_else; }
 "false" { return T_false; }
@@ -52,39 +51,39 @@ W [ \t\r]
 "while" { return T_while; }
 "true" { return T_true; }
 
+ /* Symbols */
+[\(\)\[\]\{\}\,\:\;\=\+\/\-\*\<\>\%\&\|\!] { return yytext[0]; }
+"<=" { return T_lte; }
+">=" { return T_gte; }
+"==" { return T_eq; }
+"!=" { return T_neq; }
 
-{L}({L}|{D})* { return T_id; }
+ /* Constants. Names. Chars. Strings. */
 {D}+ { return T_const; }
+{L}({L}|{D}|_)* { return T_id; }
+\'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { return T_char; }
+\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { return T_string; }
+
+ /* WhiteSpace */
+\n   { ++lineno; }
 {W}+ { /* nothing */ }
-\'([^\\\'\"\n]|\\x{hex}{hex}|\\n|\\t|\\r|\\0|\\\\|\\\'|\\\")\' { return T_char; }
-[\(\)\[\]\{\}\,\:\;\=\+\/\-\*\<\>\%\&\|] { return yytext[0]; }
-\<\= { return T_lte; }
-\>\= { return T_gte; }
-\=\= { return T_eq; }
-\!\= { return T_neq; }
 
-\" { BEGIN(STRING); }
-<STRING>\" { BEGIN(INITIAL); return T_string; BEGIN(INITIAL);}
-<STRING>(\\x{hex}{hex}|\\n|\\t|\\r|\\\'|\\\"|\\\0|\\\\) { /* nothing */ }
-<STRING>[^\n\\\"]+ { /* nothing */ }
-<STRING>\n { lineno++; ERROR("Changed line in unfinished string"); }
-<STRING><<EOF>> { ERROR("Unfinished string"); }
-<STRING>. { ERROR("Illegal character in string"); }
-
-\n { lineno++; }
-\-\-.*\n? { /* nothing */ }
-
-"(*" {++is_balanced;  BEGIN(COMMENT); }
+ /* Comments */
+\-\-.*\n? { ++lineno; }
+"(*" { BEGIN(COMMENT); }
 <COMMENT>"(*" {  ++is_balanced; }
-<COMMENT>"*)" {  --is_balanced; if(is_balanced == 0) { BEGIN(INITIAL);} }
+<COMMENT>"*)" {  if(is_balanced) --is_balanced; else { BEGIN(INITIAL);} }
 <COMMENT>\n { lineno++; }
 <COMMENT>"*" { /* nothing */ }
 <COMMENT>"(" { /* nothing */ }
 <COMMENT>")" { /* nothing */ }
-<COMMENT>[^\(\)*\n]+ { printf("%s\n", yytext);/* nothing */ }
-<COMMENT><<EOF>> { ERROR("Unfinished comment"); }
+<COMMENT>[^\(\)*\n]+ { /* nothing */ }
+<COMMENT><<EOF>> {yyerror("Unfinished comment"); }
 
-. { ERROR("Illegal character"); }
+
+{D}+({L}|_)+ { yyerror("Illegal character"); }
+
+. { yyerror("Illegal character"); }
 
 %%
 
@@ -92,7 +91,8 @@ int main () {
   int token;
   do {
     token = yylex();
-    printf("token=%d, lexeme=\"%s\"\n", token, yytext);
+    printf("Line %d: token=%d, lexeme=\"%s\"\n", lineno, token, yytext);
   } while (token != T_eof);
-    return 0;
+  return 0;
 }
+
