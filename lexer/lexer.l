@@ -35,6 +35,7 @@ W [ \t\r]
 
 %x COMMENT
 %x STRING
+%x ICOMMENT
 
 %%
 
@@ -71,10 +72,11 @@ W [ \t\r]
 <STRING>. { ERROR("Illegal character in string"); }
 
 \n { lineno++; }
-(\-\-.*\n) { /* nothing */ }
-"(*" {++is_balanced; printf("Found init (*, isbalanced = %d\n", is_balanced); BEGIN(COMMENT); }
-<COMMENT>"(*" { printf("Found (*, isbalanced = %d\n", is_balanced); ++is_balanced; }
-<COMMENT>"*)" { printf("Found *), isbalanced = %d\n", is_balanced); --is_balanced; if(is_balanced == 0) {printf("here\n"); BEGIN(INITIAL);} }
+\-\-.*\n? { /* nothing */ }
+
+"(*" {++is_balanced;  BEGIN(COMMENT); }
+<COMMENT>"(*" {  ++is_balanced; }
+<COMMENT>"*)" {  --is_balanced; if(is_balanced == 0) { BEGIN(INITIAL);} }
 <COMMENT>\n { lineno++; }
 <COMMENT>"*" { /* nothing */ }
 <COMMENT>"(" { /* nothing */ }
