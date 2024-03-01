@@ -62,8 +62,7 @@ ESC [ntr0\'\"\\]
 <COMMENT>[^\(\)*\n]+ { /* nothing */ }
 <COMMENT><<EOF>> {yyerror("Unfinished comment"); }
 
-
-{D}+({L}|_)+ { yyerror("Illegal character"); }
+    /* Illegal characters */
 
 . { yyerror("Illegal character"); }
 
