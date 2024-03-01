@@ -1,4 +1,5 @@
 # Routine:
-make clean/distclean \\
-make \\
-./alanc < filename
+
+- make clean/distclean
+- make
+- ./alanc < filename

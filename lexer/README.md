@@ -1,4 +1,5 @@
 # Routine:
-make clean/distclean \\
-make \\
-./lexer < filename
+
+- make clean/distclean
+- make
+- ./lexer < filename
