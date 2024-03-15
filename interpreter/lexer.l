@@ -6,7 +6,6 @@
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
-
 int lineno = 1;
 int is_balanced = 0;
 
@@ -35,17 +34,19 @@ ESC [ntr0\'\"\\]
 "true" { return T_true; }
 
  /* Symbols */
-[\(\)\[\]\{\}\,\:\;\=\+\/\-\*\<\>\%\&\|\!] { return yytext[0]; }
-"<=" { return T_lte; }
-">=" { return T_gte; }
-"==" { return T_eq; }
-"!=" { return T_neq; }
+[\(\)\[\]\{\}\,\:\;\=\+\/\-\*\%\&\|\!] { yylval.op = yytext[0]; return yytext[0]; }
+\< {yylval.comp = lt; return yytext[0]; }
+\> {yylval.comp = gt; return yytext[0]; }
+"<=" { yylval.comp = lte; return T_lte; }
+">=" { yylval.comp = gte; return T_gte; }
+"==" { yylval.comp = eq; return T_eq; }
+"!=" { yylval.comp = neq; return T_neq; }
 
  /* Constants. Names. Chars. Strings. */
-{D}+ { return T_const; }
-{L}({L}|{D}|_)* { return T_id; }
-\'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { return T_char; }
-\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { return T_string; }
+{D}+ { yylval.num = atoi(yytext); return T_const; }
+{L}({L}|{D}|_)* { std::string temp = std::string(yytext); yylval.var = &temp; return T_id; }
+\'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { yylval.chr = yytext[0]; return T_char; }
+\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { std::string temp = std::string(yytext); yylval.str = &temp; return T_string; }
 
  /* WhiteSpace */
 \n   { ++lineno; }

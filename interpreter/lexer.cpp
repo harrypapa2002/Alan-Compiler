@@ -1,6 +1,6 @@
-#line 2 "lexer.c"
+#line 2 "lexer.cpp"
 
-#line 4 "lexer.c"
+#line 4 "lexer.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -355,8 +355,8 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 32
-#define YY_END_OF_BUFFER 33
+#define YY_NUM_RULES 34
+#define YY_END_OF_BUFFER 35
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -366,15 +366,15 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[93] =
     {   0,
-        0,    0,    0,    0,   33,   31,   21,   20,   11,   31,
-       11,   31,   11,   11,   16,   11,   11,   11,   17,   17,
-       17,   17,   17,   17,   17,   17,   17,   30,   26,   28,
-       29,   27,   21,   15,    0,   19,    0,    0,    0,   23,
-       22,   16,   12,   14,   13,   17,   17,   17,   17,    4,
-       17,   17,   17,   17,   17,   30,   24,   25,    0,   18,
-        0,   22,   22,   17,   17,   17,    5,   17,   17,   17,
-       17,   17,    0,    0,    1,    2,   17,    6,   17,   17,
-       10,   17,    3,   17,   17,    9,   17,    8,   17,   17,
+        0,    0,    0,    0,   35,   33,   23,   22,   11,   33,
+       11,   33,   11,   11,   18,   12,   11,   13,   19,   19,
+       19,   19,   19,   19,   19,   19,   19,   32,   28,   30,
+       31,   29,   23,   17,    0,   21,    0,    0,    0,   25,
+       24,   18,   14,   16,   15,   19,   19,   19,   19,    4,
+       19,   19,   19,   19,   19,   32,   26,   27,    0,   20,
+        0,   24,   24,   19,   19,   19,    5,   19,   19,   19,
+       19,   19,    0,    0,    1,    2,   19,    6,   19,   19,
+       10,   19,    3,   19,   19,    9,   19,    8,   19,   19,
         7,    0
 
     } ;
@@ -523,35 +523,17 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "lexer.l"
 #line 4 "lexer.l"
-    #define T_eof 0
-    #define T_const 1000
-    #define T_id 1001
-    #define T_byte 1002
-    #define T_else 1003
-    #define T_false 1004
-    #define T_if 1005
-    #define T_int 1006
-    #define T_proc 1007
-    #define T_reference 1008
-    #define T_return 1009
-    #define T_while 1010
-    #define T_true 1011
-    #define T_char 1012
-    #define T_lte 1013
-    #define T_gte 1014
-    #define T_eq 1015
-    #define T_neq 1016
-    #define T_string 1017
-    int lineno = 1;
-    int is_balanced = 0;
+#include <stdio.h>
+#include <stdlib.h>
+#include "ast.hpp"
+#include "lexer.hpp"
+#include "parser.hpp"
+int lineno = 1;
+int is_balanced = 0;
 
-    void yyerror(const char msg []) {
-        fprintf(stderr, "Error, line %d: %s\n", lineno, msg);
-        exit(1);
-    }
-#line 553 "lexer.c"
+#line 535 "lexer.cpp"
 
-#line 555 "lexer.c"
+#line 537 "lexer.cpp"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -769,12 +751,12 @@ YY_DECL
 		}
 
 	{
-#line 40 "lexer.l"
+#line 22 "lexer.l"
 
 
-#line 43 "lexer.l"
+#line 25 "lexer.l"
  /* Keywords */
-#line 778 "lexer.c"
+#line 760 "lexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -833,178 +815,188 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 44 "lexer.l"
+#line 26 "lexer.l"
 { return T_byte; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 45 "lexer.l"
+#line 27 "lexer.l"
 { return T_else; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 46 "lexer.l"
+#line 28 "lexer.l"
 { return T_false; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 47 "lexer.l"
+#line 29 "lexer.l"
 { return T_if; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 48 "lexer.l"
+#line 30 "lexer.l"
 { return T_int; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 49 "lexer.l"
+#line 31 "lexer.l"
 { return T_proc; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 50 "lexer.l"
+#line 32 "lexer.l"
 { return T_reference; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 51 "lexer.l"
+#line 33 "lexer.l"
 { return T_return; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 52 "lexer.l"
+#line 34 "lexer.l"
 { return T_while; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 53 "lexer.l"
+#line 35 "lexer.l"
 { return T_true; }
 	YY_BREAK
 /* Symbols */
 case 11:
 YY_RULE_SETUP
-#line 56 "lexer.l"
-{ return yytext[0]; }
+#line 38 "lexer.l"
+{ yylval.op = yytext[0]; return yytext[0]; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 57 "lexer.l"
-{ return T_lte; }
+#line 39 "lexer.l"
+{yylval.comp = lt; return yytext[0]; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 58 "lexer.l"
-{ return T_gte; }
+#line 40 "lexer.l"
+{yylval.comp = gt; return yytext[0]; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 59 "lexer.l"
-{ return T_eq; }
+#line 41 "lexer.l"
+{ yylval.comp = lte; return T_lte; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 60 "lexer.l"
-{ return T_neq; }
+#line 42 "lexer.l"
+{ yylval.comp = gte; return T_gte; }
 	YY_BREAK
-/* Constants. Names. Chars. Strings. */
 case 16:
 YY_RULE_SETUP
-#line 63 "lexer.l"
-{ return T_const; }
+#line 43 "lexer.l"
+{ yylval.comp = eq; return T_eq; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 64 "lexer.l"
-{ return T_id; }
+#line 44 "lexer.l"
+{ yylval.comp = neq; return T_neq; }
 	YY_BREAK
+/* Constants. Names. Chars. Strings. */
 case 18:
-/* rule 18 can match eol */
 YY_RULE_SETUP
-#line 65 "lexer.l"
-{ return T_char; }
+#line 47 "lexer.l"
+{ yylval.num = atoi(yytext); return T_const; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 66 "lexer.l"
-{ return T_string; }
+#line 48 "lexer.l"
+{ std::string temp = std::string(yytext); yylval.var = &temp; return T_id; }
 	YY_BREAK
-/* WhiteSpace */
 case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
-#line 69 "lexer.l"
-{ ++lineno; }
+#line 49 "lexer.l"
+{ yylval.chr = yytext[0]; return T_char; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 70 "lexer.l"
-{ /* nothing */ }
+#line 50 "lexer.l"
+{ std::string temp = std::string(yytext); yylval.str = &temp; return T_string; }
 	YY_BREAK
-/* Comments */
+/* WhiteSpace */
 case 22:
 /* rule 22 can match eol */
 YY_RULE_SETUP
-#line 73 "lexer.l"
+#line 53 "lexer.l"
 { ++lineno; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 74 "lexer.l"
-{ BEGIN(COMMENT); }
+#line 54 "lexer.l"
+{ /* nothing */ }
 	YY_BREAK
+/* Comments */
 case 24:
+/* rule 24 can match eol */
 YY_RULE_SETUP
-#line 75 "lexer.l"
-{  ++is_balanced; }
+#line 57 "lexer.l"
+{ ++lineno; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 76 "lexer.l"
-{  if(is_balanced) --is_balanced; else { BEGIN(INITIAL);} }
+#line 58 "lexer.l"
+{ BEGIN(COMMENT); }
 	YY_BREAK
 case 26:
-/* rule 26 can match eol */
 YY_RULE_SETUP
-#line 77 "lexer.l"
-{ lineno++; }
+#line 59 "lexer.l"
+{  ++is_balanced; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 78 "lexer.l"
-{ /* nothing */ }
+#line 60 "lexer.l"
+{  if(is_balanced) --is_balanced; else { BEGIN(INITIAL);} }
 	YY_BREAK
 case 28:
+/* rule 28 can match eol */
 YY_RULE_SETUP
-#line 79 "lexer.l"
-{ /* nothing */ }
+#line 61 "lexer.l"
+{ lineno++; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 80 "lexer.l"
+#line 62 "lexer.l"
 { /* nothing */ }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 81 "lexer.l"
+#line 63 "lexer.l"
 { /* nothing */ }
 	YY_BREAK
-case YY_STATE_EOF(COMMENT):
-#line 82 "lexer.l"
-{yyerror("Unfinished comment"); }
-	YY_BREAK
-/* Illegal character */
 case 31:
 YY_RULE_SETUP
-#line 86 "lexer.l"
-{ yyerror("Illegal character"); }
+#line 64 "lexer.l"
+{ /* nothing */ }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 88 "lexer.l"
+#line 65 "lexer.l"
+{ /* nothing */ }
+	YY_BREAK
+case YY_STATE_EOF(COMMENT):
+#line 66 "lexer.l"
+{yyerror("Unfinished comment"); }
+	YY_BREAK
+/* Illegal characters */
+case 33:
+YY_RULE_SETUP
+#line 70 "lexer.l"
+{ yyerror("Illegal character"); }
+	YY_BREAK
+case 34:
+YY_RULE_SETUP
+#line 72 "lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1008 "lexer.c"
+#line 1000 "lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2009,16 +2001,11 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 88 "lexer.l"
+#line 72 "lexer.l"
 
 
-int main () {
-  int token;
-  do {
-    token = yylex();
-    printf("Line %d: token=%d, lexeme=\"%s\"\n", lineno, token, yytext);
-  } while (token != T_eof);
-  return 0;
+
+void yyerror(const char *msg) {
+    fprintf(stderr, "Error, lexeme %s, line %d: %s\n", yytext, lineno, msg);
+    exit(1);
 }
-
-
