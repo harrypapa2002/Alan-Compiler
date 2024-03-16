@@ -12,8 +12,7 @@
 %token T_reference "reference"
 %token T_return "return"
 %token T_while "while"
-%token T_true "true"
-%token T_char "char"
+%token T_true "true" 
 %token T_lte "<="
 %token T_gte ">="
 %token T_eq "=="
@@ -22,8 +21,10 @@
 %token T_string 
 %token T_const 
 %token T_id 
+%token T_char
 
-%left '&' '|'
+%left '|'
+%left '&' 
 %nonassoc T_lte T_gte '<' '>' T_eq T_neq
 %left '+' '-' 
 %left '*' '/' '%'

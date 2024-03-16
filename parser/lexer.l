@@ -3,7 +3,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "ast.hpp"
+//#include "ast.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 
@@ -61,7 +61,8 @@ ESC [ntr0\'\"\\]
 <COMMENT>"(" { /* nothing */ }
 <COMMENT>")" { /* nothing */ }
 <COMMENT>[^\(\)*\n]+ { /* nothing */ }
-<COMMENT><<EOF>> {yyerror("Unfinished comment"); }
+<COMMENT><<EOF>> { fprintf(stderr, "Lexical error at line %d: "
+			"Unfinished comment\n",lineno); exit(1);}
 
     /* Illegal characters */
 

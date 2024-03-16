@@ -1,8 +1,7 @@
 can_cer() : proc
-	isit (n : int, source:reference byte[]) : int -- foo
+	(*isit (n : int, source:reference byte[]) : int -- foo
 		i : int;
-        23
-        zAbon_a (*
+        zAbon_a 
 		{
             "Name:\t\"DouglasAdams\"\nValue:\t42foo"
 			n = n-1;
@@ -31,5 +30,5 @@ can_cer() : proc
 		if (isit(n, source) == 1) 
 			writeString("\nIs not palindrome...");
 		else
-			writeString("\nIs palindrome...");
+			writeString("\nIs palindrome..."); 
 	} *)

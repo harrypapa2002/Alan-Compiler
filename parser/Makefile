@@ -1,12 +1,25 @@
+.PHONY: clean distclean default
+
 CXX=g++
 CXXFLAGS=-Wall
-alanc: lexer.o parser.o 
-	$(CXX) $(CXXFLAGS) -o $@ $^ -lfl
-lexer.cpp: lexer.l parser.hpp
-	flex -s -o $@ $<
-parser.cpp parser.hpp: parser.y
-	bison -dv -o $@ $<
+
+default: alanc
+
+lexer.cpp: lexer.l
+	flex -s -o lexer.cpp lexer.l
+
+lexer.o: lexer.cpp lexer.hpp parser.hpp
+
+parser.hpp parser.cpp: parser.y
+	bison -dv -o parser.cpp parser.y
+
+parser.o: parser.cpp lexer.hpp
+
+alanc: lexer.o parser.o
+	$(CXX) $(CXXFLAGS) -o alanc lexer.o parser.o
+
 clean:
-	$(RM) *.o parser.cpp parser.hpp lexer.cpp core *~
+	$(RM) lexer.cpp parser.cpp parser.hpp parser.output *.o
+
 distclean: clean
 	$(RM) alanc
