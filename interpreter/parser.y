@@ -77,8 +77,8 @@ program :
     funcdef { std::cout << *$1 << std::endl; }
 
 funcdef : 
-    T_id '(' fparlist ')' ':' rtype  localdefs compoundstmt { $$ = new FuncDef("bober", $6, $7, $8, $3); }
-|   T_id '(' ')' ':' rtype localdefs compoundstmt { $$ = new FuncDef("bober", $5, $6, $7); }
+    T_id '(' fparlist ')' ':' rtype  localdefs compoundstmt { $$ = new FuncDef($1, $6, $7, $8, $3); }
+|   T_id '(' ')' ':' rtype localdefs compoundstmt { $$ = new FuncDef($1, $5, $6, $7); }
 ;
 fparlist : 
     fpardef fpardefs { $2->append($1); $$ = $2; }

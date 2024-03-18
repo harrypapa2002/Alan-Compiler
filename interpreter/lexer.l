@@ -44,9 +44,9 @@ ESC [ntr0\'\"\\]
 
  /* Constants. Names. Chars. Strings. */
 {D}+ { yylval.num = atoi(yytext); return T_const; }
-{L}({L}|{D}|_)* { std::string temp = std::string(yytext); yylval.var = &temp; return T_id; }
+{L}({L}|{D}|_)* { yylval.var = new std::string(yytext); return T_id; }
 \'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { yylval.chr = yytext[0]; return T_char; }
-\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { std::string temp = std::string(yytext); yylval.str = &temp; return T_string; }
+\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { yylval.str = new std::string(yytext); return T_string; }
 
  /* WhiteSpace */
 \n   { ++lineno; }

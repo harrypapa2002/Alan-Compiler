@@ -115,15 +115,15 @@ class FparList : public AST {
 
 class FuncDef : public LocalDef {
  public:
-    FuncDef(const std::string &n, Type *t, LocalDefList *l, Stmt *s, FparList *f = nullptr) : name(n), type(t), localDef(l), stmts(s), fpar(f) {}
-    ~FuncDef() {  delete fpar; delete type; delete localDef; delete stmts; }
+    FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f = nullptr) : name(n), fpar(f), type(t), localDef(l), stmts(s) {}
+    ~FuncDef() {  delete name; delete fpar; delete type; delete localDef; delete stmts; }
     virtual void printOn(std::ostream &out) const override {
-        out << "FuncDef(" << name << ", ";
+        out << "FuncDef(" << *name << ", ";
         if(fpar) out << *fpar << ", "; else out << "nullptr, ";
         out << *type << ", " << *localDef << ", " << *stmts << ")";
     }
  private:
-    std::string name;
+    std::string* name;  
     FparList *fpar;
     Type *type;
     LocalDefList *localDef;
