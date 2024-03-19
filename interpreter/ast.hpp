@@ -19,7 +19,7 @@ inline std::ostream &operator<<(std::ostream &out, const AST &ast) {
 class Type : public AST {
  public:
     Type(const std::string &n) : name(n) {}
-    void reference() { name = "reference " + name;}
+    void reference() { name = "reference " + name; }
     void array() { name += "[]"; }
     virtual void printOn(std::ostream &out) const override {
         out << "Type(" << name << ")";
@@ -38,11 +38,9 @@ class Stmt : public AST {
     void append(Stmt *stmt) { stmts.push_back(stmt); }
     virtual void printOn(std::ostream &out) const override {
         out << "Stmt(";
-        // Stmt *stmt = const_cast<Stmt *>(this);
-        // while (stmt) {
-        //     out << *stmt << ", ";
-        //     stmt = stmt->nextStmt;
-        // }
+        for (auto stmt : stmts) {
+            out << *stmt << ", ";
+        }
         out << ")";
     }
  private:
@@ -87,13 +85,13 @@ class LocalDefList : public AST {
 
 class Fpar : public AST {
  public:
-    Fpar(const std::string &n, Type *t) : name(n), type(t) {}
-    ~Fpar() { delete type; }
+    Fpar(std::string *n, Type *t) : name(n), type(t) {}
+    ~Fpar() { delete name; delete type; }
     virtual void printOn(std::ostream &out) const override {
-        out << "Fpar(" << name << ", " << *type << ")";
+        out << "Fpar(" << *name << ", " << *type << ")";
     }
  private:
-    std::string name;
+    std::string *name;
     Type *type;
 };
 
@@ -132,13 +130,13 @@ class FuncDef : public LocalDef {
 
 class VarDef : public LocalDef {
  public:
-    VarDef(const std::string &n, Type *t) : name(n), type(t) {}
-    ~VarDef() { delete type; }
+    VarDef(std::string *n, Type *t) : name(n), type(t) {}
+    ~VarDef() { delete name; delete type; }
     virtual void printOn(std::ostream &out) const override {
-        out << "VarDef(" << name << ", " << *type << ")";
+        out << "VarDef(" << *name << ", " << *type << ")";
     }
  private:
-    std::string name;
+    std::string* name;
     Type *type;
 };
 
@@ -183,7 +181,7 @@ class UnOp : public Expr {
 
 class BinOp : public Expr {
  public:
-    BinOp(Expr *l, char o, Expr *r) : left(l), op(o), right(r) {}
+    BinOp(Expr *l, char o, Expr *r) : op(o), left(l), right(r) {}
     ~BinOp() { delete left; delete right;}
     virtual void printOn(std::ostream &out) const override {
         out << "BinOp(" << op << ", " << *left << ", " << *right << ")";
@@ -196,7 +194,7 @@ class BinOp : public Expr {
 
 class CondCompOp : public Cond {
  public:
-    CondCompOp(Expr *l, char o, Expr *r) : left(l), op(o), right(r) {}
+    CondCompOp(Expr *l, char o, Expr *r) : op(o), left(l), right(r) {}
     ~CondCompOp() { delete left; delete right;}
     virtual void printOn(std::ostream &out) const override {
         out << "CondCompOp(" << op << ", " << *left << ", " << *right << ")";
@@ -209,7 +207,7 @@ class CondCompOp : public Cond {
 
 class CondBoolOp : public Cond {
  public:
-    CondBoolOp(Cond *l, char o, Cond *r) : left(l), op(o), right(r) {}
+    CondBoolOp(Cond *l, char o, Cond *r) :  op(o), left(l), right(r) {}
     ~CondBoolOp() { delete left; delete right;}
     virtual void printOn(std::ostream &out) const override {
         out << "CondBoolOp(" << op << ", " << *left << ", " << *right << ")";
@@ -265,22 +263,24 @@ class CharConst : public Expr {
 
 class StringConst : public Expr {
  public:
-    StringConst(const std::string &v) : val(v) {}
+    StringConst(std::string *v) : val(v) {}
+    ~StringConst() { delete val; }
     virtual void printOn(std::ostream &out) const override {
-        out << "StrConst(" << val << ")";
+        out << "StrConst(" << *val << ")";
     }
  private:
-    std::string val;
+    std::string* val;
 };
 
 class Id : public Expr {
  public:
-    Id(const std::string &n) : name(n) {}
+    Id(std::string *n) : name(n) {}
+    ~Id() { delete name; }
     virtual void printOn(std::ostream &out) const override {
-        out << "Id(" << name << ")";
+        out << "Id(" << *name << ")";
     }
  private:
-    std::string name;
+    std::string* name;
 };
 
 class Let : public Stmt {
@@ -297,13 +297,15 @@ class Let : public Stmt {
 
 class FuncCall : public Expr {
  public:
-    FuncCall(const std::string &n, ExprList *e=nullptr) : name(n), exprs(e) {}
-    ~FuncCall() { delete exprs; }
+    FuncCall(std::string *n, ExprList *e=nullptr) : name(n), exprs(e) {}
+    ~FuncCall() { delete name; delete exprs; }
     virtual void printOn(std::ostream &out) const override {
-        out << "Funccall(" << name << ", " << *exprs << ")";
+        out << "Funccall(" << *name << ", ";
+        if(exprs) out << *exprs << ")";
+        else out << ")";
     }
  private:
-    std::string name;
+    std::string *name;
     ExprList *exprs;
 };
 
@@ -323,7 +325,9 @@ class If : public Stmt {
     If(Cond *c, Stmt *t, Stmt *e = nullptr) : cond(c), thenStmt(t), elseStmt(e) {}
     ~If() { delete cond; delete thenStmt; delete elseStmt; }
     virtual void printOn(std::ostream &out) const override {
-        out << "If(" << *cond << ", " << *thenStmt << ", " << *elseStmt << ")";
+        out << "If(" << *cond << ", " << *thenStmt << ", " ;
+        if(elseStmt) out << *elseStmt << ")";
+        else out << "nullptr)";
     }
  private:
     Cond *cond;
@@ -348,15 +352,12 @@ class Return : public Stmt {
     Return(Expr *e = nullptr) : expr(e) {}
     ~Return() { delete expr; }
     virtual void printOn(std::ostream &out) const override {
-        out << "Return(" << *expr << ")";
+        out << "Return(";
+        if(expr) out << *expr << ")";
+        else out << ")";
     }
  private:
     Expr *expr;
 };
-
-
-
-
-
 
 #endif

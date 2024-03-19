@@ -77,15 +77,15 @@ program :
     funcdef { std::cout << *$1 << std::endl; }
 
 funcdef : 
-    T_id '(' fparlist ')' ':' rtype  localdefs compoundstmt { $$ = new FuncDef($1, $6, $7, $8, $3); }
+    T_id '(' fparlist ')' ':' rtype localdefs compoundstmt { $$ = new FuncDef($1, $6, $7, $8, $3); }
 |   T_id '(' ')' ':' rtype localdefs compoundstmt { $$ = new FuncDef($1, $5, $6, $7); }
 ;
 fparlist : 
     fpardef fpardefs { $2->append($1); $$ = $2; }
 ;
 fpardef : 
-    T_id ':' T_reference type { $$ = new Fpar("bober", $4); }
-|   T_id ':' type { $$ = new Fpar("bober", $3);}
+    T_id ':' T_reference type { $$ = new Fpar($1, $4); }
+|   T_id ':' type { $$ = new Fpar($1, $3);}
 ;
 fpardefs : 
     /* nothing */ { $$ = new FparList(); }
@@ -112,8 +112,8 @@ localdefs :
 |   localdef localdefs { $2->append($1); $$ = $2; }
 ;
 vardef :
-    T_id ':' datatype  '[' T_const ']' ';' { $3->array(); $$ = new VarDef("bober", $3); }
-|   T_id ':' datatype  ';' { $$ = new VarDef("bober", $3); }
+    T_id ':' datatype  '[' T_const ']' ';' { $3->array(); $$ = new VarDef($1, $3); }
+|   T_id ':' datatype  ';' { $$ = new VarDef($1, $3); }
 ;
 stmt :
     ';' { $$ = new Stmt(); }
@@ -134,8 +134,8 @@ compoundstmt :
     '{' stmts '}' { $$ = $2; }
 ;
 funccall : 
-    T_id '('  exprlist   ')' { $$ = new FuncCall("bober", $3);}
-|   T_id '(' ')' { $$ = new FuncCall("bober"); }
+    T_id '('  exprlist   ')' { $$ = new FuncCall($1, $3);}
+|   T_id '(' ')' { $$ = new FuncCall($1); }
 ;
 exprlist : 
     expr exprs { $2->append($1); $$ = $2; }
@@ -159,9 +159,9 @@ exprs:
 |   ',' expr exprs { $3->append($2); $$ = $3; }
 ;
 lvalue : 
-    T_id '[' expr ']' { $$ = new Id("bober"); }
-|   T_id { $$ = new Id("bober"); }
-|   T_string { $$ = new StringConst("bober"); }
+    T_id '[' expr ']' { $$ = new Id($1); }
+|   T_id { $$ = new Id($1); }
+|   T_string { $$ = new StringConst($1); }
 ;
 cond : 
     T_true { $$ = new BoolConst(true); }

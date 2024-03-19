@@ -1519,12 +1519,12 @@ yyreduce:
 
   case 6:
 #line 87 "parser.y"
-    { (yyval.fpardef) = new Fpar("bober", (yyvsp[(4) - (4)].type)); ;}
+    { (yyval.fpardef) = new Fpar((yyvsp[(1) - (4)].str), (yyvsp[(4) - (4)].type)); ;}
     break;
 
   case 7:
 #line 88 "parser.y"
-    { (yyval.fpardef) = new Fpar("bober", (yyvsp[(3) - (3)].type));;}
+    { (yyval.fpardef) = new Fpar((yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].type));;}
     break;
 
   case 8:
@@ -1589,12 +1589,12 @@ yyreduce:
 
   case 20:
 #line 115 "parser.y"
-    { (yyvsp[(3) - (7)].type)->array(); (yyval.vardef) = new VarDef("bober", (yyvsp[(3) - (7)].type)); ;}
+    { (yyvsp[(3) - (7)].type)->array(); (yyval.vardef) = new VarDef((yyvsp[(1) - (7)].str), (yyvsp[(3) - (7)].type)); ;}
     break;
 
   case 21:
 #line 116 "parser.y"
-    { (yyval.vardef) = new VarDef("bober", (yyvsp[(3) - (4)].type)); ;}
+    { (yyval.vardef) = new VarDef((yyvsp[(1) - (4)].str), (yyvsp[(3) - (4)].type)); ;}
     break;
 
   case 22:
@@ -1659,12 +1659,12 @@ yyreduce:
 
   case 34:
 #line 137 "parser.y"
-    { (yyval.expr) = new FuncCall("bober", (yyvsp[(3) - (4)].exprlist));;}
+    { (yyval.expr) = new FuncCall((yyvsp[(1) - (4)].str), (yyvsp[(3) - (4)].exprlist));;}
     break;
 
   case 35:
 #line 138 "parser.y"
-    { (yyval.expr) = new FuncCall("bober"); ;}
+    { (yyval.expr) = new FuncCall((yyvsp[(1) - (3)].str)); ;}
     break;
 
   case 36:
@@ -1744,17 +1744,17 @@ yyreduce:
 
   case 51:
 #line 162 "parser.y"
-    { (yyval.expr) = new Id("bober"); ;}
+    { (yyval.expr) = new Id((yyvsp[(1) - (4)].str)); ;}
     break;
 
   case 52:
 #line 163 "parser.y"
-    { (yyval.expr) = new Id("bober"); ;}
+    { (yyval.expr) = new Id((yyvsp[(1) - (1)].str)); ;}
     break;
 
   case 53:
 #line 164 "parser.y"
-    { (yyval.expr) = new StringConst("bober"); ;}
+    { (yyval.expr) = new StringConst((yyvsp[(1) - (1)].str)); ;}
     break;
 
   case 54:
