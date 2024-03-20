@@ -39,7 +39,6 @@
 %token T_return "return"
 %token T_while "while"
 %token T_true "true"
-%token<chr> T_char "char"
 %token T_lte "<="
 %token T_gte ">="
 %token T_eq "=="
@@ -48,6 +47,7 @@
 %token<str> T_string 
 %token<num> T_const 
 %token<str> T_id 
+%token<str> T_char 
 
 %left<op> '&' '|'
 %nonassoc<comp> T_lte T_gte '<' '>' T_eq T_neq
@@ -84,8 +84,8 @@ fparlist :
     fpardef fpardefs { $2->append($1); $$ = $2; }
 ;
 fpardef : 
-    T_id ':' T_reference type { $$ = new Fpar($1, $4); }
-|   T_id ':' type { $$ = new Fpar($1, $3);}
+    T_id ':' T_reference type { $$ = new Fpar($1, $4, true); }
+|   T_id ':' type { $$ = new Fpar($1, $3, false);}
 ;
 fpardefs : 
     /* nothing */ { $$ = new FparList(); }
@@ -112,7 +112,7 @@ localdefs :
 |   localdef localdefs { $2->append($1); $$ = $2; }
 ;
 vardef :
-    T_id ':' datatype  '[' T_const ']' ';' { $3->array(); $$ = new VarDef($1, $3); }
+    T_id ':' datatype '[' T_const ']' ';' { $$ = new VarDef($1, $3, $5); } 
 |   T_id ':' datatype  ';' { $$ = new VarDef($1, $3); }
 ;
 stmt :
@@ -159,7 +159,7 @@ exprs:
 |   ',' expr exprs { $3->append($2); $$ = $3; }
 ;
 lvalue : 
-    T_id '[' expr ']' { $$ = new Id($1); }
+    T_id '[' expr ']' { $$ = new ArrayAccess($1, $3); }
 |   T_id { $$ = new Id($1); }
 |   T_string { $$ = new StringConst($1); }
 ;

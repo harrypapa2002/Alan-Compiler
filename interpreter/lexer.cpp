@@ -915,7 +915,7 @@ case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
 #line 49 "lexer.l"
-{ yylval.chr = yytext[0]; return T_char; }
+{ yylval.str = new std::string(yytext); return T_char; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP

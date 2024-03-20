@@ -57,7 +57,7 @@ Grammar
    35 exprlist: expr exprs
 
    36 expr: T_const
-   37     | "char"
+   37     | T_char
    38     | lvalue
    39     | '(' expr ')'
    40     | funccall
@@ -124,14 +124,14 @@ error (256)
 "return" (265) 28 29
 "while" (266) 27
 "true" (267) 53
-"char" (268) 37
-"<=" (269) 61
-">=" (270) 62
-"==" (271) 57
-"!=" (272) 58
-T_string (273) 52
-T_const (274) 19 36
-T_id (275) 2 3 5 6 19 20 33 34 50 51
+"<=" (268) 61
+">=" (269) 62
+"==" (270) 57
+"!=" (271) 58
+T_string (272) 52
+T_const (273) 19 36
+T_id (274) 2 3 5 6 19 20 33 34 50 51
+T_char (275) 37
 UNOP (276)
 
 
@@ -575,10 +575,10 @@ state 42
    28 stmt: "return" . expr ';'
    29     | "return" . ';'
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -700,10 +700,10 @@ state 55
 
     "false"   shift, and go to state 73
     "true"    shift, and go to state 74
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 75
@@ -717,26 +717,26 @@ state 55
 
 state 56
 
-   37 expr: "char" .
+   36 expr: T_const .
 
-    $default  reduce using rule 37 (expr)
+    $default  reduce using rule 36 (expr)
 
 
 state 57
 
-   36 expr: T_const .
+   37 expr: T_char .
 
-    $default  reduce using rule 36 (expr)
+    $default  reduce using rule 37 (expr)
 
 
 state 58
 
    41 expr: '+' . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -750,10 +750,10 @@ state 59
 
    42 expr: '-' . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -767,10 +767,10 @@ state 60
 
    39 expr: '(' . expr ')'
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -824,10 +824,10 @@ state 65
 
     "false"   shift, and go to state 73
     "true"    shift, and go to state 74
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 75
@@ -844,10 +844,10 @@ state 66
    33 funccall: T_id '(' . exprlist ')'
    34         | T_id '(' . ')'
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -863,10 +863,10 @@ state 67
 
    50 lvalue: T_id '[' . expr ']'
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -901,10 +901,10 @@ state 71
 
    22 stmt: lvalue '=' . expr ';'
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -942,10 +942,10 @@ state 75
 
     "false"   shift, and go to state 73
     "true"    shift, and go to state 74
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 75
@@ -963,10 +963,10 @@ state 76
 
     "false"   shift, and go to state 73
     "true"    shift, and go to state 74
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 75
@@ -1062,10 +1062,10 @@ state 82
 
    43 expr: expr '+' . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1079,10 +1079,10 @@ state 83
 
    44 expr: expr '-' . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1096,10 +1096,10 @@ state 84
 
    45 expr: expr '*' . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1113,10 +1113,10 @@ state 85
 
    46 expr: expr '/' . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1130,10 +1130,10 @@ state 86
 
    47 expr: expr '%' . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1290,10 +1290,10 @@ state 98
 
    61 cond: expr "<=" . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1307,10 +1307,10 @@ state 99
 
    62 cond: expr ">=" . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1324,10 +1324,10 @@ state 100
 
    57 cond: expr "==" . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1341,10 +1341,10 @@ state 101
 
    58 cond: expr "!=" . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1358,10 +1358,10 @@ state 102
 
    59 cond: expr '<' . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1375,10 +1375,10 @@ state 103
 
    60 cond: expr '>' . expr
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60
@@ -1394,10 +1394,10 @@ state 104
 
     "false"   shift, and go to state 73
     "true"    shift, and go to state 74
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 75
@@ -1415,10 +1415,10 @@ state 105
 
     "false"   shift, and go to state 73
     "true"    shift, and go to state 74
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 75
@@ -1553,10 +1553,10 @@ state 115
 
    49 exprs: ',' . expr exprs
 
-    "char"    shift, and go to state 56
     T_string  shift, and go to state 44
-    T_const   shift, and go to state 57
+    T_const   shift, and go to state 56
     T_id      shift, and go to state 45
+    T_char    shift, and go to state 57
     '+'       shift, and go to state 58
     '-'       shift, and go to state 59
     '('       shift, and go to state 60

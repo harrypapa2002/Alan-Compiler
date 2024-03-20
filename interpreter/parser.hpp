@@ -49,14 +49,14 @@
      T_return = 265,
      T_while = 266,
      T_true = 267,
-     T_char = 268,
-     T_lte = 269,
-     T_gte = 270,
-     T_eq = 271,
-     T_neq = 272,
-     T_string = 273,
-     T_const = 274,
-     T_id = 275,
+     T_lte = 268,
+     T_gte = 269,
+     T_eq = 270,
+     T_neq = 271,
+     T_string = 272,
+     T_const = 273,
+     T_id = 274,
+     T_char = 275,
      UNOP = 276
    };
 #endif
@@ -71,14 +71,14 @@
 #define T_return 265
 #define T_while 266
 #define T_true 267
-#define T_char 268
-#define T_lte 269
-#define T_gte 270
-#define T_eq 271
-#define T_neq 272
-#define T_string 273
-#define T_const 274
-#define T_id 275
+#define T_lte 268
+#define T_gte 269
+#define T_eq 270
+#define T_neq 271
+#define T_string 272
+#define T_const 273
+#define T_id 274
+#define T_char 275
 #define UNOP 276
 
 
