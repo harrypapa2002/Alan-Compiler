@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include "lexer.hpp"
 #include "ast.hpp"
+#include "symbol.hpp"
+#include "types.hpp"
 
 %}
 
@@ -24,7 +26,6 @@
     LocalDef *localdef;
     Fpar *fpardef;
     Stmt *stmt;
-    //StmtList *stmtlist;
     Expr *expr;
     Cond *cond;
 }
@@ -74,7 +75,9 @@
 %%
 
 program :
-    funcdef { std::cout << *$1 << std::endl; }
+    funcdef { auto p = $1; 
+                p->sem();
+                delete p; }
 
 funcdef : 
     T_id '(' fparlist ')' ':' rtype localdefs compoundstmt { $$ = new FuncDef($1, $6, $7, $8, $3); }
@@ -84,16 +87,16 @@ fparlist :
     fpardef fpardefs { $2->append($1); $$ = $2; }
 ;
 fpardef : 
-    T_id ':' T_reference type { $$ = new Fpar($1, $4, true); }
-|   T_id ':' type { $$ = new Fpar($1, $3, false);}
+    T_id ':' T_reference type { $$ = new Fpar($1, $4, REFERENCE); }
+|   T_id ':' type { $$ = new Fpar($1, $3, VALUE); } 
 ;
 fpardefs : 
     /* nothing */ { $$ = new FparList(); }
 |   ',' fpardef fpardefs { $3->append($2); $$ = $3; }
 ;
 datatype : 
-    T_int { $$ = new Type("int"); }
-|   T_byte { $$ = new Type("byte"); }
+    T_int { $$ = new IntType(); }
+|   T_byte { $$ = new ByteType(); }
 ; 
 type : 
     datatype '[' ']' { $1->array(); $$ = $1; }

@@ -1,16 +1,63 @@
 #ifndef __AST_HPP__
 #define __AST_HPP__
 
+
 #include <iostream>
 #include <vector>
 #include <string>
 #include "lexer.hpp"
+#include "types.hpp"
+#include "symbol.hpp"
+
+inline std::ostream &operator<<(std::ostream &out, compare c)
+{
+    switch (c)
+    {
+    case lt:
+        out << "<";
+        break;
+    case gt:
+        out << ">";
+        break;
+    case lte:
+        out << "<=";
+        break;
+    case gte:
+        out << ">=";
+        break;
+    case eq:
+        out << "==";
+        break;
+    case neq:
+        out << "!=";
+        break;
+    }
+    return out;
+}
+
+inline std::ostream &operator<<(std::ostream &out, ParameterType p)
+{
+    switch (p)
+    {
+    case ParameterType::VALUE:
+        out << "Value";
+        break;
+    case ParameterType::REFERENCE:
+        out << "Reference";
+        break;
+    }
+    return out;
+}
 
 class AST
 {
 public:
     virtual ~AST() {}
     virtual void printOn(std::ostream &out) const = 0;
+    virtual void sem() {}
+
+protected:
+    Type *type;
 };
 
 inline std::ostream &operator<<(std::ostream &out, const AST &ast)
@@ -19,23 +66,22 @@ inline std::ostream &operator<<(std::ostream &out, const AST &ast)
     return out;
 }
 
-class Type : public AST
-{
-public:
-    Type(const std::string &n) : name(n) {}
-    void reference() { name = "reference " + name; }
-    void array() { name += "[]"; }
-    virtual void printOn(std::ostream &out) const override
-    {
-        out << "Type(" << name << ")";
-    }
-
-private:
-    std::string name;
-};
 
 class Expr : public AST
 {
+public:
+    virtual void eval() const = 0;
+    void type_check(Type *t) const
+    {
+        if (type->getType() != t->getType())
+        {
+            yyerror("Type mismatch");
+        }
+    }
+
+protected:
+    Type *type;
+
 };
 
 class Stmt : public AST
@@ -70,6 +116,15 @@ public:
         out << ")";
     }
 
+    virtual void sem() override
+    {
+        for (auto it = stmts.rbegin(); it != stmts.rend(); ++it)
+        {
+            auto stmt = *it; // dereference the reverse iterator to get the element
+            stmt->sem();
+        }
+    }
+
 private:
     std::vector<Stmt *> stmts;
 };
@@ -78,6 +133,11 @@ class LocalDef : public AST
 {
 public:
     virtual void printOn(std::ostream &out) const = 0;
+    virtual void sem() override {}
+
+protected:
+    Type *type;
+
 };
 
 class LocalDefList : public AST
@@ -110,6 +170,15 @@ public:
         out << ")";
     }
 
+    virtual void sem() override
+    {
+        for (auto it = defs.rbegin(); it != defs.rend(); ++it)
+        {
+            auto def = *it; // dereference the reverse iterator to get the element
+            def->sem();
+        }
+    }
+
 private:
     std::vector<LocalDef *> defs;
 };
@@ -117,7 +186,10 @@ private:
 class Fpar : public AST
 {
 public:
-    Fpar(std::string *n, Type *t, bool isRef = false) : name(n), type(t), isReference(isRef) {}
+    Fpar(std::string *n, Type *t, ParameterType p) : name(n), type(t){
+
+        parameterType = p;
+    }
     ~Fpar()
     {
         delete name;
@@ -125,13 +197,17 @@ public:
     }
     virtual void printOn(std::ostream &out) const override
     {
-        out << "Fpar(" << *name << ", " << (isReference ? "reference " : "") << *type << ")";
+        out << "Fpar(" << *name << ", " << *type << ", " << parameterType << ")";
+    }
+    virtual void sem() override
+    {
+        
     }
 
 private:
     std::string *name;
     Type *type;
-    bool isReference;
+    ParameterType parameterType;
 };
 
 class FparList : public AST
@@ -165,6 +241,16 @@ public:
         out << ")";
     }
 
+    virtual void sem() override
+    {
+        for (auto it = fpar.rbegin(); it != fpar.rend(); ++it)
+        {
+            auto f = *it; // dereference the reverse iterator to get the element
+            f->sem();
+        }
+    }
+
+
 private:
     std::vector<Fpar *> fpar;
 };
@@ -178,7 +264,7 @@ public:
         delete name;
         delete fpar;
         delete type;
-        delete localDef;
+        delete localDef;    
         delete stmts;
     }
     virtual void printOn(std::ostream &out) const override
@@ -190,6 +276,8 @@ public:
             out << "nullptr, ";
         out << *type << ", " << *localDef << ", " << *stmts << ")";
     }
+
+    
 
 private:
     std::string *name;
@@ -262,6 +350,7 @@ private:
 class Cond : public AST
 {
     virtual void printOn(std::ostream &out) const override = 0;
+    virtual void sem() override = 0;
 };
 
 class UnOp : public Expr
@@ -273,7 +362,10 @@ public:
     {
         out << "UnOp(" << op << ", " << *expr << ")";
     }
-
+    virtual void sem() override
+    {
+        expr->sem();
+    }
 private:
     char op;
     Expr *expr;
@@ -292,7 +384,11 @@ public:
     {
         out << "BinOp(" << op << ", " << *left << ", " << *right << ")";
     }
-
+    virtual void sem() override
+    {
+        left->sem();
+        right->sem();
+    }
 private:
     char op;
     Expr *left;
@@ -312,7 +408,15 @@ public:
     {
         out << "CondCompOp(" << op << ", " << *left << ", " << *right << ")";
     }
-
+    virtual void sem() override
+    {
+        left->sem();
+        TypeEnum t = left->getType()
+        if(t != TypeEnum::INT && t != TypeEnum::BYTE) yyerror("Cannot compare arrays");
+        right->type_check(t);
+        t = right->getType();
+        if(t != TypeEnum::INT && t != TypeEnum::BYTE) yyerror("Cannot compare arrays");// this should be redundant
+    }
 private:
     compare op;
     Expr *left;
@@ -332,7 +436,11 @@ public:
     {
         out << "CondBoolOp(" << op << ", " << *left << ", " << *right << ")";
     }
-
+    virtual void sem() override
+    {
+        left->sem();
+        right->sem();
+    }
 private:
     char op;
     Cond *left;
@@ -348,7 +456,10 @@ public:
     {
         out << "BoolUnOp(" << op << ", " << *cond << ")";
     }
-
+    virtual void sem() override
+    {
+        cond->sem();
+    }
 private:
     char op;
     Cond *cond;
@@ -362,7 +473,10 @@ public:
     {
         out << "Const(" << val << ")";
     }
-
+    virtual void sem() override
+    {
+        type = new IntType();
+    }
 private:
     int val;
 };
@@ -375,7 +489,7 @@ public:
     {
         out << "BoolConst(" << val << ")";
     }
-
+    virtual void sem() override {}
 private:
     bool val;
 };
@@ -388,7 +502,10 @@ public:
     {
         out << "CharConst(" << *val << ")";
     }
-
+    virtual void sem() override
+    {
+        type = new ByteType();
+    }
 private:
     std::string *val;
 };
@@ -402,7 +519,10 @@ public:
     {
         out << "StrConst(" << *val << ")";
     }
-
+    virtual void sem() override
+    {
+        type = new ArrayType(new ByteType(), val->size());
+    }
 private:
     std::string *val;
 };
@@ -416,7 +536,11 @@ public:
     {
         out << "Id(" << *name << ")";
     }
-
+    virtual void sem() override
+    {
+        Symbol *entry = st.findSymbol(name);
+        type = entry->getType();
+    }
 private:
     std::string *name;
 };
@@ -436,7 +560,15 @@ public:
         out << *indexExpr << ")";
         out << ")";
     }
-
+    virtual void sem() override
+    {
+        Symbol *entry = st.findSymbol(name);
+        Type *t = entry->getType();
+        if(t->getType() != TypeEnum::ARRAY) yyerror("Variable is not an array");
+        indexExpr->sem();
+        if(indexExpr->getType() != TypeEnum::INT) yyerror("Array index must be integer");
+        type = t->getBaseType();
+    }
 private:
     std::string *name;
     Expr *indexExpr;
@@ -455,7 +587,13 @@ public:
     {
         out << "Let(" << *lexpr << ", " << *rexpr << ")";
     }
-
+    virtual void sem() override
+    {
+        Symbol *entry = st.findSymbol(lexpr->getName());
+        rexpr->type_check(entry->getType());
+        lexpr->sem();
+        rexpr->sem();
+    }
 private:
     Expr *lexpr;
     Expr *rexpr;
