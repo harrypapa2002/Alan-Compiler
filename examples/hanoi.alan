@@ -5,11 +5,11 @@ solve () : proc
 
         move (source : reference byte [], target : reference byte[]) : proc
         {
-            writeString("Moving from ");
-            writeString(source);
-            writeString(" to ");
-        writeString(target);
-        writeString(".\n");
+            --writeString("Moving from ");
+            --writeString(source);
+            --writeString(" to ");
+            --writeString(target);
+            --writeString(".\n");
         }
 
     { -- hanoi
@@ -23,7 +23,7 @@ solve () : proc
     NumberOfRings : int;
 
 { -- solve
-    writeString("Rings: ");
-    NumberOfRings = readInteger();
+    --writeString("Rings: ");
+    NumberOfRings = 42; --readInteger();
     hanoi(NumberOfRings, "left", "right", "middle");
 } -- solve

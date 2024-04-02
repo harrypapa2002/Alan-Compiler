@@ -1,0 +1,10 @@
+solve () : proc
+A : int;
+foo () : proc 
+{
+B = 42;
+}
+{ -- solve
+A = 1;
+
+} -- solve

@@ -96,7 +96,7 @@ public:
 
 
 
-class StmtList : public AST
+class StmtList : public Stmt
 {
 public:
     StmtList() : stmts() {
@@ -214,7 +214,7 @@ public:
     }
     virtual void printOn(std::ostream &out) const override
     {
-        out << "Fpar(" << *name << ", " << *type << ", " << parameterType << ")";
+        out << "Fpar(" << *name << ", "  << ", " << parameterType << ")";
     }
     virtual void sem() override
     {
@@ -302,7 +302,7 @@ public:
             out << *fpar << ", ";
         else
             out << "nullptr, ";
-        out << *type << ", " << *localDef << ", " << *stmts << ")";
+        out  << ", " << *localDef << ", " << *stmts << ")";
         
     }
 
@@ -359,7 +359,7 @@ public:
     }
     virtual void printOn(std::ostream &out) const override
     {
-        out << "VarDef(" << *name << ", " << *type;
+        out << "VarDef(" << *name << ", " ;
         if (isArray)
         {
             out << ", Array Size: " << size;
@@ -676,7 +676,7 @@ public:
     ~Id() { delete name; }
     virtual void printOn(std::ostream &out) const override
     {
-        out << "Id(" << *name << ",  " << *type << ")";
+        out << "Id(" << *name << ",  "  << ")";
     }
     virtual void sem() override
     {
