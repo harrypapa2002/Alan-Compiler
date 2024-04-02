@@ -95,8 +95,7 @@ public:
 };
 
 
-
-class StmtList : public AST
+class StmtList : public Stmt
 {
 public:
     StmtList() : stmts() {}
@@ -299,7 +298,7 @@ public:
             out << *fpar << ", ";
         else
             out << "nullptr, ";
-        out << *type << ", " << *localDef << ", " << *stmts << ")";
+        out  << ", " << *localDef << ", " << *stmts << ")";
         
     }
 
