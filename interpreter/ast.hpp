@@ -95,24 +95,20 @@ public:
 };
 
 
-
-class StmtList : public AST
+class StmtList : public Stmt
 {
 public:
-    StmtList() : stmts() {
-       
-    }
+    StmtList() : stmts() {}
     ~StmtList()
     {
         for (Stmt *s : stmts)
             delete s;
-            
     }
 
     void append(Stmt *stmt) { stmts.push_back(stmt); }
     virtual void printOn(std::ostream &out) const override
     {
-        out << "StmtList(";
+        out << "Stmt(";
         bool first = true;
         for (auto it = stmts.rbegin(); it != stmts.rend(); ++it)
         {
@@ -284,7 +280,7 @@ private:
 class FuncDef : public LocalDef
 {
 public:
-    FuncDef(std::string *n, Type *t, LocalDefList *l, StmtList *s, FparList *f = nullptr) : name(n), fpar(f), type(t), localDef(l), stmts(s)
+    FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f = nullptr) : name(n), fpar(f), type(t), localDef(l), stmts(s)
     {
         funcSymbol = nullptr;
     }
@@ -303,7 +299,6 @@ public:
         else
             out << "nullptr, ";
         out << *type << ", " << *localDef << ", " << *stmts << ")";
-        
     }
 
     virtual void sem() override
@@ -345,7 +340,7 @@ private:
     FparList *fpar;
     Type *type;
     LocalDefList *localDef;
-    StmtList *stmts;
+    Stmt *stmts;
     FunctionSymbol *funcSymbol;
 };
 

@@ -89,11 +89,10 @@ typedef union YYSTYPE
 #line 18 "parser.y"
 {
     ExprList *exprlist;
-    StmtList *stmtlist;
     LocalDefList *localdefs;
     FparList *fparlist;
+    StmtList *stmtlist;
     Type *type;
-    Empty *empty;
     int num;
     std::string *str;
     unsigned char chr;
@@ -112,7 +111,7 @@ typedef union YYSTYPE
     FuncCall *fun;
 }
 /* Line 1529 of yacc.c.  */
-#line 116 "parser.hpp"
+#line 115 "parser.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
