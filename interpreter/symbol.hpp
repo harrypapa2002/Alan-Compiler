@@ -24,7 +24,6 @@ enum class ParameterType
 
 
 
-
 class Symbol
 {
 public:
@@ -67,12 +66,21 @@ public:
         this->symbolType = SymbolType::PARAMETER;
         this->parameterType = parameterType;
     }
-    
+    void printOn(std::ostream &out) const {
+        out << "Parameter: " << name << " " << *type;
+        out << " " << (parameterType == ParameterType::VALUE ? "value" : "reference");
+    }
     ParameterType getParameterType() const { return parameterType; }
 
 private:
     ParameterType parameterType;
 };
+
+inline std::ostream &operator<<(std::ostream &out,ParameterSymbol p)
+{
+    p.printOn(out);
+    return out;
+}
 
 class FunctionSymbol : public Symbol {
 public:
@@ -83,10 +91,10 @@ public:
         this->returnType = type->getType();
     }
 
-    const std::vector<ParameterSymbol *> &getParameters() const { return parameters; }
+    const std::vector<ParameterSymbol> &getParameters() const { return parameters; }
     TypeEnum getReturnType() const { return returnType; }
 
-    void addParameter(ParameterSymbol *parameter) {
+    void addParameter(ParameterSymbol parameter) {
         parameters.push_back(parameter);
     }
 
@@ -96,7 +104,7 @@ public:
     
 
 private:
-    std::vector<ParameterSymbol *> parameters;
+    std::vector<ParameterSymbol> parameters;
     TypeEnum returnType;
     
 };
@@ -224,6 +232,9 @@ private:
     std::stack<FunctionSymbol*> currentFunctionContext; // Track the current function context
 
 };
+
+
+
 
 extern SymbolTable st;
 

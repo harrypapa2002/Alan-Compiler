@@ -52,6 +52,26 @@ inline std::ostream &operator<<(std::ostream &out, ParameterType p)
     return out;
 }
 
+inline std::ostream &operator<<(std::ostream &out, TypeEnum t)
+{
+    switch (t)
+    {
+    case TypeEnum::INT:
+        out << "Int";
+        break;
+    case TypeEnum::BYTE:
+        out << "Byte";
+        break;
+    case TypeEnum::VOID:
+        out << "Void";
+        break;
+    case TypeEnum::ARRAY:
+        out << "Array";
+        break;
+    }
+    return out;
+}
+
 class AST
 {
 public:
@@ -319,7 +339,7 @@ public:
             fpar->sem();
             for (auto &param : fpar->getParameters())
             {
-                funcSymbol->addParameter(param->getParameterSymbol());
+                funcSymbol->addParameter(*param->getParameterSymbol());
             }
         }
 
@@ -672,7 +692,7 @@ public:
     ~Id() { delete name; }
     virtual void printOn(std::ostream &out) const override
     {
-        out << "Id(" << *name << ",  "  << ")";
+        out << "Id(" << *name << ",  " << type->getType()  << ")";
     }
     virtual void sem() override
     {
@@ -817,7 +837,7 @@ public:
         if (exprs)
         {
             exprs->sem();
-            std::vector<ParameterSymbol *> params = func->getParameters();
+            std::vector<ParameterSymbol> params = func->getParameters();
             if (exprs->getExprs().size() != params.size())
             {
                 yyerror("Number of parameters does not match");
@@ -825,7 +845,7 @@ public:
 
             for (int i = 0; i < exprs->getExprs().size(); i++)
             {
-                if (exprs->getExprs()[i]->getTypeEnum() != params[i]->getType()->getType())
+                if (exprs->getExprs()[i]->getTypeEnum() != params[i].getType()->getType())
                 {
                     yyerror("Type mismatch");
                 }
