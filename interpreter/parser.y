@@ -17,11 +17,10 @@ SymbolTable st;
 
 %union {
     ExprList *exprlist;
-    StmtList *stmtlist;
     LocalDefList *localdefs;
     FparList *fparlist;
+    StmtList *stmtlist;
     Type *type;
-    Empty *empty;
     int num;
     std::string *str;
     unsigned char chr;
@@ -85,7 +84,6 @@ SymbolTable st;
 %type <fun> funccall
 
 
-
 %%
 
 program :
@@ -137,7 +135,7 @@ vardef :
 |   T_id ':' datatype  ';' { $$ = new VarDef($1, $3, false); }
 ;
 stmt :
-    ';' { new Empty(); }
+    ';' { $$ = new Empty();}
 |   lvalue  '=' expr ';' { $$ = new Let($1, $3); }
 |   compoundstmt  { $$ = $1; }
 |   funccall  ';' { $$ = new ProcCall($1); }
