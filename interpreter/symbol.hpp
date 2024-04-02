@@ -37,9 +37,6 @@ public:
     Symbol *getNext() const { return next; }
     void setNext(Symbol *nextSymbol) { next = nextSymbol; }
 
-
-
-
 protected:
     std::string name;
     Type *type;
@@ -79,15 +76,14 @@ private:
 
 class FunctionSymbol : public Symbol {
 public:
-    FunctionSymbol(std::string name, Type *type, std::vector<ParameterSymbol *> parameters, TypeEnum returnType) {
+    FunctionSymbol(std::string name, Type *type) : parameters(){
         this->name = name;
         this->type = type;
         this->symbolType = SymbolType::FUNCTION;
-        this->parameters = parameters;
-        this->returnType = returnType;
+        this->returnType = type->getType();
     }
 
-    std::vector<ParameterSymbol *> getParameters() const { return parameters; }
+    const std::vector<ParameterSymbol *> &getParameters() const { return parameters; }
     TypeEnum getReturnType() const { return returnType; }
 
     void addParameter(ParameterSymbol *parameter) {
@@ -97,6 +93,7 @@ public:
     void setReturnType(TypeEnum returnType) {
         this->returnType = returnType;
     }
+    
 
 private:
     std::vector<ParameterSymbol *> parameters;
@@ -109,6 +106,15 @@ private:
 class Scope
 {
 public:
+
+    ~Scope()
+    {
+        for (auto &symbolPair : symbols)
+        {
+            delete symbolPair.second;
+        }
+    }
+
     void addSymbol(std::string name, Symbol *symbol)
     {
         if (symbols.find(name) != symbols.end())
@@ -126,10 +132,11 @@ public:
             return it->second;
         return nullptr;
     }
-    std::unordered_map<std::string, Symbol *> getSymbols()
+    const std::unordered_map<std::string, Symbol *> &getSymbols() const
     {
         return symbols;
     }
+    
 
 private:
     std::unordered_map<std::string, Symbol *> symbols;
@@ -165,8 +172,26 @@ public:
         {
             globalSymbols[symbolPair.first] = symbolPair.second->getNext();
         }
-        delete scope;
         scopes.pop();
+        delete scope;
+        
+    }
+
+    void enterFunctionScope(FunctionSymbol* function) {
+        currentFunctionContext.push(function);
+        enterScope(); 
+    }
+
+    void exitFunctionScope() {
+        if (!currentFunctionContext.empty()) {
+            currentFunctionContext.pop();
+        }
+        exitScope();
+    }
+
+    Type* getCurrentFunctionReturnType() const {
+        if (currentFunctionContext.empty()) return nullptr;
+        return currentFunctionContext.top()->getType();
     }
 
     void addSymbol(std::string name, Symbol *symbol)
@@ -181,6 +206,11 @@ public:
         return findGlobalSymbol(name);
     }
 
+    Symbol *findSymbolInCurrentScope(std::string name)
+    {
+        return scopes.top()->findSymbol(name);
+    }
+
 private:
     Symbol *findGlobalSymbol(std::string name)
     {
@@ -191,6 +221,8 @@ private:
     }
     std::stack<Scope *> scopes;
     std::unordered_map<std::string, Symbol *> globalSymbols; // Tracks the most recent symbols by name
+    std::stack<FunctionSymbol*> currentFunctionContext; // Track the current function context
+
 };
 
 extern SymbolTable st;

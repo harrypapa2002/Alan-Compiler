@@ -6,17 +6,25 @@
 #include "symbol.hpp"
 #include "types.hpp"
 
+Type* typeInteger = new IntType();
+Type* typeByte = new ByteType();
+Type* typeVoid = new VoidType();
+
+SymbolTable st;
+
 %}
 
 
 %union {
     ExprList *exprlist;
+    StmtList *stmtlist;
     LocalDefList *localdefs;
     FparList *fparlist;
     Type *type;
+    Empty *empty;
     int num;
     std::string *str;
-    char chr;
+    unsigned char chr;
     char op;
     compare comp;
     std::string *var;
@@ -28,6 +36,8 @@
     Stmt *stmt;
     Expr *expr;
     Cond *cond;
+    Lval *lvalue;
+    FuncCall *fun;
 }
 
 %token T_byte "byte"
@@ -48,7 +58,7 @@
 %token<str> T_string 
 %token<num> T_const 
 %token<str> T_id 
-%token<str> T_char 
+%token<chr> T_char 
 
 %left<op> '&' '|'
 %nonassoc<comp> T_lte T_gte '<' '>' T_eq T_neq
@@ -59,25 +69,31 @@
 %expect 1
  
 %type <exprlist> exprlist exprs
-%type <stmt> stmt stmts compoundstmt
+%type <stmt> stmt 
 %type <localdefs> localdefs
 %type <fparlist> fparlist fpardefs
+%type <stmtlist> stmts compoundstmt
 %type <ast> program 
 %type <vardef> vardef
 %type <fpardef> fpardef
 %type <funcdef> funcdef
 %type <localdef> localdef
 %type <cond> cond
-%type <expr> expr funccall lvalue
+%type <expr> expr 
+%type <lvalue> lvalue
 %type <type> datatype type rtype
+%type <fun> funccall
+
 
 
 %%
 
 program :
-    funcdef { auto p = $1; 
-                p->sem();
-                delete p; }
+    funcdef {   
+            std::cout << "AST: " << *$1 << std::endl;
+        } 
+                
+         
 
 funcdef : 
     T_id '(' fparlist ')' ':' rtype localdefs compoundstmt { $$ = new FuncDef($1, $6, $7, $8, $3); }
@@ -87,24 +103,24 @@ fparlist :
     fpardef fpardefs { $2->append($1); $$ = $2; }
 ;
 fpardef : 
-    T_id ':' T_reference type { $$ = new Fpar($1, $4, REFERENCE); }
-|   T_id ':' type { $$ = new Fpar($1, $3, VALUE); } 
+    T_id ':' T_reference type { $$ = new Fpar($1, $4, ParameterType::REFERENCE); }
+|   T_id ':' type { $$ = new Fpar($1, $3, ParameterType::VALUE); }
 ;
 fpardefs : 
     /* nothing */ { $$ = new FparList(); }
 |   ',' fpardef fpardefs { $3->append($2); $$ = $3; }
 ;
 datatype : 
-    T_int { $$ = new IntType(); }
-|   T_byte { $$ = new ByteType(); }
+    T_int { $$ = typeInteger; }
+|   T_byte { $$ = typeByte; }
 ; 
 type : 
-    datatype '[' ']' { $1->array(); $$ = $1; }
+    datatype '[' ']' {  $$ = new ArrayType($1);}
 |   datatype { $$ = $1; }
 ;
 rtype : 
     datatype { $$ = $1; }
-|   T_proc { $$ = new Type("proc"); }
+|   T_proc { $$ = typeVoid; }
 ;
 localdef :
     funcdef { $$ = $1; }
@@ -115,11 +131,11 @@ localdefs :
 |   localdef localdefs { $2->append($1); $$ = $2; }
 ;
 vardef :
-    T_id ':' datatype '[' T_const ']' ';' { $$ = new VarDef($1, $3, $5); } 
-|   T_id ':' datatype  ';' { $$ = new VarDef($1, $3); }
+    T_id ':' datatype '[' T_const ']' ';' { $$ = new VarDef($1, $3, true, $5); } 
+|   T_id ':' datatype  ';' { $$ = new VarDef($1, $3, false); }
 ;
 stmt :
-    ';' { $$ = new Stmt(); }
+    ';' { new Empty(); }
 |   lvalue  '=' expr ';' { $$ = new Let($1, $3); }
 |   compoundstmt  { $$ = $1; }
 |   funccall  ';' { $$ = new ProcCall($1); }
@@ -130,7 +146,7 @@ stmt :
 |   T_return ';' { $$ = new Return(); }
 ;
 stmts :
-    /* nothing */ { $$ = new Stmt(); }
+    /* nothing */ { $$ = new StmtList(); }
 |   stmt stmts { $2->append($1); $$ = $2; }
 ;
 compoundstmt : 

@@ -1,13 +1,16 @@
 #ifndef __AST_HPP__
 #define __AST_HPP__
 
-
 #include <iostream>
 #include <vector>
 #include <string>
 #include "lexer.hpp"
 #include "types.hpp"
 #include "symbol.hpp"
+
+extern Type *typeInteger;
+extern Type *typeByte;
+extern Type *typeVoid;
 
 inline std::ostream &operator<<(std::ostream &out, compare c)
 {
@@ -66,37 +69,50 @@ inline std::ostream &operator<<(std::ostream &out, const AST &ast)
     return out;
 }
 
-
 class Expr : public AST
 {
 public:
-    virtual void eval() const = 0;
-    void type_check(Type *t) const
-    {
-        if (type->getType() != t->getType())
-        {
-            yyerror("Type mismatch");
-        }
-    }
+    virtual ~Expr() {}
+    // virtual void eval() const = 0;
+    virtual void printOn(std::ostream &out) const override = 0;
+
+    virtual void sem() override = 0;
+
+    Type *getType() const { return type; }
+
+    TypeEnum getTypeEnum() const { return type->getType(); }
 
 protected:
     Type *type;
-
 };
 
 class Stmt : public AST
 {
 public:
-    Stmt() : stmts() {}
-    ~Stmt()
+    virtual ~Stmt() {}
+    virtual void printOn(std::ostream &out) const override = 0;
+    virtual void sem() override = 0;
+};
+
+
+
+class StmtList : public AST
+{
+public:
+    StmtList() : stmts() {
+       
+    }
+    ~StmtList()
     {
         for (Stmt *s : stmts)
             delete s;
+            
     }
+
     void append(Stmt *stmt) { stmts.push_back(stmt); }
     virtual void printOn(std::ostream &out) const override
     {
-        out << "Stmt(";
+        out << "StmtList(";
         bool first = true;
         for (auto it = stmts.rbegin(); it != stmts.rend(); ++it)
         {
@@ -112,7 +128,7 @@ public:
                 first = false;
             }
         }
-        
+
         out << ")";
     }
 
@@ -132,12 +148,12 @@ private:
 class LocalDef : public AST
 {
 public:
-    virtual void printOn(std::ostream &out) const = 0;
-    virtual void sem() override {}
+    virtual ~LocalDef() {}
+    virtual void printOn(std::ostream &out) const override = 0;
+    virtual void sem() override = 0;
 
 protected:
     Type *type;
-
 };
 
 class LocalDefList : public AST
@@ -186,14 +202,15 @@ private:
 class Fpar : public AST
 {
 public:
-    Fpar(std::string *n, Type *t, ParameterType p) : name(n), type(t){
+    Fpar(std::string *n, Type *t, ParameterType p) : name(n), type(t)
+    {
 
         parameterType = p;
+        parameterSymbol = nullptr;
     }
     ~Fpar()
     {
         delete name;
-        delete type;
     }
     virtual void printOn(std::ostream &out) const override
     {
@@ -201,13 +218,21 @@ public:
     }
     virtual void sem() override
     {
-        
+        if (st.findSymbolInCurrentScope(*name))
+        {
+            yyerror(("Parameter '" + *name + "' already declared in the same scope").c_str());
+        }
+        parameterSymbol = new ParameterSymbol(*name, type, parameterType);
+        st.addSymbol(*name, parameterSymbol);
     }
+
+    ParameterSymbol *getParameterSymbol() const { return parameterSymbol; }
 
 private:
     std::string *name;
     Type *type;
     ParameterType parameterType;
+    ParameterSymbol *parameterSymbol;
 };
 
 class FparList : public AST
@@ -237,7 +262,7 @@ public:
                 first = false;
             }
         }
-        
+
         out << ")";
     }
 
@@ -250,6 +275,7 @@ public:
         }
     }
 
+    const std::vector<Fpar *> &getParameters() const { return fpar; }
 
 private:
     std::vector<Fpar *> fpar;
@@ -258,13 +284,15 @@ private:
 class FuncDef : public LocalDef
 {
 public:
-    FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f = nullptr) : name(n), fpar(f), type(t), localDef(l), stmts(s) {}
+    FuncDef(std::string *n, Type *t, LocalDefList *l, StmtList *s, FparList *f = nullptr) : name(n), fpar(f), type(t), localDef(l), stmts(s)
+    {
+        funcSymbol = nullptr;
+    }
     ~FuncDef()
     {
         delete name;
         delete fpar;
-        delete type;
-        delete localDef;    
+        delete localDef;
         delete stmts;
     }
     virtual void printOn(std::ostream &out) const override
@@ -275,41 +303,95 @@ public:
         else
             out << "nullptr, ";
         out << *type << ", " << *localDef << ", " << *stmts << ")";
+        
     }
 
-    
+    virtual void sem() override
+    {
+        if (st.findSymbol(*name))
+        {
+            yyerror(("Function name '" + *name + "' already declared").c_str());
+        }
+
+        funcSymbol = new FunctionSymbol(*name, type);
+        st.addSymbol(*name, funcSymbol);
+
+        st.enterFunctionScope(funcSymbol);
+
+        if (fpar)
+        {
+            fpar->sem();
+            for (auto &param : fpar->getParameters())
+            {
+                funcSymbol->addParameter(param->getParameterSymbol());
+            }
+        }
+
+        if (localDef)
+        {
+            localDef->sem();
+        }
+
+        if (stmts)
+        {
+            stmts->sem();
+        }
+
+        st.exitFunctionScope();
+    }
 
 private:
     std::string *name;
     FparList *fpar;
     Type *type;
     LocalDefList *localDef;
-    Stmt *stmts;
+    StmtList *stmts;
+    FunctionSymbol *funcSymbol;
 };
 
 class VarDef : public LocalDef
 {
 public:
-    VarDef(std::string *n, Type *t, int arraySize = -1) : name(n), type(t), size(arraySize) {}
+    VarDef(std::string *n, Type *t,  bool arr, int arraySize = -1) : name(n), type(t), size(arraySize), isArray(arr) {}
     ~VarDef()
     {
         delete name;
-        delete type;
     }
     virtual void printOn(std::ostream &out) const override
     {
         out << "VarDef(" << *name << ", " << *type;
-        if (size >= 0)
+        if (isArray)
         {
             out << ", Array Size: " << size;
         }
         out << ")";
     }
 
+    virtual void sem() override
+    {
+        if (st.findSymbol(*name))
+        {
+            yyerror(("Variable name '" + *name + "' already declared").c_str());
+        }
+
+        if (isArray)
+        {
+            if (size < 0)
+            {
+                yyerror("Array size must be greater than 0");
+            }
+
+            type = new ArrayType(type, size);
+        }
+
+        st.addSymbol(*name, new VariableSymbol(*name, type));
+    }
+
 private:
     std::string *name;
     Type *type;
     int size;
+    bool isArray;
 };
 
 class ExprList : public AST
@@ -339,21 +421,33 @@ public:
                 first = false;
             }
         }
-        
+
         out << ")";
     }
+
+    virtual void sem() override
+    {
+        for (auto it = exprs.rbegin(); it != exprs.rend(); ++it)
+        {
+            auto expr = *it; // dereference the reverse iterator to get the element
+            expr->sem();
+        }
+    }
+
+    const std::vector<Expr *> &getExprs() const { return exprs; }
 
 private:
     std::vector<Expr *> exprs;
 };
 
-class Cond : public AST
+class Cond : public AST // checked
 {
+public:
     virtual void printOn(std::ostream &out) const override = 0;
     virtual void sem() override = 0;
 };
 
-class UnOp : public Expr
+class UnOp : public Expr // checked
 {
 public:
     UnOp(char o, Expr *e) : op(o), expr(e) {}
@@ -365,13 +459,17 @@ public:
     virtual void sem() override
     {
         expr->sem();
+        if (expr->getTypeEnum() != TypeEnum::INT)
+            yyerror("Unary operator can only be applied to integers");
+        type = typeInteger;
     }
+
 private:
     char op;
     Expr *expr;
 };
 
-class BinOp : public Expr
+class BinOp : public Expr // checked
 {
 public:
     BinOp(Expr *l, char o, Expr *r) : op(o), left(l), right(r) {}
@@ -388,14 +486,27 @@ public:
     {
         left->sem();
         right->sem();
+
+        if (!equalTypes(left->getTypeEnum(), right->getTypeEnum()))
+        {
+            yyerror("Type mismatch");
+        }
+
+        if (!equalTypes(left->getTypeEnum(), TypeEnum::INT) && !equalTypes(left->getTypeEnum(), TypeEnum::BYTE))
+        {
+            yyerror("Binary operator can only be applied to integers or bytes");
+        }
+
+        type = left->getType();
     }
+
 private:
     char op;
     Expr *left;
     Expr *right;
 };
 
-class CondCompOp : public Cond
+class CondCompOp : public Cond // checked
 {
 public:
     CondCompOp(Expr *l, compare o, Expr *r) : op(o), left(l), right(r) {}
@@ -411,12 +522,16 @@ public:
     virtual void sem() override
     {
         left->sem();
-        TypeEnum t = left->getType()
-        if(t != TypeEnum::INT && t != TypeEnum::BYTE) yyerror("Cannot compare arrays");
-        right->type_check(t);
-        t = right->getType();
-        if(t != TypeEnum::INT && t != TypeEnum::BYTE) yyerror("Cannot compare arrays");// this should be redundant
+        right->sem();
+        TypeEnum t = left->getTypeEnum();
+        if (!equalTypes(t, right->getTypeEnum()))
+        {
+            yyerror("Type mismatch");
+        }
+        if (t != TypeEnum::INT && t != TypeEnum::BYTE)
+            yyerror("Comparison operator can only be applied to integers or bytes");
     }
+
 private:
     compare op;
     Expr *left;
@@ -441,6 +556,7 @@ public:
         left->sem();
         right->sem();
     }
+
 private:
     char op;
     Cond *left;
@@ -460,12 +576,13 @@ public:
     {
         cond->sem();
     }
+
 private:
     char op;
     Cond *cond;
 };
 
-class IntConst : public Expr
+class IntConst : public Expr // checked
 {
 public:
     IntConst(int v) : val(v) {}
@@ -475,13 +592,65 @@ public:
     }
     virtual void sem() override
     {
-        type = new IntType();
+        type = typeInteger;
     }
+
 private:
     int val;
 };
 
-class BoolConst : public Cond
+class CharConst : public Expr // checked
+{
+public:
+    CharConst(unsigned char c) : val(c) {}
+    virtual void printOn(std::ostream &out) const override
+    {
+        out << "CharConst(" << val << ")";
+    }
+    virtual void sem() override
+    {
+        type = typeByte;
+    }
+
+private:
+    unsigned char val;
+};
+
+class Lval : public Expr // checked
+{
+public:
+    virtual ~Lval() {}
+    virtual void printOn(std::ostream &out) const override
+    {
+        out << "Lval(" << *name << ")";
+    }
+    virtual void sem() override {}
+
+    std::string getName() const { return *name; }
+
+protected:
+    std::string *name;
+};
+
+class StringConst : public Lval // checked
+{
+public:
+    StringConst(std::string *v)
+    {
+        name = v;
+    }
+    ~StringConst() { delete name; }
+    virtual void printOn(std::ostream &out) const override
+    {
+        out << "StrConst(" << *name << ")";
+    }
+    virtual void sem() override
+    {
+        type = new ArrayType(typeByte, name->size() + 1);
+    }
+};
+
+class BoolConst : public Cond // checked
 {
 public:
     BoolConst(bool v) : val(v) {}
@@ -489,66 +658,55 @@ public:
     {
         out << "BoolConst(" << val << ")";
     }
-    virtual void sem() override {}
+    virtual void sem() override
+    {
+    }
+
 private:
     bool val;
 };
 
-class CharConst : public Expr
+class Id : public Lval // checked
 {
 public:
-    CharConst(std::string *v) : val(v) {}
-    virtual void printOn(std::ostream &out) const override
+    Id(std::string *n)
     {
-        out << "CharConst(" << *val << ")";
+        name = n;
     }
-    virtual void sem() override
-    {
-        type = new ByteType();
-    }
-private:
-    std::string *val;
-};
-
-class StringConst : public Expr
-{
-public:
-    StringConst(std::string *v) : val(v) {}
-    ~StringConst() { delete val; }
-    virtual void printOn(std::ostream &out) const override
-    {
-        out << "StrConst(" << *val << ")";
-    }
-    virtual void sem() override
-    {
-        type = new ArrayType(new ByteType(), val->size());
-    }
-private:
-    std::string *val;
-};
-
-class Id : public Expr
-{
-public:
-    Id(std::string *n) : name(n) {}
     ~Id() { delete name; }
     virtual void printOn(std::ostream &out) const override
     {
-        out << "Id(" << *name << ")";
+        out << "Id(" << *name << ",  " << *type << ")";
     }
     virtual void sem() override
     {
-        Symbol *entry = st.findSymbol(name);
+        Symbol *entry = st.findSymbol(*name);
+        if (!entry)
+        {
+            yyerror("Variable not declared");
+        }
+
+        symbolType = entry->getSymbolType();
+
+        if (symbolType == SymbolType::FUNCTION)
+        {
+            yyerror("Function cannot be used as a variable");
+        }
+
         type = entry->getType();
     }
+
 private:
-    std::string *name;
+    SymbolType symbolType;
 };
 
-class ArrayAccess : public Expr
+class ArrayAccess : public Lval // checked
 {
 public:
-    ArrayAccess(std::string *n, Expr *index) : name(n), indexExpr(index) {}
+    ArrayAccess(std::string *n, Expr *index) : indexExpr(index)
+    {
+        name = n;
+    }
     ~ArrayAccess()
     {
         delete name;
@@ -562,22 +720,36 @@ public:
     }
     virtual void sem() override
     {
-        Symbol *entry = st.findSymbol(name);
-        Type *t = entry->getType();
-        if(t->getType() != TypeEnum::ARRAY) yyerror("Variable is not an array");
+
         indexExpr->sem();
-        if(indexExpr->getType() != TypeEnum::INT) yyerror("Array index must be integer");
+        if (indexExpr->getTypeEnum() != TypeEnum::INT)
+            yyerror("Array index must be integer");
+
+        Symbol *entry = st.findSymbol(*name);
+        if (!entry)
+        {
+            yyerror("Variable not declared");
+        }
+        if(entry->getSymbolType() == SymbolType::FUNCTION)
+        {
+            yyerror("Function cannot be used as a variable");
+        }
+        Type *t = entry->getType();
+
+        if (t->getType() != TypeEnum::ARRAY)
+            yyerror("Variable is not an array");
+
         type = t->getBaseType();
     }
+
 private:
-    std::string *name;
     Expr *indexExpr;
 };
 
-class Let : public Stmt
+class Let : public Stmt // checked
 {
 public:
-    Let(Expr *l, Expr *r) : lexpr(l), rexpr(r) {}
+    Let(Lval *l, Expr *r) : lexpr(l), rexpr(r) {}
     ~Let()
     {
         delete lexpr;
@@ -589,13 +761,28 @@ public:
     }
     virtual void sem() override
     {
-        Symbol *entry = st.findSymbol(lexpr->getName());
-        rexpr->type_check(entry->getType());
         lexpr->sem();
         rexpr->sem();
+
+        Symbol *entry = st.findSymbol(lexpr->getName());
+        if (!entry)
+        {
+            yyerror("Variable not declared");
+        }
+        SymbolType symbolType = entry->getSymbolType();
+        if (symbolType == SymbolType::FUNCTION)
+        {
+            yyerror("Function cannot be used as a variable");
+        }
+
+        if (!equalTypes(lexpr->getTypeEnum(), rexpr->getTypeEnum()))
+        {
+            yyerror("Type mismatch");
+        }
     }
+
 private:
-    Expr *lexpr;
+    Lval *lexpr;
     Expr *rexpr;
 };
 
@@ -617,26 +804,65 @@ public:
             out << ")";
     }
 
+    virtual void sem() override
+    {
+        Symbol *entry = st.findSymbol(*name);
+        if (!entry)
+        {
+            yyerror("Function not declared");
+        }
+        SymbolType symbolType = entry->getSymbolType();
+        if (symbolType != SymbolType::FUNCTION)
+        {
+            yyerror("Variable cannot be used as a function");
+        }
+
+        FunctionSymbol *func = (FunctionSymbol *)entry;
+        if (exprs)
+        {
+            exprs->sem();
+            std::vector<ParameterSymbol *> params = func->getParameters();
+            if (exprs->getExprs().size() != params.size())
+            {
+                yyerror("Number of parameters does not match");
+            }
+
+            for (int i = 0; i < exprs->getExprs().size(); i++)
+            {
+                if (exprs->getExprs()[i]->getTypeEnum() != params[i]->getType()->getType())
+                {
+                    yyerror("Type mismatch");
+                }
+            }
+        }
+        type = func->getType();
+    }
+
 private:
     std::string *name;
     ExprList *exprs;
 };
 
-class ProcCall : public Stmt
+class ProcCall : public Stmt // checked
 {
 public:
-    ProcCall(Expr *f) : funcCall(f) {}
+    ProcCall(FuncCall *f) : funcCall(f) {}
     ~ProcCall() { delete funcCall; }
     virtual void printOn(std::ostream &out) const override
     {
         out << "ProcCall(" << *funcCall << ")";
     }
 
+    virtual void sem() override
+    {
+        funcCall->sem();
+    }
+
 private:
-    Expr *funcCall;
+    FuncCall *funcCall;
 };
 
-class If : public Stmt
+class If : public Stmt // checked
 {
 public:
     If(Cond *c, Stmt *t, Stmt *e = nullptr) : cond(c), thenStmt(t), elseStmt(e) {}
@@ -655,13 +881,21 @@ public:
             out << "nullptr)";
     }
 
+    virtual void sem() override
+    {
+        cond->sem();
+        thenStmt->sem();
+        if (elseStmt)
+            elseStmt->sem();
+    }
+
 private:
     Cond *cond;
     Stmt *thenStmt;
     Stmt *elseStmt;
 };
 
-class While : public Stmt
+class While : public Stmt // checked
 {
 public:
     While(Cond *c, Stmt *b) : cond(c), body(b) {}
@@ -673,6 +907,12 @@ public:
     virtual void printOn(std::ostream &out) const override
     {
         out << "While(" << *cond << ", " << *body << ")";
+    }
+
+    virtual void sem() override
+    {
+        cond->sem();
+        body->sem();
     }
 
 private:
@@ -694,8 +934,47 @@ public:
             out << ")";
     }
 
+    virtual void sem() override
+    {
+
+        Type *expectedReturnType = st.getCurrentFunctionReturnType();
+        if (!expectedReturnType)
+        {
+            yyerror("Return statement not within any function scope.");
+            return;
+        }
+
+        if (expr)
+        {
+            expr->sem();
+
+            if (expr->getType()->getType() != expectedReturnType->getType())
+            {
+                yyerror("Return type does not match the function's return type.");
+            }
+        }
+        else
+        {
+            if (expectedReturnType->getType() != TypeEnum::VOID)
+            {
+                yyerror("Missing return value in function expected to return a non-void type.");
+                return;
+            }
+        }
+    }
+
 private:
     Expr *expr;
+};
+
+class Empty : public Stmt
+{
+public:
+    virtual void printOn(std::ostream &out) const override
+    {
+        out << "Empty()";
+    }
+    virtual void sem() override {}
 };
 
 #endif

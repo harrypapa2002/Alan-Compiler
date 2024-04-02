@@ -86,15 +86,17 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 10 "parser.y"
+#line 18 "parser.y"
 {
     ExprList *exprlist;
+    StmtList *stmtlist;
     LocalDefList *localdefs;
     FparList *fparlist;
     Type *type;
+    Empty *empty;
     int num;
     std::string *str;
-    char chr;
+    unsigned char chr;
     char op;
     compare comp;
     std::string *var;
@@ -104,12 +106,13 @@ typedef union YYSTYPE
     LocalDef *localdef;
     Fpar *fpardef;
     Stmt *stmt;
-    //StmtList *stmtlist;
     Expr *expr;
     Cond *cond;
+    Lval *lvalue;
+    FuncCall *fun;
 }
 /* Line 1529 of yacc.c.  */
-#line 113 "parser.hpp"
+#line 116 "parser.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

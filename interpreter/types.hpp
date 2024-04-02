@@ -1,6 +1,5 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
-#include "ast.hpp"
 #include "lexer.hpp"
 
 #define INT_SIZE 4
@@ -15,7 +14,8 @@ enum class TypeEnum
     REFERENCE
 };
 
-class Type : public AST
+
+class Type 
 {
 public:
     virtual ~Type() {};
@@ -31,6 +31,13 @@ public:
 protected:
     TypeEnum type;
 };
+
+inline std::ostream &operator<<(std::ostream &out, const Type &type)
+{
+    type.printOn(out);
+    return out;
+}
+
 
 class VoidType : public Type
 {
@@ -69,7 +76,7 @@ public:
 class ArrayType : public Type
 {
 public:
-    ArrayType(Type *baseType, int size) : baseType(baseType), size(size)
+    ArrayType(Type *baseType, int size = -1 ) : baseType(baseType), size(size)
     {
         if (baseType->getType() == TypeEnum::VOID)
             yyerror("Array cannot have void type");
@@ -112,6 +119,11 @@ public:
 private:
     Type *baseType;
 };
+
+
+inline bool equalTypes(TypeEnum t1, TypeEnum t2) {
+    return t1 == t2;
+}
 
 
 #endif // TYPES_HPP

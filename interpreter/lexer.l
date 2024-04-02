@@ -6,6 +6,7 @@
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include <string>
 int lineno = 1;
 int is_balanced = 0;
 
@@ -45,7 +46,7 @@ ESC [ntr0\'\"\\]
  /* Constants. Names. Chars. Strings. */
 {D}+ { yylval.num = atoi(yytext); return T_const; }
 {L}({L}|{D}|_)* { yylval.var = new std::string(yytext); return T_id; }
-\'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { yylval.str = new std::string(yytext); return T_char; }
+\'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { yylval.chr = fixChar(yytext+1); return T_char; }
 \"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { yylval.str = new std::string(yytext); return T_string; }
 
  /* WhiteSpace */
@@ -75,3 +76,38 @@ void yyerror(const char *msg) {
     fprintf(stderr, "Error, lexeme %s, line %d: %s\n", yytext, lineno, msg);
     exit(1);
 }
+
+int findChar(char c){
+    if(c >= '0' && c <= '9') return c - '0';
+    else if(c >= 'a' && c <= 'f') return c - 'a' + 10;
+    else if(c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+}
+
+unsigned char fixHex(char *s){
+    return findChar(s[0]) * 16 + findChar(s[1]);
+}
+unsigned char fixChar(char *s){
+    if(s[0] != '\\') return s[0];
+
+    else if (s[1] == 'x'){
+        return fixHex(s+2);
+    }
+
+    else {
+        switch(s[1]){
+            case 'n': return '\n';
+            case 't': return '\t';
+            case 'r': return '\r';
+            case '0': return '\0';
+            case '\'': return '\'';
+            case '\"': return '\"';
+            case '\\': return '\\';
+            default: return s[1];
+        }
+
+    }
+}
+
+
+
