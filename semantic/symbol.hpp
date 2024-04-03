@@ -157,57 +157,49 @@ public:
     SymbolTable()
     {
         enterScope();
-        FunctionSymbol *writeInteger = new FunctionSymbol(std::string("writeInteger"), typeVoid);
-        writeInteger->addParameter(ParameterSymbol(std::string("n"), typeInteger, ParameterType::VALUE));
-        addSymbol(std::string("writeInteger"), writeInteger);
-        FunctionSymbol *writeByte = new FunctionSymbol(std::string(std::string("writeByte")), typeVoid);
-        writeByte->addParameter(ParameterSymbol(std::string("b"), typeByte, ParameterType::VALUE));
-        addSymbol(std::string("writeByte"), writeByte);
-        FunctionSymbol *writeChar = new FunctionSymbol(std::string("writeChar"), typeVoid);
-        writeChar->addParameter(ParameterSymbol(std::string("b"), typeByte, ParameterType::VALUE));
-        addSymbol(std::string("writeChar"), writeChar);
-        FunctionSymbol *writeString = new FunctionSymbol(std::string("writeString"), typeVoid);
-        writeString->addParameter(ParameterSymbol(std::string("s"), new ArrayType(typeByte), ParameterType::REFERENCE));
-        addSymbol(std::string("writeString"), writeString);
-        FunctionSymbol *readInteger = new FunctionSymbol(std::string("readInteger"), typeInteger);
-        addSymbol(std::string("readInteger"), readInteger);
-        FunctionSymbol *readByte = new FunctionSymbol(std::string("readByte"), typeByte);
-        addSymbol(std::string("readByte"), readByte);
-        FunctionSymbol *readChar = new FunctionSymbol(std::string("readChar"), typeByte);
-        addSymbol(std::string("readChar"), readChar);
-        FunctionSymbol *readString = new FunctionSymbol(std::string("readString"), typeVoid);
-        readString->addParameter(ParameterSymbol(std::string("n"), typeInteger, ParameterType::VALUE));
-        readString->addParameter(ParameterSymbol(std::string("s"), new ArrayType(typeByte), ParameterType::REFERENCE));
-        addSymbol(std::string("readString"), readString);
-        /*
-        extend (b : byte) : int {}
-        shrink (i : int) : byte {}
-        strlen (s : reference byte []) : int {}
-        strcmp (s1 : reference byte [], s2 : reference byte []) : int {}
-        strcpy (trg : reference byte [], src : reference byte []) : proc {}
-        strcat (trg : reference byte [], src : reference byte []) : proc {}
-        */
-        FunctionSymbol *extend = new FunctionSymbol(std::string("extend"), typeInteger);
-        extend->addParameter(ParameterSymbol(std::string("b"), typeByte, ParameterType::VALUE));
-        addSymbol(std::string("extend"), extend);
-        FunctionSymbol *shrink = new FunctionSymbol(std::string("shrink"), typeByte);
-        shrink->addParameter(ParameterSymbol(std::string("i"), typeInteger, ParameterType::VALUE));
-        addSymbol(std::string("shrink"), shrink);
-        FunctionSymbol *strlen = new FunctionSymbol(std::string("strlen"), typeInteger);
-        strlen->addParameter(ParameterSymbol(std::string("s"), new ArrayType(typeByte), ParameterType::REFERENCE));
-        addSymbol(std::string("strlen"), strlen);
-        FunctionSymbol *strcmp = new FunctionSymbol(std::string("strcmp"), typeInteger);
-        strcmp->addParameter(ParameterSymbol(std::string("s1"), new ArrayType(typeByte), ParameterType::REFERENCE));
-        strcmp->addParameter(ParameterSymbol(std::string("s2"), new ArrayType(typeByte), ParameterType::REFERENCE));
-        addSymbol(std::string("strcmp"), strcmp);
-        FunctionSymbol *strcpy = new FunctionSymbol(std::string("strcpy"), typeVoid);
-        strcpy->addParameter(ParameterSymbol(std::string("trg"), new ArrayType(typeByte), ParameterType::REFERENCE));
-        strcpy->addParameter(ParameterSymbol(std::string("src"), new ArrayType(typeByte), ParameterType::REFERENCE));
-        addSymbol(std::string("strcpy"), strcpy);
-        FunctionSymbol *strcat = new FunctionSymbol(std::string("strcat"), typeVoid);
-        strcat->addParameter(ParameterSymbol(std::string("trg"), new ArrayType(typeByte), ParameterType::REFERENCE));
-        strcat->addParameter(ParameterSymbol(std::string("src"), new ArrayType(typeByte), ParameterType::REFERENCE));
-        addSymbol(std::string("strcat"), strcat);
+        FunctionSymbol *writeInteger = new FunctionSymbol("writeInteger", typeVoid);
+        writeInteger->addParameter(ParameterSymbol("n", typeInteger, ParameterType::VALUE));
+        addSymbol("writeInteger", writeInteger);
+        FunctionSymbol *writeByte = new FunctionSymbol("writeByte", typeVoid);
+        writeByte->addParameter(ParameterSymbol("b", typeByte, ParameterType::VALUE));
+        addSymbol("writeByte", writeByte);
+        FunctionSymbol *writeChar = new FunctionSymbol("writeChar", typeVoid);
+        writeChar->addParameter(ParameterSymbol("b", typeByte, ParameterType::VALUE));
+        addSymbol("writeChar", writeChar);
+        FunctionSymbol *writeString = new FunctionSymbol("writeString", typeVoid);
+        writeString->addParameter(ParameterSymbol("s", new ArrayType(typeByte), ParameterType::REFERENCE));
+        addSymbol("writeString", writeString);
+        FunctionSymbol *readInteger = new FunctionSymbol("readInteger", typeInteger);
+        addSymbol("readInteger", readInteger);
+        FunctionSymbol *readByte = new FunctionSymbol("readByte", typeByte);
+        addSymbol("readByte", readByte);
+        FunctionSymbol *readChar = new FunctionSymbol("readChar", typeByte);
+        addSymbol("readChar", readChar);
+        FunctionSymbol *readString = new FunctionSymbol("readString", typeVoid);
+        readString->addParameter(ParameterSymbol("n", typeInteger, ParameterType::VALUE));
+        readString->addParameter(ParameterSymbol("s", new ArrayType(typeByte), ParameterType::REFERENCE));
+        addSymbol("readString", readString);
+        FunctionSymbol *extend = new FunctionSymbol("extend", typeInteger);
+        extend->addParameter(ParameterSymbol("b", typeByte, ParameterType::VALUE));
+        addSymbol("extend", extend);
+        FunctionSymbol *shrink = new FunctionSymbol("shrink", typeByte);
+        shrink->addParameter(ParameterSymbol("i", typeInteger, ParameterType::VALUE));
+        addSymbol("shrink", shrink);
+        FunctionSymbol *strlen = new FunctionSymbol("strlen", typeInteger);
+        strlen->addParameter(ParameterSymbol("s", new ArrayType(typeByte), ParameterType::REFERENCE));
+        addSymbol("strlen", strlen);
+        FunctionSymbol *strcmp = new FunctionSymbol("strcmp", typeInteger);
+        strcmp->addParameter(ParameterSymbol("s1", new ArrayType(typeByte), ParameterType::REFERENCE));
+        strcmp->addParameter(ParameterSymbol("s2", new ArrayType(typeByte), ParameterType::REFERENCE));
+        addSymbol("strcmp", strcmp);
+        FunctionSymbol *strcpy = new FunctionSymbol("strcpy", typeVoid);
+        strcpy->addParameter(ParameterSymbol("trg", new ArrayType(typeByte), ParameterType::REFERENCE));
+        strcpy->addParameter(ParameterSymbol("src", new ArrayType(typeByte), ParameterType::REFERENCE));
+        addSymbol("strcpy", strcpy);
+        FunctionSymbol *strcat = new FunctionSymbol("strcat", typeVoid);
+        strcat->addParameter(ParameterSymbol("trg", new ArrayType(typeByte), ParameterType::REFERENCE));
+        strcat->addParameter(ParameterSymbol("src", new ArrayType(typeByte), ParameterType::REFERENCE));
+        addSymbol("strcat", strcat);
     }
 
     ~SymbolTable()
