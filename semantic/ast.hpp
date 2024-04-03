@@ -118,6 +118,11 @@ public:
     virtual ~Stmt() {}
     virtual void printOn(std::ostream &out) const override = 0;
     virtual void sem() override = 0;
+    void setExternal(bool e) { external = e; }
+    bool isReturnStatement() const { return isReturn; }
+protected:
+    bool external;
+    bool isReturn;
 };
 
 
@@ -159,8 +164,11 @@ public:
         for (auto it = stmts.rbegin(); it != stmts.rend(); ++it)
         {
             auto stmt = *it; // dereference the reverse iterator to get the element
+            stmt->setExternal(external);
             stmt->sem();
+            if(stmt->isReturnStatement()) st.setReturnStatementFound();
         }
+        isReturn = false;
     }
 
 private:
@@ -356,6 +364,7 @@ public:
 
         if (stmts)
         {
+            stmts->setExternal(true);
             stmts->sem();
         }
 
@@ -810,7 +819,7 @@ public:
         {
             yyerror("Type mismatch");
         }
-
+        isReturn = false;
         
     }
 
@@ -926,15 +935,20 @@ public:
     virtual void sem() override
     {
         cond->sem();
+        thenStmt->setExternal(elseStmt && external);
         thenStmt->sem();
-        if (elseStmt)
+        if (elseStmt) {
+            elseStmt->setExternal(external);
             elseStmt->sem();
+            if(thenStmt->isReturnStatement() && elseStmt->isReturnStatement()) st.setReturnStatementFound();
+        }
     }
 
 private:
     Cond *cond;
     Stmt *thenStmt;
     Stmt *elseStmt;
+    int Returns;
 };
 
 class While : public Stmt // checked
@@ -954,6 +968,7 @@ public:
     virtual void sem() override
     {
         cond->sem();
+        body->setExternal(false);
         body->sem();
     }
 
@@ -1003,8 +1018,8 @@ public:
                 return;
             }
         }
-
-        st.setReturnStatementFound();
+        if (external)
+            isReturn = true;
 
 
     }
