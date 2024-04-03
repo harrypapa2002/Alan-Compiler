@@ -12,6 +12,9 @@ extern Type *typeInteger;
 extern Type *typeByte;
 extern Type *typeVoid;
 
+
+
+
 inline std::ostream &operator<<(std::ostream &out, compare c)
 {
     switch (c)
@@ -620,8 +623,11 @@ class CharConst : public Expr // checked
 public:
     CharConst(unsigned char c) : val(c) {}
     virtual void printOn(std::ostream &out) const override
-    {
-        out << "CharConst(" << val << ")";
+    {   
+        out << "CharConst(";
+        if (val <= 255 && val >= 0) out << std::hex  << (int)val;
+        else out << val;
+        out << ")";
     }
     virtual void sem() override
     {
@@ -825,6 +831,7 @@ public:
         Symbol *entry = st.findSymbol(*name);
         if (!entry)
         {
+
             yyerror("Function not declared");
         }
         SymbolType symbolType = entry->getSymbolType();

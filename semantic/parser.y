@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include "lexer.hpp"
 #include "ast.hpp"
-#include "symbol.hpp"
 #include "types.hpp"
+#include "symbol.hpp"
 
-Type* typeInteger = new IntType();
-Type* typeByte = new ByteType();
-Type* typeVoid = new VoidType();
+Type *typeInteger = new IntType();
+Type *typeByte = new ByteType();
+Type *typeVoid = new VoidType();
 
 SymbolTable st;
 
@@ -88,9 +88,8 @@ SymbolTable st;
 
 program :
     funcdef {   
-            /*std::cout << "AST: " << *$1 << std::endl;*/
             $1->sem();
-
+            std::cout << "AST: " << *$1 << std::endl;
         } 
                 
          

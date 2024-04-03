@@ -1,6 +1,6 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
-#include "lexer.hpp"
+//#include "lexer.hpp"
 
 #define INT_SIZE 4
 #define BYTE_SIZE 1
@@ -125,5 +125,8 @@ inline bool equalTypes(TypeEnum t1, TypeEnum t2) {
     return t1 == t2;
 }
 
+extern Type *typeInteger;
+extern Type *typeByte;
+extern Type *typeVoid;
 
 #endif // TYPES_HPP

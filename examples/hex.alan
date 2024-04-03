@@ -1,0 +1,5 @@
+solve () : proc
+h : byte;
+{ -- solve
+    h = '\xff';
+} -- solve
