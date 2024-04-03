@@ -29,7 +29,7 @@ main () : proc
       i : int;
       
    { -- bsort
-      changed = 'y';
+      changed = '\xff';
       while (changed == 'y') {
          changed = 'n';
          i = 0;
@@ -58,6 +58,7 @@ main () : proc
    
    seed : int;
    x    : int [16];
+   y    : byte [10];
    i    : int;
    
 { -- main

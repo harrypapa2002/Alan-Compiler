@@ -11,6 +11,7 @@ gcd():proc
 		{
 			if ((a%i==0) & (b%i==0))
 				return i;
+				;
 			i=i-1;
 		}
 		return 1;

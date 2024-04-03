@@ -89,6 +89,11 @@ public:
         this->type = type;
         this->symbolType = SymbolType::FUNCTION;
         this->returnType = type->getType();
+        if(returnType == TypeEnum::VOID) {
+            needsReturn = false;
+        } else {
+            needsReturn = true;
+        }
     }
 
     const std::vector<ParameterSymbol> &getParameters() const { return parameters; }
@@ -101,11 +106,20 @@ public:
     void setReturnType(TypeEnum returnType) {
         this->returnType = returnType;
     }
+
+    bool getNeedsReturn() const {
+        return needsReturn;
+    }
+
+    void setNeedsReturn(bool needsReturn) {
+        this->needsReturn = needsReturn;
+    }
     
 
 private:
     std::vector<ParameterSymbol> parameters;
     TypeEnum returnType;
+    bool needsReturn;
     
 };
 
@@ -261,6 +275,14 @@ public:
     {
         return scopes.top()->findSymbol(name);
     }
+
+    void setReturnStatementFound() {
+        if (!currentFunctionContext.empty()) {
+            currentFunctionContext.top()->setNeedsReturn(false);
+        }
+    }
+
+
 
 private:
     Symbol *findGlobalSymbol(std::string name)

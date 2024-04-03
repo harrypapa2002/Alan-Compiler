@@ -71,6 +71,9 @@ inline std::ostream &operator<<(std::ostream &out, TypeEnum t)
     case TypeEnum::ARRAY:
         out << "Array";
         break;
+    case TypeEnum::REFERENCE:
+        out << "Reference";
+        break;
     }
     return out;
 }
@@ -356,6 +359,11 @@ public:
             stmts->sem();
         }
 
+        if (funcSymbol->getNeedsReturn())
+        {
+            yyerror(("Non void function' " + *name + "' does not have a return statement").c_str());
+        }
+
         st.exitFunctionScope();
     }
 
@@ -395,7 +403,7 @@ public:
 
         if (isArray)
         {
-            if (size < 0)
+            if (size <= 0)
             {
                 yyerror("Array size must be greater than 0");
             }
@@ -613,6 +621,7 @@ public:
     {
         type = typeInteger;
     }
+    int getValue() const { return val; }
 
 private:
     int val;
@@ -625,7 +634,7 @@ public:
     virtual void printOn(std::ostream &out) const override
     {   
         out << "CharConst(";
-        if (val <= 255 && val >= 0) out << std::hex  << (int)val;
+        if (val <= 255 && val >= 0) out << (int)val;
         else out << val;
         out << ")";
     }
@@ -801,6 +810,8 @@ public:
         {
             yyerror("Type mismatch");
         }
+
+        
     }
 
 private:
@@ -855,6 +866,14 @@ public:
                 if (exprs->getExprs()[i]->getTypeEnum() != params[i].getType()->getType())
                 {
                     yyerror("Type mismatch");
+                }
+                if(exprs->getExprs()[i]->getTypeEnum() == TypeEnum::ARRAY)
+                {
+                   
+                   if(params[i].getType()->getBaseType()->getType() != exprs->getExprs()[i]->getType()->getBaseType()->getType())
+                   {
+                       yyerror("Array type mismatch");
+                   }
                 }
             }
         }
@@ -984,6 +1003,10 @@ public:
                 return;
             }
         }
+
+        st.setReturnStatementFound();
+
+
     }
 
 private:

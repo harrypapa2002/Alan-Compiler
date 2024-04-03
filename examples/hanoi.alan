@@ -11,6 +11,8 @@ solve () : proc
             --writeString(target);
             --writeString(".\n");
         }
+        i : int;
+        t: byte;
 
     { -- hanoi
         if (rings >= 1) {
@@ -21,6 +23,7 @@ solve () : proc
     } -- hanoi
 
     NumberOfRings : int;
+    i : int;
 
 { -- solve
     --writeString("Rings: ");
