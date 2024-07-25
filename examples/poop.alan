@@ -2,7 +2,7 @@ solve () : proc
 foo () : int 
 {
     if(true) return 69;
-    return 3;
+    else { while(true) {} return 3; }
 }
 { -- solve
 

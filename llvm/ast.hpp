@@ -7,6 +7,16 @@
 #include "lexer.hpp"
 #include "types.hpp"
 #include "symbol.hpp"
+#include <llvm/Pass.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Value.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/Transforms/InstCombine/InstCombine.h>
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/Transforms/Scalar/GVN.h>
+#include <llvm/Transforms/Utils.h>
+
 
 extern Type *typeInteger;
 extern Type *typeByte;
@@ -84,8 +94,111 @@ public:
     virtual ~AST() {}
     virtual void printOn(std::ostream &out) const = 0;
     virtual void sem() {}
+    virtual llvm::Value* igen() const { return nullptr; }
+
+    void llvm_igen(bool optimize=true) {
+    // Initialize
+        TheModule = std::make_unique<llvm::Module>("alan program", TheContext);
+        TheFPM = std::make_unique<llvm::legacy::FunctionPassManager>(TheModule.get());
+        if (optimize) {
+          TheFPM->add(llvm::createPromoteMemoryToRegisterPass());
+          TheFPM->add(llvm::createInstructionCombiningPass());
+          TheFPM->add(llvm::createReassociatePass());
+          TheFPM->add(llvm::createGVNPass());
+          TheFPM->add(llvm::createCFGSimplificationPass());
+        }
+        TheFPM->doInitialization();
+
+        // Initialize types
+        i8  = llvm::IntegerType::get(TheContext, 8);
+        i32 = llvm::IntegerType::get(TheContext, 32);
+        i64 = llvm::IntegerType::get(TheContext, 64);
+
+        vars_type = llvm::ArrayType::get(i32, 26);
+        nl_type = llvm::ArrayType::get(i8, 2);
+
+        // Initialize global variables
+        TheVars = new llvm::GlobalVariable(
+          *TheModule, vars_type, false, llvm::GlobalValue::PrivateLinkage,
+          llvm::ConstantAggregateZero::get(vars_type), "vars");
+        TheVars->setAlignment(llvm::MaybeAlign(16));
+        TheNL = new llvm::GlobalVariable(
+          *TheModule, nl_type, true, llvm::GlobalValue::PrivateLinkage,
+          llvm::ConstantArray::get(nl_type, {c8('\n'), c8('\0')}), "nl");
+        TheNL->setAlignment(llvm::MaybeAlign(1));
+
+        // Initialize library functions
+        llvm::FunctionType *writeInteger_type =
+          llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext), {i64}, false);
+        TheWriteInteger =
+          llvm::Function::Create(writeInteger_type, llvm::Function::ExternalLinkage,
+                           "writeInteger", TheModule.get());
+        llvm::FunctionType *writeString_type =
+          llvm::FunctionType::get(llvm::Type::getVoidTy(TheContext),
+                            {llvm::PointerType::get(i8, 0)}, false);
+        TheWriteString =
+          llvm::Function::Create(writeString_type, llvm::Function::ExternalLinkage,
+                           "writeString", TheModule.get());
+
+        // Define and start the main function.
+        llvm::FunctionType *main_type = llvm::FunctionType::get(i32, {}, false);
+        llvm::Function *main =
+          llvm::Function::Create(main_type, llvm::Function::ExternalLinkage,
+                           "main", TheModule.get());
+        llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
+        Builder.SetInsertPoint(BB);
+
+        // Emit the program code
+        igen();
+
+        Builder.CreateRet(c32(0));
+
+        // Verify the IR.
+        bool bad = llvm::verifyModule(*TheModule, &llvm::errs());
+        if (bad) {
+          std::cerr << "The IR is bad!" << std::endl;
+          TheModule->print(llvm::errs(), nullptr);
+          std::exit(1);
+        }
+
+        // Optimize!
+        TheFPM->run(*main);
+
+        // Print out the IR.
+        TheModule->print(llvm::outs(), nullptr);
+    }
 
 protected:
+    static llvm::LLVMContext TheContext;
+    static llvm::IRBuilder<> Builder;
+    static std::unique_ptr<llvm::Module> TheModule;
+    static std::unique_ptr<llvm::legacy::FunctionPassManager> TheFPM;
+
+    static llvm::GlobalVariable *TheVars;
+    static llvm::GlobalVariable *TheNL;
+    static llvm::Function *TheWriteInteger;
+    static llvm::Function *TheWriteString;
+
+    static llvm::Type *i8;
+    static llvm::Type *i32;
+    static llvm::Type *i64;
+    static llvm::ArrayType *vars_type;
+    static llvm::ArrayType *nl_type;
+
+    static llvm::ConstantInt* c8(char c) {
+      return llvm::ConstantInt::get(TheContext, llvm::APInt(8, c, true));
+    }
+    static llvm::ConstantInt* c32(int n) {
+      return llvm::ConstantInt::get(TheContext, llvm::APInt(32, n, true));
+    }
+    static llvm::ConstantArray* ca8(std::string s) {
+        std::vector<llvm::Constant*> chars;
+        for (char c : s) {
+            chars.push_back(c8(c));
+        }
+        chars.push_back(c8('\0'));
+        return llvm::dyn_cast<llvm::ConstantArray>(llvm::ConstantArray::get(llvm::ArrayType::get(i8, s.size() + 1), chars));
+    }
     Type *type;
 };
 
@@ -107,7 +220,6 @@ public:
     Type *getType() const { return type; }
 
     TypeEnum getTypeEnum() const { return type->getType(); }
-
 protected:
     Type *type;
 };
@@ -170,7 +282,14 @@ public:
         }
         isReturn = false;
     }
-
+    llvm::Value* igen() const override {
+        for (auto it = stmts.rbegin(); it != stmts.rend(); ++it)
+        {
+            auto stmt = *it; // dereference the reverse iterator to get the element
+            stmt->igen();
+        }
+        return nullptr;
+    }
 private:
     std::vector<Stmt *> stmts;
 };
@@ -224,7 +343,14 @@ public:
             def->sem();
         }
     }
-
+    llvm::Value* igen() const override {
+        for (auto it = defs.rbegin(); it != defs.rend(); ++it)
+        {
+            auto def = *it; // dereference the reverse iterator to get the element
+            def->igen();
+        }
+        return nullptr;
+    }
 private:
     std::vector<LocalDef *> defs;
 };
@@ -376,6 +502,7 @@ public:
         st.exitFunctionScope();
     }
 
+     
 private:
     std::string *name;
     FparList *fpar;
@@ -423,6 +550,9 @@ public:
         st.addSymbol(*name, new VariableSymbol(*name, type));
     }
 
+    llvm::Value *igen() const override {
+        
+    }
 private:
     std::string *name;
     Type *type;
@@ -469,7 +599,14 @@ public:
             expr->sem();
         }
     }
-
+    llvm::Value* igen() const override {
+        for (auto it = exprs.rbegin(); it != exprs.rend(); ++it)
+        {
+            auto expr = *it; // dereference the reverse iterator to get the element
+            expr->igen();
+        }
+        return nullptr;
+    }
     const std::vector<Expr *> &getExprs() const { return exprs; }
 
 private:
@@ -499,7 +636,18 @@ public:
             yyerror("Unary operator can only be applied to integers");
         type = typeInteger;
     }
-
+    llvm::Value* igen() const override {
+        llvm::Value* e = expr->igen();
+        switch (op)
+        {
+        case '-':
+            return Builder.CreateNeg(e, "negtmp");
+        case '+':
+            return e;
+        default:
+            return nullptr;
+        }
+    }
 private:
     char op;
     Expr *expr;
@@ -535,7 +683,25 @@ public:
 
         type = left->getType();
     }
-
+    llvm::Value* igen() const override {
+        llvm::Value* l = left->igen();
+        llvm::Value* r = right->igen();
+        switch (op)
+        {
+        case '+':
+            return Builder.CreateAdd(l, r, "addtmp");
+        case '-':
+            return Builder.CreateSub(l, r, "subtmp");
+        case '*':
+            return Builder.CreateMul(l, r, "multmp");
+        case '/':
+            return Builder.CreateSDiv(l, r, "divtmp");
+        case '%':
+            return Builder.CreateSRem(l, r, "modtmp");
+        default:
+            return nullptr;
+        }
+    }
 private:
     char op;
     Expr *left;
@@ -567,7 +733,27 @@ public:
         if (t != TypeEnum::INT && t != TypeEnum::BYTE)
             yyerror("Comparison operator can only be applied to integers or bytes");
     }
-
+    llvm::Value* igen() const override {
+        llvm::Value* l = left->igen();
+        llvm::Value* r = right->igen();
+        switch (op)
+        {
+        case lt:
+            return Builder.CreateICmpSLT(l, r, "lttmp");
+        case gt:
+            return Builder.CreateICmpSGT(l, r, "gttmp");
+        case lte:
+            return Builder.CreateICmpSLE(l, r, "ltetmp");
+        case gte:
+            return Builder.CreateICmpSGE(l, r, "gtetmp");
+        case eq:
+            return Builder.CreateICmpEQ(l, r, "eqtmp");
+        case neq:
+            return Builder.CreateICmpNE(l, r, "neqtmp");
+        default:
+            return nullptr;
+        }
+    }
 private:
     compare op;
     Expr *left;
@@ -592,7 +778,19 @@ public:
         left->sem();
         right->sem();
     }
-
+    llvm::Value* igen() const override {
+        llvm::Value* l = left->igen();
+        llvm::Value* r = right->igen();
+        switch (op)
+        {
+        case '&':
+            return Builder.CreateAnd(l, r, "andtmp");
+        case '|':
+            return Builder.CreateOr(l, r, "ortmp");
+        default:
+            return nullptr;
+        }
+    }
 private:
     char op;
     Cond *left;
@@ -612,7 +810,16 @@ public:
     {
         cond->sem();
     }
-
+    llvm::Value* igen() const override {
+        llvm::Value* c = cond->igen();
+        switch (op)
+        {
+        case '!':
+            return Builder.CreateNot(c, "nottmp");
+        default:
+            return nullptr;
+        }
+    }
 private:
     char op;
     Cond *cond;
@@ -629,6 +836,9 @@ public:
     virtual void sem() override
     {
         type = typeInteger;
+    }
+    llvm::Value* igen() const override {
+        return c32(val);
     }
     int getValue() const { return val; }
 
@@ -651,7 +861,9 @@ public:
     {
         type = typeByte;
     }
-
+    llvm::Value* igen() const override {
+        return c8(val);
+    }
 private:
     unsigned char val;
 };
@@ -688,6 +900,10 @@ public:
     {
         type = new ArrayType(typeByte, name->size() + 1);
     }
+    llvm::Value* igen() const override {
+        return ca8(*name);
+    }    
+
 };
 
 class BoolConst : public Cond // checked
@@ -701,7 +917,9 @@ public:
     virtual void sem() override
     {
     }
-
+    llvm::Value* igen() const override {
+        return c32(val);
+    }
 private:
     bool val;
 };
@@ -735,7 +953,10 @@ public:
 
         type = entry->getType();
     }
-
+    llvm::Value* igen() const override {
+        llvm::Value *v = st.findSymbol(*name)->getValue();
+        return Builder.CreateLoad(v, *name);
+    }
 private:
     SymbolType symbolType;
 };
@@ -781,7 +1002,12 @@ public:
 
         type = t->getBaseType();
     }
-
+    llvm::Value* igen() const override {
+        llvm::Value *v = ...;
+        llvm::Value *i = indexExpr->igen();
+        llvm::Value *l = Builder.CreateGEP(v, i, "arrayidx");
+        return Builder.CreateLoad(l, "arraytmp");
+    }
 private:
     Expr *indexExpr;
 };
@@ -822,7 +1048,11 @@ public:
         isReturn = false;
         
     }
-
+    llvm::Value* igen() const override {
+        llvm::Value *r = rexpr->igen();
+        llvm::Value *l = ...;
+        return Builder.CreateStore(r, l);
+    }
 private:
     Lval *lexpr;
     Expr *rexpr;
@@ -888,7 +1118,19 @@ public:
         }
         type = func->getType();
     }
-
+    llvm::Value* igen() const override {
+        llvm::Function *calleeF = TheModule->getFunction(*name);
+        if (!calleeF) {
+            yyerror("Unknown function referenced");
+        }
+        std::vector<llvm::Value*> args;
+        if (exprs) {
+            for (auto expr : exprs->getExprs()) {
+                args.push_back(expr->igen());
+            }
+        }
+        return Builder.CreateCall(calleeF, args, "calltmp");
+    }
 private:
     std::string *name;
     ExprList *exprs;
@@ -908,7 +1150,19 @@ public:
     {
         funcCall->sem();
     }
-
+    llvm::Value* igen() const override {
+        llvm::Function *calleeF = TheModule->getFunction(*funcCall->name);
+        if (!calleeF) {
+            yyerror("Unknown function referenced");
+        }
+        std::vector<llvm::Value*> args;
+        if (funcCall->exprs) {
+            for (auto expr : funcCall->exprs->getExprs()) {
+                args.push_back(expr->igen());
+            }
+        }
+        return Builder.CreateCall(calleeF, args, "calltmp");
+    }
 private:
     FuncCall *funcCall;
 };
@@ -943,7 +1197,25 @@ public:
             if(thenStmt->isReturnStatement() && elseStmt->isReturnStatement()) st.setReturnStatementFound();
         }
     }
-
+    llvm::Value* igen() const override {
+        llvm::Value *v = cond->igen();
+        llvm::Value *cond = Builder.CreateICmpNE(v, c32(0), "if_cond");
+        llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+        llvm::BasicBlock *ThenBB = llvm::BasicBlock::Create(TheContext, "then", TheFunction);
+        llvm::BasicBlock *ElseBB = llvm::BasicBlock::Create(TheContext, "else");
+        llvm::BasicBlock *AfterBB = llvm::BasicBlock::Create(TheContext, "endif");
+        Builder.CreateCondBr(v, ThenBB, ElseBB);
+        Builder.SetInsertPoint(ThenBB);
+        thenStmt->igen();
+        Builder.CreateBr(AfterBB);
+        Builder.SetInsertPoint(ElseBB);
+        if (elseStmt)
+            elseStmt->igen();
+        Builder.CreateBr(AfterBB);
+        ElseBB = Builder.GetInsertBlock();
+        Builder.SetInsertPoint(AfterBB);
+        return nullptr;
+    }
 private:
     Cond *cond;
     Stmt *thenStmt;
@@ -970,7 +1242,22 @@ public:
         body->setExternal(false);
         body->sem();
     }
-
+    llvm::Value* igen() const override {
+        llvm::Function *TheFunction = Builder.GetInsertBlock()->getParent();
+        llvm::BasicBlock *CondBB = llvm::BasicBlock::Create(TheContext, "cond", TheFunction);
+        llvm::BasicBlock *LoopBB = llvm::BasicBlock::Create(TheContext, "loop");
+        llvm::BasicBlock *AfterBB = llvm::BasicBlock::Create(TheContext, "endwhile");
+        Builder.CreateBr(CondBB);
+        Builder.SetInsertPoint(CondBB);
+        llvm::Value *v = cond->igen();
+        llvm::Value *cond = Builder.CreateICmpNE(v, c32(0), "while_cond");
+        Builder.CreateCondBr(v, LoopBB, AfterBB);
+        Builder.SetInsertPoint(LoopBB);
+        body->igen();
+        Builder.CreateBr(CondBB);
+        Builder.SetInsertPoint(AfterBB);
+        return nullptr;
+    }
 private:
     Cond *cond;
     Stmt *body;
@@ -1023,6 +1310,15 @@ public:
 
     }
 
+    llvm::Value* igen() const override {
+        llvm::Value *r;
+        if (expr) {
+            llvm::Value *e = expr->igen();
+            r = Builder.CreateRet(e);
+        } else r = Builder.CreateRetVoid();
+        Builder.SetInsertPoint(llvm::BasicBlock::Create(TheContext, "after_ret", Builder.GetInsertBlock()->getParent()));
+        return r;
+    }
 private:
     Expr *expr;
 };
