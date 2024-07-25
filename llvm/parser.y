@@ -89,7 +89,7 @@ SymbolTable st;
 program :
     funcdef {   
             $1->llvm_igen();
-            std::cout << "AST: " << *$1 << std::endl;
+            //std::cout << "AST: " << *$1 << std::endl;
         } 
                 
          

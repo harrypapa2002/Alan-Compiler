@@ -27,7 +27,6 @@ public:
     virtual void printOn(std::ostream &out) const = 0;
 
     TypeEnum getType() const { return type; }
-
 protected:
     TypeEnum type;
 };
@@ -61,6 +60,7 @@ public:
     int getSize() const override { return INT_SIZE; }
 
     void printOn(std::ostream &out) const override { out << "int"; }
+
 };
 
 class ByteType : public Type

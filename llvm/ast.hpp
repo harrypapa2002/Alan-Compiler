@@ -114,14 +114,9 @@ public:
         i32 = llvm::IntegerType::get(TheContext, 32);
         i64 = llvm::IntegerType::get(TheContext, 64);
 
-        vars_type = llvm::ArrayType::get(i32, 26);
         nl_type = llvm::ArrayType::get(i8, 2);
 
         // Initialize global variables
-        TheVars = new llvm::GlobalVariable(
-          *TheModule, vars_type, false, llvm::GlobalValue::PrivateLinkage,
-          llvm::ConstantAggregateZero::get(vars_type), "vars");
-        TheVars->setAlignment(llvm::MaybeAlign(16));
         TheNL = new llvm::GlobalVariable(
           *TheModule, nl_type, true, llvm::GlobalValue::PrivateLinkage,
           llvm::ConstantArray::get(nl_type, {c8('\n'), c8('\0')}), "nl");
@@ -139,7 +134,6 @@ public:
         TheWriteString =
           llvm::Function::Create(writeString_type, llvm::Function::ExternalLinkage,
                            "writeString", TheModule.get());
-
         // Define and start the main function.
         llvm::FunctionType *main_type = llvm::FunctionType::get(i32, {}, false);
         llvm::Function *main =
@@ -174,7 +168,6 @@ protected:
     static std::unique_ptr<llvm::Module> TheModule;
     static std::unique_ptr<llvm::legacy::FunctionPassManager> TheFPM;
 
-    static llvm::GlobalVariable *TheVars;
     static llvm::GlobalVariable *TheNL;
     static llvm::Function *TheWriteInteger;
     static llvm::Function *TheWriteString;
@@ -198,6 +191,18 @@ protected:
         }
         chars.push_back(c8('\0'));
         return llvm::dyn_cast<llvm::ConstantArray>(llvm::ConstantArray::get(llvm::ArrayType::get(i8, s.size() + 1), chars));
+    }
+    static llvm::Type *getLLVMType(Type *t) {
+        switch (t->getType())
+        {
+        case TypeEnum::INT:
+            return i32;
+        case TypeEnum::BYTE:
+            return i8;
+        case TypeEnum::ARRAY:
+            return llvm::ArrayType::get(getLLVMType(t->getBaseType()), t->getSize());
+        }
+        return nullptr;
     }
     Type *type;
 };
@@ -502,6 +507,37 @@ public:
         st.exitFunctionScope();
     }
 
+    llvm::Value* igen() const override {
+        llvm::FunctionType *FT = llvm::FunctionType::get(getLLVMType(type), false);
+        llvm::Function *F = llvm::Function::Create(FT, llvm::Function::ExternalLinkage, *name, TheModule.get());
+        llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", F);
+        Builder.SetInsertPoint(BB);
+
+        st.enterFunctionScope(funcSymbol);
+
+        if (fpar)
+        {
+            for (auto &param : fpar->getParameters())
+            {
+                llvm::Argument *arg = F->arg_begin();
+                arg->setName(param->getParameterSymbol()->getName());
+                llvm::Value *v = Builder.CreateAlloca(getLLVMType(param->getParameterSymbol()->getType()), nullptr, param->getParameterSymbol()->getName());
+                Builder.CreateStore(arg, v);
+                param->getParameterSymbol()->setValue(v);
+            }
+        }
+
+        if (localDef)
+        {
+            localDef->igen();
+        }
+
+        stmts->igen();
+
+        st.exitFunctionScope();
+
+        return F;
+    }
      
 private:
     std::string *name;
@@ -551,7 +587,11 @@ public:
     }
 
     llvm::Value *igen() const override {
-        
+        llvm::AllocaInst *Alloca;
+        if (isArray) Alloca = Builder.CreateAlloca(getLLVMType(type), c32(size), *name);
+        else Alloca = Builder.CreateAlloca(getLLVMType(type), nullptr, *name);
+        st.addSymbol(*name, new VariableSymbol(*name, type, Alloca));
+        return nullptr;
     }
 private:
     std::string *name;
@@ -954,8 +994,10 @@ public:
         type = entry->getType();
     }
     llvm::Value* igen() const override {
-        llvm::Value *v = st.findSymbol(*name)->getValue();
-        return Builder.CreateLoad(v, *name);
+        Symbol *e = st.findSymbol(*name);
+        llvm::Value *v = e->getValue();
+        llvm::Type *t = getLLVMType(e->getType());
+        return Builder.CreateLoad(t, v, *name);
     }
 private:
     SymbolType symbolType;
@@ -1002,11 +1044,16 @@ public:
 
         type = t->getBaseType();
     }
+
+    Expr *getIndexExpr() const { return indexExpr; }
+
     llvm::Value* igen() const override {
-        llvm::Value *v = ...;
+        Symbol *e = st.findSymbol(*name);
+        llvm::Value *v = e->getValue();
+        llvm::Type *t = getLLVMType(e->getType());
         llvm::Value *i = indexExpr->igen();
-        llvm::Value *l = Builder.CreateGEP(v, i, "arrayidx");
-        return Builder.CreateLoad(l, "arraytmp");
+        llvm::Value *l = Builder.CreateGEP(t, v, std::vector<llvm::Value *>{c32(0), i}, "arrayidx");
+        return Builder.CreateLoad(getLLVMType(e->getType()->getBaseType()), l, "arraytmp");
     }
 private:
     Expr *indexExpr;
@@ -1050,7 +1097,16 @@ public:
     }
     llvm::Value* igen() const override {
         llvm::Value *r = rexpr->igen();
-        llvm::Value *l = ...;
+        if(lexpr->getTypeEnum() == TypeEnum::ARRAY)
+        {
+            Symbol *e = st.findSymbol(lexpr->getName());
+            llvm::Value *v = e->getValue();
+            llvm::Type *t = getLLVMType(e->getType());
+            llvm::Value *i = lexpr->igen();
+            llvm::Value *l = Builder.CreateGEP(t, v, i, "arrayidx");
+            return Builder.CreateStore(r, l);
+        } 
+        llvm::Value *l = st.findSymbol(lexpr->getName())->getValue();
         return Builder.CreateStore(r, l);
     }
 private:
@@ -1151,17 +1207,7 @@ public:
         funcCall->sem();
     }
     llvm::Value* igen() const override {
-        llvm::Function *calleeF = TheModule->getFunction(*funcCall->name);
-        if (!calleeF) {
-            yyerror("Unknown function referenced");
-        }
-        std::vector<llvm::Value*> args;
-        if (funcCall->exprs) {
-            for (auto expr : funcCall->exprs->getExprs()) {
-                args.push_back(expr->igen());
-            }
-        }
-        return Builder.CreateCall(calleeF, args, "calltmp");
+        funcCall->igen();
     }
 private:
     FuncCall *funcCall;

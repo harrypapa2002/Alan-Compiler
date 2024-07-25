@@ -1230,7 +1230,7 @@ yyreduce:
 #line 90 "parser.y"
             {   
             (yyvsp[0].funcdef)->llvm_igen();
-            std::cout << "AST: " << *(yyvsp[0].funcdef) << std::endl;
+            //std::cout << "AST: " << *$1 << std::endl;
         }
 #line 1236 "parser.cpp"
     break;

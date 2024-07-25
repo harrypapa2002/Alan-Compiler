@@ -7,6 +7,7 @@
 #include "ast.hpp"
 #include "types.hpp"
 #include <stack>
+#include <llvm/IR/Value.h>
 
 enum class SymbolType
 {
@@ -35,12 +36,13 @@ public:
     SymbolType getSymbolType() const { return symbolType; }
     Symbol *getNext() const { return next; }
     void setNext(Symbol *nextSymbol) { next = nextSymbol; }
-
+    llvm::Value *getValue() const { return value; }
 protected:
     std::string name;
     Type *type;
     Symbol *next;
     SymbolType symbolType;
+    llvm::Value *value;
 };
 
 
@@ -50,6 +52,12 @@ public:
         this->name = name;
         this->type = type;
         this->symbolType = SymbolType::VARIABLE;
+    }
+    VariableSymbol(std::string name, Type *type, llvm::Value *value) {
+        this->name = name;
+        this->type = type;
+        this->symbolType = SymbolType::VARIABLE;
+        this->value = value;
     }
     
 };
@@ -71,7 +79,7 @@ public:
         out << " " << (parameterType == ParameterType::VALUE ? "value" : "reference");
     }
     ParameterType getParameterType() const { return parameterType; }
-
+    void setValue(llvm::Value *value) { this->value = value; }
 private:
     ParameterType parameterType;
 };
