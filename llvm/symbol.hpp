@@ -310,5 +310,6 @@ private:
 
 
 extern SymbolTable st;
+extern SymbolTable gen;
 
 #endif // SYMBOL_HPP

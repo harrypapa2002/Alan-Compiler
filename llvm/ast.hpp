@@ -513,7 +513,7 @@ public:
         llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", F);
         Builder.SetInsertPoint(BB);
 
-        st.enterFunctionScope(funcSymbol);
+        gen.enterFunctionScope(funcSymbol);
 
         if (fpar)
         {
@@ -534,7 +534,7 @@ public:
 
         stmts->igen();
 
-        st.exitFunctionScope();
+        gen.exitFunctionScope();
 
         return F;
     }
@@ -590,7 +590,7 @@ public:
         llvm::AllocaInst *Alloca;
         if (isArray) Alloca = Builder.CreateAlloca(getLLVMType(type), c32(size), *name);
         else Alloca = Builder.CreateAlloca(getLLVMType(type), nullptr, *name);
-        st.addSymbol(*name, new VariableSymbol(*name, type, Alloca));
+        gen.addSymbol(*name, new VariableSymbol(*name, type, Alloca));
         return nullptr;
     }
 private:
@@ -994,7 +994,7 @@ public:
         type = entry->getType();
     }
     llvm::Value* igen() const override {
-        Symbol *e = st.findSymbol(*name);
+        Symbol *e = gen.findSymbol(*name);
         llvm::Value *v = e->getValue();
         llvm::Type *t = getLLVMType(e->getType());
         return Builder.CreateLoad(t, v, *name);
@@ -1048,7 +1048,7 @@ public:
     Expr *getIndexExpr() const { return indexExpr; }
 
     llvm::Value* igen() const override {
-        Symbol *e = st.findSymbol(*name);
+        Symbol *e = gen.findSymbol(*name);
         llvm::Value *v = e->getValue();
         llvm::Type *t = getLLVMType(e->getType());
         llvm::Value *i = indexExpr->igen();
@@ -1099,7 +1099,7 @@ public:
         llvm::Value *r = rexpr->igen();
         if(lexpr->getTypeEnum() == TypeEnum::ARRAY)
         {
-            Symbol *e = st.findSymbol(lexpr->getName());
+            Symbol *e = gen.findSymbol(lexpr->getName());
             llvm::Value *v = e->getValue();
             llvm::Type *t = getLLVMType(e->getType());
             llvm::Value *i = lexpr->igen();

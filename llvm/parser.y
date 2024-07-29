@@ -11,7 +11,7 @@ Type *typeByte = new ByteType();
 Type *typeVoid = new VoidType();
 
 SymbolTable st;
-
+SymbolTable gen;
 %}
 
 
