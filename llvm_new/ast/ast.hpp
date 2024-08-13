@@ -5,6 +5,16 @@
 #include <vector>
 #include <string>
 #include <llvm/IR/Value.h> 
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Constants.h>
 #include "../lexer/lexer.hpp"
 #include "../symbol/types.hpp"
 #include "../symbol/symbol.hpp"
@@ -23,11 +33,10 @@ public:
     virtual void printOn(std::ostream &out) const = 0;
     virtual void sem() {}
     virtual llvm::Value* igen() const { return nullptr; } 
-    void llvm_igen(bool optimize);
-
+    void llvm_igen(bool optimize = true);
+    static llvm::LLVMContext TheContext;
 protected:
     Type *type;
-    static llvm::LLVMContext TheContext;
     static llvm::IRBuilder<> Builder;
     static std::unique_ptr<llvm::Module> TheModule;
     static std::unique_ptr<llvm::legacy::FunctionPassManager> TheFPM;
@@ -36,10 +45,11 @@ protected:
     static llvm::Type *i8;
     static llvm::Type *i32;
     static GenScope scopes;
-    std::stack<GenBlock*> blockStack;
+    static std::stack<GenBlock*> blockStack;
     static llvm::ConstantInt* c8(char c);
     static llvm::ConstantInt* c32(int n);
     static llvm::ConstantArray* ca8(std::string s);
+    bool isMain;
 
 };
 
@@ -55,9 +65,10 @@ public:
     virtual llvm::Value* igen() const override = 0;
     Type *getType() const;
     TypeEnum getTypeEnum() const;
-
+    std::string getName() const;
 protected:
     Type *type;
+    std::string *name;
 };
 
 // Stmt Class
@@ -128,11 +139,11 @@ public:
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
     ParameterSymbol *getParameterSymbol() const;
-
-private:
+    ParameterType parameterType;
     std::string *name;
     Type *type;
-    ParameterType parameterType;
+private:
+    
     ParameterSymbol *parameterSymbol;
 };
 
@@ -145,7 +156,7 @@ public:
     void append(Fpar *f);
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
-    virtual llvm::Value* igen() const override;
+    //virtual llvm::Value* igen() const override;
     const std::vector<Fpar *> &getParameters() const;
 
 private:
@@ -326,11 +337,8 @@ public:
     virtual ~Lval() {}
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
-    std::string getName() const;
+    //std::string getName() const;
     virtual llvm::Value* igen() const override = 0;
-
-protected:
-    std::string *name;
 };
 
 // StringConst Class
@@ -409,10 +417,9 @@ public:
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
     virtual llvm::Value* igen() const override;
-
-private:
-   std::string *name;
-   ExprList *exprs;
+    std::string *name;
+    ExprList *exprs;
+//private:
 };
 
 // ProcCall Class
@@ -468,6 +475,7 @@ public:
     ~Return();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
+    virtual llvm::Value* igen() const override;
 
 private:
     Expr *expr;

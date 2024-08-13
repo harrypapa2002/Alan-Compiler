@@ -89,7 +89,8 @@ Type *typeVoid = new VoidType();
 program :
     funcdef {   
             $1->sem();
-            std::cout << "AST: " << *$1 << std::endl;
+            $1->llvm_igen();
+            std::cout << *$1 << std::endl;
         } 
                 
          

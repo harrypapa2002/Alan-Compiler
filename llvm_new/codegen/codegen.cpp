@@ -1,9 +1,10 @@
 #include "codegen.hpp"
+#include "../ast/ast.hpp"
 
 // Define LLVM types globally to avoid re-initialization
-llvm::Type* i32 = llvm::Type::getInt32Ty(llvm::getGlobalContext());
-llvm::Type* i8 = llvm::Type::getInt8Ty(llvm::getGlobalContext());
-llvm::Type* proc = llvm::Type::getVoidTy(llvm::getGlobalContext());
+llvm::Type* i32 = llvm::IntegerType::get(AST::TheContext, 32);;
+llvm::Type* i8 =  llvm::IntegerType::get(AST::TheContext, 8);
+llvm::Type* proc =  llvm::Type::getVoidTy(AST::TheContext);
 
 llvm::Type* translateType(Type* type, ParameterType pt) {
     llvm::Type* t;

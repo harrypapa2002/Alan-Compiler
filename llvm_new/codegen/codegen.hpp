@@ -6,9 +6,17 @@
 #include <vector>
 #include <stack>
 #include <stack>
-#include <llvm/IR/Instructions.h>
-#include <llvm/IR/BasicBlock.h>
-#include <llvm/IR/Type.h> 
+#include <llvm/Pass.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/Value.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/Transforms/InstCombine/InstCombine.h>
+#include <llvm/Transforms/Scalar.h>
+#include <llvm/Transforms/Scalar/GVN.h>
+#include <llvm/Transforms/Utils.h>
+
+
 
 #include "../symbol/symbol.hpp"
 #include "../symbol/types.hpp"
@@ -21,6 +29,7 @@ private:
     llvm::Function* func;
     std::vector<llvm::Type*> args;
     std::unordered_map<std::string, llvm::Type*> locals;
+    std::unordered_map<std::string, llvm::Type*> derefs;
     std::unordered_map<std::string, llvm::AllocaInst*> values;
     std::unordered_map<std::string, llvm::AllocaInst*> addresses;
     llvm::BasicBlock* block;

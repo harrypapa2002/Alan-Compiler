@@ -238,6 +238,7 @@ const std::vector<Fpar *> &FparList::getParameters() const
 FuncDef::FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f) : name(n), fpar(f), type(t), localDef(l), stmts(s)
 {
     funcSymbol = nullptr;
+    isMain = false;
 }
 
 FuncDef::~FuncDef()
@@ -430,7 +431,7 @@ void Lval::printOn(std::ostream &out) const
     out << "Lval(" << *name << ")";
 }
 
-std::string Lval::getName() const
+std::string Expr::getName() const
 {
     return *name;
 }
