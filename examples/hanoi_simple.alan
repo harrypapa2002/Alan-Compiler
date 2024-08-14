@@ -1,0 +1,16 @@
+solve () : proc
+
+    hanoi (rings : reference int) : proc
+    { -- hanoi
+        if (rings >= 1) {
+            --hanoi(rings-1);
+        }
+    } -- hanoi
+
+    NumberOfRings : int;
+
+{ -- solve
+    --writeString("Rings: ");
+    NumberOfRings = 42; --readInteger();
+    hanoi(NumberOfRings);
+} -- solve

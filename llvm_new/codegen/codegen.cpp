@@ -63,6 +63,17 @@ llvm::Type* GenBlock::getLocal(std::string name) {
     return locals[name];
 }
 
+// Add dereference for GenBlock
+void GenBlock::addDeref(std::string name, Type* type, ParameterType pt) {
+    derefs[name] = translateType(type, pt);
+}
+
+// Get dereference for GenBlock
+
+llvm::Type* GenBlock::getDeref(std::string name) {
+    return derefs[name];
+}
+
 // Add value for GenBlock
 void GenBlock::addValue(std::string name, llvm::AllocaInst* value) {
     values[name] = value;

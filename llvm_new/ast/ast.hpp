@@ -487,7 +487,7 @@ class Empty : public Stmt
 public:
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override {}
-    virtual llvm::Value* igen() const override {}
+    virtual llvm::Value* igen() const override;
 
 };
 

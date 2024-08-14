@@ -90,7 +90,6 @@ program :
     funcdef {   
             $1->sem();
             $1->llvm_igen();
-            std::cout << *$1 << std::endl;
         } 
                 
          

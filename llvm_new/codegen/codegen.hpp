@@ -48,6 +48,9 @@ public:
     void addLocal(std::string name, Type* type, ParameterType pt);
     llvm::Type* getLocal(std::string name);
 
+    void addDeref(std::string name, Type* type, ParameterType pt);
+    llvm::Type* getDeref(std::string name);
+
     void addValue(std::string name, llvm::AllocaInst* value);
     llvm::AllocaInst* getValue(std::string name);
 
