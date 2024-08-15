@@ -283,7 +283,7 @@ void Let::sem()
     lexpr->sem();
     rexpr->sem();
 
-    Symbol *entry = st.findSymbol(lexpr->getName());
+    Symbol *entry = st.findSymbol(*lexpr->getName());
     if (!entry)
     {
         yyerror("Variable not declared");

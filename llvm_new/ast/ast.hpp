@@ -48,8 +48,6 @@ protected:
     static std::stack<GenBlock*> blockStack;
     static llvm::ConstantInt* c8(char c);
     static llvm::ConstantInt* c32(int n);
-    static llvm::ConstantArray* ca8(std::string s);
-    bool isMain;
 
 };
 
@@ -63,12 +61,12 @@ public:
     virtual void printOn(std::ostream &out) const override = 0;
     virtual void sem() override = 0;
     virtual llvm::Value* igen() const override = 0;
+    virtual std::string* getName() const { return nullptr; }
     Type *getType() const;
     TypeEnum getTypeEnum() const;
-    std::string getName() const;
+
 protected:
     Type *type;
-    std::string *name;
 };
 
 // Stmt Class
@@ -139,11 +137,13 @@ public:
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
     ParameterSymbol *getParameterSymbol() const;
+    ParameterType getParameterType() const;
+    std::string* getName() const;
+    
+private:
     ParameterType parameterType;
     std::string *name;
     Type *type;
-private:
-    
     ParameterSymbol *parameterSymbol;
 };
 
@@ -156,7 +156,6 @@ public:
     void append(Fpar *f);
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
-    //virtual llvm::Value* igen() const override;
     const std::vector<Fpar *> &getParameters() const;
 
 private:
@@ -337,8 +336,11 @@ public:
     virtual ~Lval() {}
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
-    //std::string getName() const;
     virtual llvm::Value* igen() const override = 0;
+    virtual std::string* getName() const override;
+
+protected:
+    std::string *name;
 };
 
 // StringConst Class
@@ -350,6 +352,8 @@ public:
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
     virtual llvm::Value* igen() const override;
+protected:
+    std::string *name;
 };
 
 // BoolConst Class
@@ -388,6 +392,7 @@ public:
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
     virtual llvm::Value* igen() const override;
+    Expr *getIndexExpr() const;
 
 private:
     Expr *indexExpr;

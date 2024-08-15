@@ -20,8 +20,7 @@ llvm::Type *AST::proc = llvm::Type::getVoidTy(TheContext);
 llvm::Type *AST::i8 = llvm::IntegerType::get(TheContext, 8);
 llvm::Type *AST::i32 = llvm::IntegerType::get(TheContext, 32);
 GenScope AST::scopes;
-std::stack<GenBlock*> AST::blockStack;
-
+std::stack<GenBlock *> AST::blockStack;
 
 llvm::ConstantInt *AST::c8(char c)
 {
@@ -33,20 +32,9 @@ llvm::ConstantInt *AST::c32(int n)
     return llvm::ConstantInt::get(TheContext, llvm::APInt(32, n, true));
 }
 
-llvm::ConstantArray *AST::ca8(std::string s)
-{
-    std::vector<llvm::Constant *> chars;
-    for (char c : s)
-    {
-        chars.push_back(c8(c));
-    }
-    chars.push_back(c8('\0'));
-    return llvm::dyn_cast<llvm::ConstantArray>(llvm::ConstantArray::get(llvm::ArrayType::get(i8, s.size() + 1), chars));
-}
-
+// TODO:: Remove "if" clauses lines 62-76
 void AST::llvm_igen(bool optimize)
 {
-    isMain = true;
     TheModule = std::make_unique<llvm::Module>(filename, TheContext);
 
     scopes.openScope();
@@ -66,8 +54,6 @@ void AST::llvm_igen(bool optimize)
     llvm::FunctionType *main_type = llvm::FunctionType::get(i32, {}, false);
     llvm::Function *main = llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, "main", TheModule.get());
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
-    //Builder.SetInsertPoint(BB);
-    //scopes.openScope();
 
     // Codegen the AST
     this->igen();
@@ -110,7 +96,7 @@ void AST::llvm_igen(bool optimize)
     TheModule->print(llvm::outs(), nullptr);
 }
 
-llvm::Value *StmtList::igen() const 
+llvm::Value *StmtList::igen() const
 {
     for (auto it = stmts.rbegin(); it != stmts.rend(); ++it)
     {
@@ -120,7 +106,7 @@ llvm::Value *StmtList::igen() const
     return nullptr;
 }
 
-llvm::Value *LocalDefList::igen() const 
+llvm::Value *LocalDefList::igen() const
 {
     for (auto it = defs.rbegin(); it != defs.rend(); ++it)
     {
@@ -130,22 +116,22 @@ llvm::Value *LocalDefList::igen() const
     return nullptr;
 }
 
-llvm::Value *IntConst::igen() const 
+llvm::Value *IntConst::igen() const
 {
     return c32(val);
 }
 
-llvm::Value *CharConst::igen() const 
+llvm::Value *CharConst::igen() const
 {
     return c8(val);
 }
 
-llvm::Value *BoolConst::igen() const 
+llvm::Value *BoolConst::igen() const
 {
     return llvm::ConstantInt::get(TheContext, llvm::APInt(1, val, true));
 }
 
-llvm::Value *UnOp::igen() const 
+llvm::Value *UnOp::igen() const
 {
     llvm::Value *e = expr->igen();
     switch (op)
@@ -159,7 +145,7 @@ llvm::Value *UnOp::igen() const
     }
 }
 
-llvm::Value *BinOp::igen() const 
+llvm::Value *BinOp::igen() const
 {
     llvm::Value *l = left->igen();
     llvm::Value *r = right->igen();
@@ -180,7 +166,7 @@ llvm::Value *BinOp::igen() const
     }
 }
 
-llvm::Value *CondCompOp::igen() const 
+llvm::Value *CondCompOp::igen() const
 {
     llvm::Value *l = left->igen();
     std::cout << "left type: " << l->getType()->getTypeID() << std::endl;
@@ -205,7 +191,7 @@ llvm::Value *CondCompOp::igen() const
     }
 }
 
-llvm::Value *CondBoolOp::igen() const 
+llvm::Value *CondBoolOp::igen() const
 {
     llvm::Value *l = left->igen();
     llvm::Value *r = right->igen();
@@ -220,25 +206,30 @@ llvm::Value *CondBoolOp::igen() const
     }
 }
 
-llvm::Value *CondUnOp::igen() const 
+llvm::Value *CondUnOp::igen() const
 {
     return Builder.CreateNot(cond->igen(), "nottmp");
 }
 
-llvm::Value *VarDef::igen() const {
-    llvm::Type* t = translateType(type, ParameterType::VALUE);
+llvm::Value *VarDef::igen() const
+{
+    llvm::Type *t = translateType(type, ParameterType::VALUE);
     llvm::AllocaInst *Alloca = Builder.CreateAlloca(t, nullptr, *name);
-    if (!blockStack.empty()) {
-        GenBlock* currentBlock = blockStack.top();
+    if (!blockStack.empty())
+    {
+        GenBlock *currentBlock = blockStack.top();
         currentBlock->addLocal(*name, type, ParameterType::VALUE);
         currentBlock->addValue(*name, Alloca);
-    } else {
+    }
+    else
+    {
         std::cerr << "Error: Block stack is empty, cannot add variable definition." << std::endl;
     }
 
     return nullptr;
 }
 
+// TODO:: Remove "if" related to blockstack.empty() and "cout", check getPointerElementType() to avoid use of deref if possible
 llvm::Value *Id::igen() const
 {
     if (blockStack.empty())
@@ -252,98 +243,134 @@ llvm::Value *Id::igen() const
     if (currentBlock->isReference(*name))
     {
         std::cout << "Generating code for reference" << std::endl;
-        llvm::LoadInst *referenceAddress = Builder.CreateLoad(currentBlock->getLocal(*name), currentBlock->getAddress(*name));
+        llvm::Value *referenceAddress = Builder.CreateLoad(currentBlock->getLocal(*name), currentBlock->getAddress(*name));
         std::cout << "first loadinst ok\n";
-        //std::cout << "deref " << currentBlock->getDeref(*name)->getTypeID() << std::endl;
+        // std::cout << "deref " << currentBlock->getDeref(*name)->getTypeID() << std::endl;
         return Builder.CreateLoad(currentBlock->getDeref(*name), referenceAddress, "deref");
     }
     else
-    {   
-        llvm::AllocaInst * value = currentBlock->getValue(*name);
+    {
+        llvm::AllocaInst *value = currentBlock->getValue(*name);
         return Builder.CreateLoad(value->getAllocatedType(), value);
     }
 }
 
-
 llvm::Value *ArrayAccess::igen() const
 {
-    if (blockStack.empty()) {
+    if (blockStack.empty())
+    {
         std::cerr << "Error: Block stack is empty, cannot generate code for array access." << std::endl;
         return nullptr;
     }
 
-    GenBlock* currentBlock = blockStack.top();
-    llvm::AllocaInst* arrayPtr;
-    llvm::Value* indexValue = indexExpr->igen();
-    std::cout << "Generating code for array access " << *name << "["  << "]" << std::endl;
-    llvm::Value* elementPtr;
-    
-    if (currentBlock->isReference(*name)) {
+    GenBlock *currentBlock = blockStack.top();
+    llvm::AllocaInst *arrayPtr;
+    llvm::Value *indexValue = indexExpr->igen();
+    std::cout << "Generating code for array access " << *name << "[" << "]" << std::endl;
+    llvm::Value *elementPtr;
+
+    llvm::Type *elementType = translateType(type->getBaseType(), ParameterType::VALUE);
+
+    if (currentBlock->isReference(*name))
+    {
         arrayPtr = currentBlock->getAddress(*name);
-        llvm::Value* arrayLoad = Builder.CreateLoad(currentBlock->getLocal(*name), arrayPtr, *name + "_arrayptr");
+        llvm::Value *arrayLoad = Builder.CreateLoad(currentBlock->getLocal(*name), arrayPtr, *name + "_arrayptr");
         std::cout << "first loadinst ok\n";
         elementPtr = Builder.CreateGEP(currentBlock->getDeref(*name), arrayLoad, indexValue, "elementptr");
         std::cout << "elementptr ok\n";
-    } else {
+    }
+    else
+    {
         arrayPtr = currentBlock->getValue(*name);
-        elementPtr = Builder.CreateGEP(currentBlock->getLocal(*name), arrayPtr, std::vector<llvm::Value*>({c32(0), indexValue}), "elementptr");
+        elementPtr = Builder.CreateGEP(currentBlock->getLocal(*name), arrayPtr, std::vector<llvm::Value *>({c32(0), indexValue}), "elementptr");
     }
 
-    return elementPtr;
-    
+    return Builder.CreateLoad(elementType, elementPtr, "loadtmp");
 }
 
-llvm::Value *Let::igen() const {
-    llvm::Value* value = rexpr->igen();
-    llvm::Value* l = lexpr->igen();
-    if (l) {
-        if(!l->getType()->isPointerTy()) {
-            l = blockStack.top()->getValue(lexpr->getName());
+llvm::Value *Let::igen() const
+{
+    llvm::Value *rValue = rexpr->igen();
+
+    if (auto lval = dynamic_cast<Id *>(lexpr))
+    {
+        if (blockStack.top()->isReference(*lval->getName()))
+        {
+            llvm::Value *addr = Builder.CreateLoad(blockStack.top()->getLocal(*lval->getName()), blockStack.top()->getAddress(*lval->getName()));
+            return Builder.CreateStore(rValue, addr);
         }
-        Builder.CreateStore(value, l);
-    } else {
-        std::cerr << "Error: Variable " << " not found." << std::endl;
+        else
+        {
+            return Builder.CreateStore(rValue, blockStack.top()->getValue(*lval->getName()));
+        }
+    }
+    else if (auto arrayAccess = dynamic_cast<ArrayAccess *>(lexpr))
+    {
+        llvm::Value *index = arrayAccess->getIndexExpr()->igen();
+        llvm::Value *arrayPtr;
+
+        if (blockStack.top()->isReference(*arrayAccess->getName()))
+        {
+            arrayPtr = Builder.CreateLoad(blockStack.top()->getLocal(*arrayAccess->getName()), blockStack.top()->getAddress(*arrayAccess->getName()));
+            arrayPtr = Builder.CreateGEP(blockStack.top()->getDeref(*arrayAccess->getName()), arrayPtr, index, "elementptr");
+        }
+        else
+        {
+            arrayPtr = Builder.CreateGEP(blockStack.top()->getLocal(*arrayAccess->getName()), blockStack.top()->getValue(*arrayAccess->getName()),
+                                         {c32(0), index}, "elementptr");
+        }
+        return Builder.CreateStore(rValue, arrayPtr);
     }
 
     return nullptr;
 }
 
-llvm::Value *FuncCall::igen() const {
-    llvm::Function* func = scopes.getFunction(*name);
-    if (func) {
-        std::vector<llvm::Value*> args;
+llvm::Value *FuncCall::igen() const
+{
+    llvm::Function *func = scopes.getFunction(*name);
+    if (func)
+    {
+        std::vector<llvm::Value *> args;
         auto Exprs = exprs->getExprs();
         auto arg = func->arg_begin();
-        for (auto it = Exprs.rbegin(); it != Exprs.rend(); ++it) {
+        for (auto it = Exprs.rbegin(); it != Exprs.rend(); ++it)
+        {
             auto expr = *it;
             auto exprval = expr->igen();
-            if (arg->getType()->isPointerTy()) {
+            if (arg->getType()->isPointerTy())
+            {
                 std::cout << "Creating call argument ref" << std::endl;
                 args.push_back(exprval);
-            } else {
+            }
+            else
+            {
                 args.push_back(Builder.CreateLoad(arg->getType(), exprval, *name + "_arg"));
             }
             ++arg;
         }
         return Builder.CreateCall(func, args, *name + "_call");
-    } else {
+    }
+    else
+    {
         std::cerr << "Error: Function " << *name << " not found." << std::endl;
     }
 
     return nullptr;
 }
 
-llvm::Value *If::igen() const {
+llvm::Value *If::igen() const
+{
     std::cout << "Generating code for if statement" << std::endl;
     llvm::Value *v = cond->igen();
-    if (!v->getType()->isIntegerTy(32)) {
+    if (!v->getType()->isIntegerTy(32))
+    {
         v = Builder.CreateZExt(v, i32);
     }
     llvm::Value *condValue = Builder.CreateICmpNE(v, c32(0), "if_cond");
-    llvm::Function* func = blockStack.top()->getFunc();
-    llvm::BasicBlock* thenBB = llvm::BasicBlock::Create(TheContext, "then", func);
-    llvm::BasicBlock* elseBB = llvm::BasicBlock::Create(TheContext, "else");
-    llvm::BasicBlock* mergeBB = llvm::BasicBlock::Create(TheContext, "ifcont");
+    llvm::Function *func = blockStack.top()->getFunc();
+    llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(TheContext, "then", func);
+    llvm::BasicBlock *elseBB = llvm::BasicBlock::Create(TheContext, "else");
+    llvm::BasicBlock *mergeBB = llvm::BasicBlock::Create(TheContext, "ifcont");
 
     Builder.CreateCondBr(condValue, thenBB, elseBB);
 
@@ -351,15 +378,23 @@ llvm::Value *If::igen() const {
     blockStack.top()->setBlock(thenBB);
     std::cout << "Generating code for then statement" << std::endl;
     thenStmt->igen();
-    Builder.CreateBr(mergeBB);
+    if (!blockStack.top()->hasReturn())
+    {
+        Builder.CreateBr(mergeBB);
+    }
     thenBB = Builder.GetInsertBlock();
 
     func->getBasicBlockList().push_back(elseBB);
     Builder.SetInsertPoint(elseBB);
-    if (elseStmt) {
+    blockStack.top()->setBlock(elseBB);
+    if (elseStmt)
+    {
         elseStmt->igen();
     }
-    Builder.CreateBr(mergeBB);
+    if (!blockStack.top()->hasReturn())
+    {
+        Builder.CreateBr(mergeBB);
+    }
     elseBB = Builder.GetInsertBlock();
     func->getBasicBlockList().push_back(mergeBB);
     Builder.SetInsertPoint(mergeBB);
@@ -368,149 +403,186 @@ llvm::Value *If::igen() const {
     return nullptr;
 }
 
-llvm::Value *While::igen() const {
-    llvm::Function* func = Builder.GetInsertBlock()->getParent();
-    llvm::BasicBlock* condBB = llvm::BasicBlock::Create(TheContext, "cond", func);
-    llvm::BasicBlock* loopBB = llvm::BasicBlock::Create(TheContext, "loop");
-    llvm::BasicBlock* afterBB = llvm::BasicBlock::Create(TheContext, "afterloop");
+llvm::Value *While::igen() const
+{
+    llvm::Function *TheFunction = blockStack.top()->getFunc();
+    llvm::BasicBlock *condBB = llvm::BasicBlock::Create(TheContext, "cond", func);
+    llvm::BasicBlock *loopBB = llvm::BasicBlock::Create(TheContext, "loop");
+    llvm::BasicBlock *afterBB = llvm::BasicBlock::Create(TheContext, "afterloop");
 
     Builder.CreateBr(condBB);
     Builder.SetInsertPoint(condBB);
-    llvm::Value* condValue = cond->igen();
+    blockStack.top()->setBlock(condBB);
+
+    llvm::Value *condValue = cond->igen();
+    if (!condValue->getType()->isIntegerTy(32))
+    {
+        condValue = Builder.CreateZExt(condValue, i32);
+    }
+    condValue = Builder.CreateICmpNE(condValue, c32(0), "while_cond");
+
     Builder.CreateCondBr(condValue, loopBB, afterBB);
 
     func->getBasicBlockList().push_back(loopBB);
     Builder.SetInsertPoint(loopBB);
+    blockStack.top()->setBlock(loopBB);
     body->igen();
     Builder.CreateBr(condBB);
 
     func->getBasicBlockList().push_back(afterBB);
     Builder.SetInsertPoint(afterBB);
+    blockStack.top()->setBlock(afterBB);
 
     return nullptr;
 }
 
-
-llvm::Value *Return::igen() const {
-    llvm::Value* value = expr->igen();
+// TODO:: Remove "if" related to blockstack.empty()
+llvm::Value *Return::igen() const
+{
+    llvm::Value *value = expr->igen();
     Builder.CreateRet(value);
-    if (!blockStack.empty()) {
-        GenBlock* currentBlock = blockStack.top();
+    if (!blockStack.empty())
+    {
+        GenBlock *currentBlock = blockStack.top();
         currentBlock->addReturn();
-    } else {
+    }
+    else
+    {
         std::cerr << "Error: Block stack is empty, cannot add return statement." << std::endl;
     }
 
     return nullptr;
 }
 
-llvm::Value *FuncDef::igen() const {
+llvm::Value *FuncDef::igen() const
+{
     std::cout << "Generating code for function " << *name << std::endl;
-    llvm::Type* returnType = translateType(type, ParameterType::VALUE);
-    std::vector<llvm::Type*> argTypes;
-    auto args = std::vector<Fpar*>();
-    if(fpar)
+    llvm::Type *returnType = translateType(type, ParameterType::VALUE);
+    std::vector<llvm::Type *> argTypes;
+    auto args = std::vector<Fpar *>();
+    if (fpar)
         args = fpar->getParameters();
-        
-    for (auto it = args.rbegin(); it != args.rend(); ++it) {
+
+    for (auto it = args.rbegin(); it != args.rend(); ++it)
+    {
         auto arg = *it;
-        argTypes.push_back(translateType(arg->type, arg->parameterType));
-        //arg->igen();
+        argTypes.push_back(translateType(arg->getType(), arg->getParameterType()));
     }
-    llvm::FunctionType* funcType = llvm::FunctionType::get(returnType, argTypes, false);
-    llvm::Function* func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, *name, TheModule.get());
-    
-    scopes.addFunction(*name, func);
+    llvm::FunctionType *funcType = llvm::FunctionType::get(returnType, argTypes, false);
+    llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, *name, TheModule.get());
+    llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, *name + "_entry", func);
 
-
-    llvm::BasicBlock* BB = llvm::BasicBlock::Create(TheContext, *name + "_entry", func);
     Builder.SetInsertPoint(BB);
-    
-    GenBlock* currentBlock = new GenBlock();
+
+    GenBlock *currentBlock = new GenBlock();
     currentBlock->setFunc(func);
     currentBlock->setBlock(BB);
     blockStack.push(currentBlock);
+    scopes.addFunction(*name, func);
     scopes.openScope();
-    
-    auto argIt = args.rbegin();
-    for (auto arg = func->arg_begin(); arg != func->arg_end(); ++arg) {
-        std::cout << "Adding argument2 " << *(*argIt)->name << std::endl;
-        arg->setName(*(*argIt)->name);
-        llvm::AllocaInst* Alloca = Builder.CreateAlloca(arg->getType(), nullptr, *(*argIt)->name);
-        Builder.CreateStore(arg, Alloca);
-        currentBlock->addArg(*(*argIt)->name, (*argIt)->type, (*argIt)->parameterType);
-        if ((*argIt)->parameterType == ParameterType::REFERENCE) {
-            currentBlock->addDeref(*(*argIt)->name, (*argIt)->type, ParameterType::VALUE);
-            currentBlock->addAddress(*(*argIt)->name, Alloca);
-        } else {
-            currentBlock->addValue(*(*argIt)->name, Alloca);
+
+    if (fpar)
+    {
+        unsigned index = 0;
+        for (auto &param : func->args())
+        {
+            param.setName(*args[index]->getName());
+            llvm::AllocaInst *Alloca = Builder.CreateAlloca(param.getType(), nullptr, *args[index]->getName());
+            Builder.CreateStore(&param, Alloca);
+            currentBlock->addArg(*args[index]->getName(), args[index]->getType(), args[index]->getParameterType());
+            currentBlock->addLocal(*args[index]->getName(), args[index]->getType(), args[index]->getParameterType());
+            if (args[index]->getParameterType() == ParameterType::REFERENCE)
+            {
+                currentBlock->addDeref(*args[index]->getName(), args[index]->getType(), ParameterType::VALUE);
+                currentBlock->addAddress(*args[index]->getName(), Alloca);
+            }
+            else
+            {
+                currentBlock->addValue(*args[index]->getName(), Alloca);
+            }
+            ++index;
         }
-        ++argIt;
     }
     std::cout << "localdefs" << std::endl;
     localDef->igen();
     std::cout << "stmts" << std::endl;
     stmts->igen();
 
-    if (!currentBlock->hasReturn()) {
+    if (!currentBlock->hasReturn())
+    {
         Builder.CreateRetVoid();
     }
 
     blockStack.pop();
     scopes.closeScope();
 
-    if(!isMain)
+    if (!blockStack.empty())
         Builder.SetInsertPoint(blockStack.top()->getBlock());
 
     return nullptr;
 }
 
-llvm::Value *ExprList::igen() const {
-    for (auto it = exprs.rbegin(); it != exprs.rend(); ++it) {
+llvm::Value *ExprList::igen() const
+{
+    for (auto it = exprs.rbegin(); it != exprs.rend(); ++it)
+    {
         auto expr = *it;
         expr->igen();
     }
     return nullptr;
 }
 
-llvm::Value *StringConst::igen() const {
+llvm::Value *StringConst::igen() const
+{
     return Builder.CreateGlobalStringPtr(*name);
 }
 
-llvm::Value *ProcCall::igen() const {
+llvm::Value *ProcCall::igen() const
+{
     std::cout << "Generating code for procedure call" << std::endl;
-    llvm::Function* func = scopes.getFunction(*funcCall->name);
-    if (func) {
-        std::vector<llvm::Value*> args;
+    llvm::Function *func = scopes.getFunction(*funcCall->name);
+    if (func)
+    {
+        std::vector<llvm::Value *> args;
         auto Exprs = funcCall->exprs->getExprs();
         auto arg = func->arg_begin();
-        for (auto it = Exprs.rbegin(); it != Exprs.rend(); ++it) {
+        for (auto it = Exprs.rbegin(); it != Exprs.rend(); ++it)
+        {
             auto expr = *it;
             std::cout << "Creating call argument" << std::endl;
-            llvm::Value* exprval = expr->igen();
-            if (arg->getType()->isPointerTy()) {
+            llvm::Value *exprval = expr->igen();
+            if (arg->getType()->isPointerTy())
+            {
                 std::cout << "Creating call argument ref" << std::endl;
-                if (exprval->getTypeEnum() == TypeEnum::ARRAY) {
+                if (exprval->getTypeEnum() == TypeEnum::ARRAY)
+                {
                     args.push_back(exprval);
-                } else {
+                }
+                else
+                {
                     args.push_back(Builder.CreateLoad(arg->getType(), exprval, *funcCall->name + "_arg"));
                 }
-            } else {
+            }
+            else
+            {
                 args.push_back(exprval);
             }
             ++arg;
         }
         std::cout << "Creating call" << std::endl;
         return Builder.CreateCall(func, args);
-    } else {
+    }
+    else
+    {
         std::cerr << "Error: Function " << *funcCall->name << " not found." << std::endl;
     }
-    
+
     return nullptr;
 }
 
-llvm::Value *Empty::igen() const {
+// TODO:: Remove cout
+llvm::Value *Empty::igen() const
+{
     std::cout << "Empty" << std::endl;
     return nullptr;
 }
-

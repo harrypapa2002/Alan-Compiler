@@ -16,8 +16,6 @@
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Utils.h>
 
-
-
 #include "../symbol/symbol.hpp"
 #include "../symbol/types.hpp"
 

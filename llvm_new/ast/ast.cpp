@@ -192,6 +192,14 @@ ParameterSymbol *Fpar::getParameterSymbol() const
     return parameterSymbol;
 }
 
+std::string* Fpar::getName() const {
+    return name;
+}
+
+ParameterType Fpar::getParameterType() const {
+    return parameterType;
+}
+
 // FparList Class Method Implementations
 
 FparList::FparList() : fpar() {}
@@ -238,7 +246,6 @@ const std::vector<Fpar *> &FparList::getParameters() const
 FuncDef::FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f) : name(n), fpar(f), type(t), localDef(l), stmts(s)
 {
     funcSymbol = nullptr;
-    isMain = false;
 }
 
 FuncDef::~FuncDef()
@@ -431,9 +438,8 @@ void Lval::printOn(std::ostream &out) const
     out << "Lval(" << *name << ")";
 }
 
-std::string Expr::getName() const
-{
-    return *name;
+std::string* Lval::getName() const{
+    return name;
 }
 
 // StringConst Class Method Implementations
@@ -495,6 +501,11 @@ ArrayAccess::~ArrayAccess()
 void ArrayAccess::printOn(std::ostream &out) const
 {
     out << "ArrayAccess(" << *name << ", Index: " << *indexExpr << ")";
+}
+
+Expr* ArrayAccess::getIndexExpr() const
+{
+    return indexExpr;
 }
 
 // Let Class Method Implementations
