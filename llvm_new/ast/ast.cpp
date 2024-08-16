@@ -187,6 +187,11 @@ void Fpar::printOn(std::ostream &out) const
     out << "Fpar(" << *name << ", " << type->getType() << ", " << parameterType << ")";
 }
 
+Type *Fpar::getType() const
+{
+    return type;
+}
+
 ParameterSymbol *Fpar::getParameterSymbol() const
 {
     return parameterSymbol;
@@ -531,6 +536,14 @@ FuncCall::~FuncCall()
 {
     delete name;
     delete exprs;
+}
+
+std::string* FuncCall::getName() const {
+    return name;
+}
+
+ExprList* FuncCall::getExprs() const {
+    return exprs;
 }
 
 void FuncCall::printOn(std::ostream &out) const

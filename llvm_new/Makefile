@@ -4,8 +4,8 @@ LLVM-CONFIG = llvm-config
 
 CXX = clang++
 CXXFLAGS = `$(LLVM-CONFIG) --cxxflags`
-LDFLAGS = `$(LLVM-CONFIG) --ldflags`
-LDLIBS = `$(LLVM-CONFIG) --libs --system-libs core` # Adjust this if more LLVM components are needed
+LDFLAGS = `$(LLVM_CONFIG) --ldflags`
+LDLIBS = `$(LLVM-CONFIG) --libs --system-libs core`
 
 # Directories
 LEXER_DIR = lexer

@@ -328,35 +328,32 @@ llvm::Value *Let::igen() const
 llvm::Value *FuncCall::igen() const
 {
     llvm::Function *func = scopes.getFunction(*name);
-    if (func)
+    std::vector<llvm::Value *> args;
+    if (exprs)
     {
-        std::vector<llvm::Value *> args;
-        auto Exprs = exprs->getExprs();
+        auto exprList = exprs->getExprs();
         auto arg = func->arg_begin();
-        for (auto it = Exprs.rbegin(); it != Exprs.rend(); ++it)
+        for (auto it = exprList.rbegin(); it != exprList.rend(); ++it)
         {
-            auto expr = *it;
-            auto exprval = expr->igen();
+            llvm::Value *argValue = (*it)->igen();
+
             if (arg->getType()->isPointerTy())
             {
-                std::cout << "Creating call argument ref" << std::endl;
-                args.push_back(exprval);
+                args.push_back(argValue);
             }
             else
             {
-                args.push_back(Builder.CreateLoad(arg->getType(), exprval, *name + "_arg"));
+                args.push_back(Builder.CreateLoad(arg->getType(), argValue, *name + "_arg"));
             }
             ++arg;
         }
-        return Builder.CreateCall(func, args, *name + "_call");
-    }
-    else
-    {
-        std::cerr << "Error: Function " << *name << " not found." << std::endl;
+
     }
 
-    return nullptr;
+    return Builder.CreateCall(func, args, *name + "_call");
+
 }
+
 
 llvm::Value *If::igen() const
 {
@@ -406,7 +403,7 @@ llvm::Value *If::igen() const
 llvm::Value *While::igen() const
 {
     llvm::Function *TheFunction = blockStack.top()->getFunc();
-    llvm::BasicBlock *condBB = llvm::BasicBlock::Create(TheContext, "cond", func);
+    llvm::BasicBlock *condBB = llvm::BasicBlock::Create(TheContext, "cond", TheFunction);
     llvm::BasicBlock *loopBB = llvm::BasicBlock::Create(TheContext, "loop");
     llvm::BasicBlock *afterBB = llvm::BasicBlock::Create(TheContext, "afterloop");
 
@@ -423,13 +420,13 @@ llvm::Value *While::igen() const
 
     Builder.CreateCondBr(condValue, loopBB, afterBB);
 
-    func->getBasicBlockList().push_back(loopBB);
+    TheFunction->getBasicBlockList().push_back(loopBB);
     Builder.SetInsertPoint(loopBB);
     blockStack.top()->setBlock(loopBB);
     body->igen();
     Builder.CreateBr(condBB);
 
-    func->getBasicBlockList().push_back(afterBB);
+    TheFunction->getBasicBlockList().push_back(afterBB);
     Builder.SetInsertPoint(afterBB);
     blockStack.top()->setBlock(afterBB);
 
@@ -538,46 +535,8 @@ llvm::Value *StringConst::igen() const
 }
 
 llvm::Value *ProcCall::igen() const
-{
-    std::cout << "Generating code for procedure call" << std::endl;
-    llvm::Function *func = scopes.getFunction(*funcCall->name);
-    if (func)
-    {
-        std::vector<llvm::Value *> args;
-        auto Exprs = funcCall->exprs->getExprs();
-        auto arg = func->arg_begin();
-        for (auto it = Exprs.rbegin(); it != Exprs.rend(); ++it)
-        {
-            auto expr = *it;
-            std::cout << "Creating call argument" << std::endl;
-            llvm::Value *exprval = expr->igen();
-            if (arg->getType()->isPointerTy())
-            {
-                std::cout << "Creating call argument ref" << std::endl;
-                if (exprval->getTypeEnum() == TypeEnum::ARRAY)
-                {
-                    args.push_back(exprval);
-                }
-                else
-                {
-                    args.push_back(Builder.CreateLoad(arg->getType(), exprval, *funcCall->name + "_arg"));
-                }
-            }
-            else
-            {
-                args.push_back(exprval);
-            }
-            ++arg;
-        }
-        std::cout << "Creating call" << std::endl;
-        return Builder.CreateCall(func, args);
-    }
-    else
-    {
-        std::cerr << "Error: Function " << *funcCall->name << " not found." << std::endl;
-    }
-
-    return nullptr;
+{    
+    return funcCall->igen();
 }
 
 // TODO:: Remove cout

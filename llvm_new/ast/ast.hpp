@@ -36,7 +36,6 @@ public:
     void llvm_igen(bool optimize = true);
     static llvm::LLVMContext TheContext;
 protected:
-    Type *type;
     static llvm::IRBuilder<> Builder;
     static std::unique_ptr<llvm::Module> TheModule;
     static std::unique_ptr<llvm::legacy::FunctionPassManager> TheFPM;
@@ -139,6 +138,7 @@ public:
     ParameterSymbol *getParameterSymbol() const;
     ParameterType getParameterType() const;
     std::string* getName() const;
+    Type *getType() const;
     
 private:
     ParameterType parameterType;
@@ -216,7 +216,7 @@ private:
 };
 
 // Cond Class
-class Cond : public AST // checked
+class Cond : public AST 
 {
 public:
     virtual void printOn(std::ostream &out) const override = 0;
@@ -225,7 +225,7 @@ public:
 };
 
 // UnOp Class
-class UnOp : public Expr // checked
+class UnOp : public Expr 
 {
 public:
     UnOp(char o, Expr *e);
@@ -240,7 +240,7 @@ private:
 };
 
 // BinOp Class
-class BinOp : public Expr // checked
+class BinOp : public Expr 
 {
 public:
     BinOp(Expr *l, char o, Expr *r);
@@ -256,7 +256,7 @@ private:
 };
 
 // CondCompOp Class
-class CondCompOp : public Cond // checked
+class CondCompOp : public Cond 
 {
 public:
     CondCompOp(Expr *l, compare o, Expr *r);
@@ -303,7 +303,7 @@ private:
 };
 
 // IntConst Class
-class IntConst : public Expr // checked
+class IntConst : public Expr 
 {
 public:
     IntConst(int v);
@@ -317,7 +317,7 @@ private:
 };
 
 // CharConst Class
-class CharConst : public Expr // checked
+class CharConst : public Expr 
 {
 public:
     CharConst(unsigned char c);
@@ -330,7 +330,7 @@ private:
 };
 
 // Lval Class
-class Lval : public Expr // checked
+class Lval : public Expr 
 {
 public:
     virtual ~Lval() {}
@@ -344,7 +344,7 @@ protected:
 };
 
 // StringConst Class
-class StringConst : public Lval // checked
+class StringConst : public Lval 
 {
 public:
     StringConst(std::string *v);
@@ -357,7 +357,7 @@ protected:
 };
 
 // BoolConst Class
-class BoolConst : public Cond // checked
+class BoolConst : public Cond 
 {
 public:
     BoolConst(bool v);
@@ -370,7 +370,7 @@ private:
 };
 
 // Id Class
-class Id : public Lval // checked
+class Id : public Lval 
 {
 public:
     Id(std::string *n);
@@ -384,7 +384,7 @@ private:
 };
 
 // ArrayAccess Class
-class ArrayAccess : public Lval // checked
+class ArrayAccess : public Lval 
 {
 public:
     ArrayAccess(std::string *n, Expr *index);
@@ -399,7 +399,7 @@ private:
 };
 
 // Let Class
-class Let : public Stmt // checked
+class Let : public Stmt 
 {
 public:
     Let(Lval *l, Expr *r);
@@ -422,13 +422,16 @@ public:
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
     virtual llvm::Value* igen() const override;
+    ExprList *getExprs() const;
+    virtual std::string* getName() const override;
+
+protected:
     std::string *name;
     ExprList *exprs;
-//private:
 };
 
 // ProcCall Class
-class ProcCall : public Stmt // checked
+class ProcCall : public Stmt 
 {
 public:
     ProcCall(FuncCall *f);
@@ -442,7 +445,7 @@ private:
 };
 
 // If Class
-class If : public Stmt // checked
+class If : public Stmt 
 {
 public:
     If(Cond *c, Stmt *t, Stmt *e = nullptr);
@@ -458,7 +461,7 @@ private:
 };
 
 // While Class
-class While : public Stmt // checked
+class While : public Stmt 
 {
 public:
     While(Cond *c, Stmt *b);
