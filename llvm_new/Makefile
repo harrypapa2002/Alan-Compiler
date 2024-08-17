@@ -4,7 +4,7 @@ LLVM-CONFIG = llvm-config
 
 CXX = clang++
 CXXFLAGS = `$(LLVM-CONFIG) --cxxflags`
-LDFLAGS = `$(LLVM_CONFIG) --ldflags`
+LDFLAGS = `$(LLVM-CONFIG) --ldflags`
 LDLIBS = `$(LLVM-CONFIG) --libs --system-libs core`
 
 # Directories

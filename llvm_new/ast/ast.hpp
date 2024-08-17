@@ -41,10 +41,12 @@ protected:
     static std::unique_ptr<llvm::legacy::FunctionPassManager> TheFPM;
     std::string filename;
     static llvm::Type *proc;
+    static llvm::Type *i1;
     static llvm::Type *i8;
     static llvm::Type *i32;
     static GenScope scopes;
     static std::stack<GenBlock*> blockStack;
+    static llvm::ConstantInt* c1(bool b); 
     static llvm::ConstantInt* c8(char c);
     static llvm::ConstantInt* c32(int n);
 
