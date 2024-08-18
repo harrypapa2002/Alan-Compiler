@@ -37,6 +37,7 @@ FunctionSymbol::FunctionSymbol(std::string name, Type* type) : parameters() {
     this->symbolType = SymbolType::FUNCTION;
     this->returnType = type->getType();
     this->needsReturn = (returnType != TypeEnum::VOID);
+    this->returnStatementFound = false;
 }
 
 // Get parameters of the function
@@ -67,4 +68,12 @@ bool FunctionSymbol::getNeedsReturn() const {
 // Set if the function needs a return statement
 void FunctionSymbol::setNeedsReturn(bool needsReturn) { 
     this->needsReturn = needsReturn; 
+}
+
+void FunctionSymbol::setReturnStatementFound() {
+    returnStatementFound = true;
+}
+
+bool FunctionSymbol::getReturnStatementFound() const {
+    return returnStatementFound;
 }

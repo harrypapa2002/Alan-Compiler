@@ -73,11 +73,14 @@ public:
     void setReturnType(TypeEnum returnType);
     bool getNeedsReturn() const;
     void setNeedsReturn(bool needsReturn);
+    void setReturnStatementFound();
+    bool getReturnStatementFound() const;
 
 private:
     std::vector<ParameterSymbol> parameters;
     TypeEnum returnType;
     bool needsReturn;
+    bool returnStatementFound;
 };
 
 #endif // SYMBOL_HPP

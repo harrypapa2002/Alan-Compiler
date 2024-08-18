@@ -248,7 +248,7 @@ const std::vector<Fpar *> &FparList::getParameters() const
 
 // FuncDef Class Method Implementations
 
-FuncDef::FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f) : name(n), fpar(f), type(t), localDef(l), stmts(s)
+FuncDef::FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f) : name(n), fpar(f), type(t), localDef(l), stmts(s), hasReturn(false)
 {
     funcSymbol = nullptr;
 }
@@ -273,6 +273,10 @@ void FuncDef::printOn(std::ostream &out) const
 
 std::string* FuncDef::getName() const {
     return name;
+}
+
+void FuncDef::setReturn () {
+    hasReturn = true;
 }
 
 // VarDef Class Method Implementations

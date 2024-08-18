@@ -130,7 +130,13 @@ Symbol* SymbolTable::findSymbolInCurrentScope(std::string name) {
 void SymbolTable::setReturnStatementFound() {
     if (!currentFunctionContext.empty()) {
         currentFunctionContext.top()->setNeedsReturn(false);
+        currentFunctionContext.top()->setReturnStatementFound();
     }
+}
+
+bool SymbolTable::getReturnStatementFound() const {
+    if (currentFunctionContext.empty()) return false;
+    return currentFunctionContext.top()->getReturnStatementFound();
 }
 
 // Find a symbol in the global symbol map

@@ -557,7 +557,7 @@ llvm::Value *FuncDef::igen() const
     localDef->igen();
     stmts->igen();
 
-    if (!BB->getTerminator())
+    if (!hasReturn)
     {
         Builder.CreateRetVoid();
     }

@@ -15,6 +15,7 @@ void StmtList::sem()
         stmt->sem();
         if (stmt->isReturnStatement())
             st.setReturnStatementFound();
+        
     }
     isReturn = false;
 }
@@ -93,6 +94,11 @@ void FuncDef::sem()
     if (funcSymbol->getNeedsReturn())
     {
         yyerror(("Non-void function '" + *name + "' does not have a return statement").c_str());
+    }
+
+    if (funcSymbol->getReturnStatementFound())
+    {
+        setReturn();
     }
 
     st.exitFunctionScope();

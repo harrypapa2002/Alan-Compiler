@@ -24,6 +24,7 @@ public:
     Symbol* findSymbolInCurrentScope(std::string name);
 
     void setReturnStatementFound();
+    bool getReturnStatementFound() const;
 
 private:
     Symbol* findGlobalSymbol(std::string name);

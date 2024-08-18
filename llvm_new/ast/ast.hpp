@@ -178,6 +178,7 @@ public:
     virtual void sem() override;
     virtual llvm::Value* igen() const override;
     std::string* getName() const; 
+    void setReturn();
 
 private:
     std::string *name;
@@ -186,6 +187,7 @@ private:
     LocalDefList *localDef;
     Stmt *stmts;
     FunctionSymbol *funcSymbol;
+    bool hasReturn;
 };
 
 // VarDef Class
