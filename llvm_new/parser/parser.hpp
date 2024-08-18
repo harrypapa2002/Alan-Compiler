@@ -1,14 +1,14 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,9 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -33,61 +31,58 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Tokens.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
+#ifndef YY_YY_PARSER_PARSER_HPP_INCLUDED
+# define YY_YY_PARSER_PARSER_HPP_INCLUDED
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int yydebug;
+#endif
+
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     T_byte = 258,
-     T_else = 259,
-     T_false = 260,
-     T_if = 261,
-     T_int = 262,
-     T_proc = 263,
-     T_reference = 264,
-     T_return = 265,
-     T_while = 266,
-     T_true = 267,
-     T_lte = 268,
-     T_gte = 269,
-     T_eq = 270,
-     T_neq = 271,
-     T_string = 272,
-     T_const = 273,
-     T_id = 274,
-     T_char = 275,
-     UNOP = 276
-   };
+  enum yytokentype
+  {
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    T_byte = 258,                  /* "byte"  */
+    T_else = 259,                  /* "else"  */
+    T_false = 260,                 /* "false"  */
+    T_if = 261,                    /* "if"  */
+    T_int = 262,                   /* "int"  */
+    T_proc = 263,                  /* "proc"  */
+    T_reference = 264,             /* "reference"  */
+    T_return = 265,                /* "return"  */
+    T_while = 266,                 /* "while"  */
+    T_true = 267,                  /* "true"  */
+    T_lte = 268,                   /* "<="  */
+    T_gte = 269,                   /* ">="  */
+    T_eq = 270,                    /* "=="  */
+    T_neq = 271,                   /* "!="  */
+    T_string = 272,                /* T_string  */
+    T_const = 273,                 /* T_const  */
+    T_id = 274,                    /* T_id  */
+    T_char = 275,                  /* T_char  */
+    UNOP = 276                     /* UNOP  */
+  };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
-#define T_byte 258
-#define T_else 259
-#define T_false 260
-#define T_if 261
-#define T_int 262
-#define T_proc 263
-#define T_reference 264
-#define T_return 265
-#define T_while 266
-#define T_true 267
-#define T_lte 268
-#define T_gte 269
-#define T_eq 270
-#define T_neq 271
-#define T_string 272
-#define T_const 273
-#define T_id 274
-#define T_char 275
-#define UNOP 276
 
-
-
-
+/* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 18 "parser/parser.y"
+union YYSTYPE
 {
+#line 18 "parser/parser.y"
+
     ExprList *exprlist;
     LocalDefList *localdefs;
     FparList *fparlist;
@@ -109,14 +104,20 @@ typedef union YYSTYPE
     Cond *cond;
     Lval *lvalue;
     FuncCall *fun;
-}
-/* Line 1529 of yacc.c.  */
-#line 115 "parser/parser.hpp"
-	YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
+
+#line 109 "parser/parser.hpp"
+
+};
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
 #endif
+
 
 extern YYSTYPE yylval;
 
+
+int yyparse (void);
+
+
+#endif /* !YY_YY_PARSER_PARSER_HPP_INCLUDED  */

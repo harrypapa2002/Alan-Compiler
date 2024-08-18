@@ -1,3 +1,4 @@
 foo() : proc 
 {
+    writeString("foo\n");
 }

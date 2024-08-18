@@ -35,6 +35,7 @@ public:
     virtual llvm::Value* igen() const { return nullptr; } 
     void llvm_igen(bool optimize = true);
     static llvm::LLVMContext TheContext;
+    void codegenLibs();
 protected:
     static llvm::IRBuilder<> Builder;
     static std::unique_ptr<llvm::Module> TheModule;
