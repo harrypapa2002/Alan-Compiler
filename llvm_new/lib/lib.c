@@ -2,19 +2,19 @@
 #include <stdio.h>
 
 void writeInteger(int n) {
-  printf("%d\n", n);
+  printf("%d", n);
 }
 
 void writeByte(char c) {
-  printf("%d\n", c);
+  printf("%d", c);
 }
 
 void writeChar(char c) {
-  printf("%c\n", c);
+  printf("%c", c);
 }
 
 void writeString(char* s) {
-  printf("%s\n", s);
+  printf("%s", s);
 }
 
 int readInteger() {
@@ -36,7 +36,16 @@ char readChar() {
 }
 
 void readString(int n, char* s) {
-    scanf("%s", s);    
+    
+    for (int i = 0; i < n; i++) {
+        s[i] = getchar();
+        if (s[i] == '\n' || s[i] == EOF) {
+            s[i] = '\0';
+            return;
+        }
+    }
+    s[n] = '\0';
+    return;    
 }
 
 int extend(char b) {

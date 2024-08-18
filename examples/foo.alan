@@ -1,4 +1,7 @@
-foo() : proc 
+fo() : proc
+    pog : byte [10];
+    i : int; 
 {
-    writeString("foo\n");
+    readString(10, pog);
+    writeString(pog);
 }

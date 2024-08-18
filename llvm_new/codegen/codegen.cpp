@@ -9,10 +9,10 @@ llvm::Type* proc =  llvm::Type::getVoidTy(AST::TheContext);
 llvm::Type* translateType(Type* type, ParameterType pt) {
     llvm::Type* t;
     if (type->getType() == TypeEnum::INT) {
-        std::cout << "int" << std::endl;
+        //std::cout << "int" << std::endl;
         t = i32;
     } else if (type->getType() == TypeEnum::BYTE) {
-        std::cout << "byte" << std::endl;
+        //std::cout << "byte" << std::endl;
         t = i8;
     } else if (type->getType() == TypeEnum::VOID) {
         t = proc;

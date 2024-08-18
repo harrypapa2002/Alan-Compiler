@@ -335,6 +335,7 @@ void FuncCall::sem()
 
             if (exprType != paramType)
             {
+                //std::cout << exprType  << paramType << std::endl;
                 yyerror("Type mismatch in function call parameters");
             }
 

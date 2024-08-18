@@ -29,29 +29,18 @@ declare void @strcat(ptr, ptr)
 
 define i32 @main() {
 entry:
-  call void @foo()
+  call void @fo()
   ret i32 0
 }
 
-define void @foo() {
-foo_entry:
-  %str_const_alloca = alloca [8 x i8], align 1
-  %0 = getelementptr [8 x i8], ptr %str_const_alloca, i32 0, i32 0
-  store i8 34, ptr %0, align 1
-  %1 = getelementptr [8 x i8], ptr %str_const_alloca, i32 0, i32 1
-  store i8 102, ptr %1, align 1
-  %2 = getelementptr [8 x i8], ptr %str_const_alloca, i32 0, i32 2
-  store i8 111, ptr %2, align 1
-  %3 = getelementptr [8 x i8], ptr %str_const_alloca, i32 0, i32 3
-  store i8 111, ptr %3, align 1
-  %4 = getelementptr [8 x i8], ptr %str_const_alloca, i32 0, i32 4
-  store i8 92, ptr %4, align 1
-  %5 = getelementptr [8 x i8], ptr %str_const_alloca, i32 0, i32 5
-  store i8 110, ptr %5, align 1
-  %6 = getelementptr [8 x i8], ptr %str_const_alloca, i32 0, i32 6
-  store i8 34, ptr %6, align 1
-  %7 = getelementptr [8 x i8], ptr %str_const_alloca, i32 0, i32 7
-  store i8 0, ptr %7, align 1
-  call void @writeString(ptr %str_const_alloca)
+define void @fo() {
+fo_entry:
+  %pog = alloca [10 x [10 x i8]], align 1
+  %i = alloca i32, align 4
+  %int_const = alloca i32, align 4
+  store i32 10, ptr %int_const, align 4
+  %readString_arg = load i32, ptr %int_const, align 4
+  call void @readString(i32 %readString_arg, ptr %pog)
+  call void @writeString(ptr %pog)
   ret void
 }
