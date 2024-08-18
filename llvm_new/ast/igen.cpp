@@ -105,7 +105,7 @@ void AST::llvm_igen(bool optimize)
 
 llvm::Value *StmtList::igen() const
 {
-    ////std::cout << "Generating code for statement list" << std::endl;
+    //////std::cout << "Generating code for statement list" << std::endl;
     for (auto it = stmts.rbegin(); it != stmts.rend(); ++it)
     {
         auto stmt = *it;
