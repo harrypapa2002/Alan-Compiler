@@ -921,7 +921,7 @@ YY_RULE_SETUP
 case 21:
 YY_RULE_SETUP
 #line 51 "lexer/lexer.l"
-{ yylval.str = new std::string(yytext); return T_string; }
+{ yylval.str = new std::string(yytext + 1, strlen(yytext) - 2);  return T_string; }
 	YY_BREAK
 /* WhiteSpace */
 case 22:

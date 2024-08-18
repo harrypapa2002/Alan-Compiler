@@ -20,8 +20,5 @@ solve () : proc
 { -- solve
     --writeString("Rings: ");
     NumberOfRings = 42; --readInteger();
-    writeString("Rings: ");
-    writeInteger(NumberOfRings);
-    writeChar('\n');
     hanoi(NumberOfRings, "left", "right", "middle");
 } -- solve

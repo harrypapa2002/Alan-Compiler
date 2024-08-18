@@ -115,6 +115,7 @@ llvm::Value *StmtList::igen() const
 
 llvm::Value *LocalDefList::igen() const
 {
+    ////std::cout << "Generating code for local definition list" << std::endl;
     for (auto it = defs.rbegin(); it != defs.rend(); ++it)
     {
         auto def = *it;
@@ -125,6 +126,7 @@ llvm::Value *LocalDefList::igen() const
 
 llvm::Value *IntConst::igen() const
 {
+    //std::cout << "Generating code for integer constant " << val << std::endl;
     llvm::AllocaInst *alloca = Builder.CreateAlloca(i32, nullptr, "int_const");
     Builder.CreateStore(c32(val), alloca);
     return alloca;
@@ -132,6 +134,7 @@ llvm::Value *IntConst::igen() const
 
 llvm::Value *CharConst::igen() const
 {
+    //std::cout << "Generating code for character constant " << val << std::endl;
     llvm::AllocaInst *alloca = Builder.CreateAlloca(i8, nullptr, "char_const");
     Builder.CreateStore(c8(val), alloca);
     return alloca;
@@ -139,6 +142,7 @@ llvm::Value *CharConst::igen() const
 
 llvm::Value *BoolConst::igen() const
 {
+    //std::cout << "Generating code for boolean constant " << val << std::endl;
     llvm::AllocaInst *alloca = Builder.CreateAlloca(i1, nullptr, "bool_const");
     Builder.CreateStore(c1(val), alloca);
     return alloca;
@@ -146,6 +150,7 @@ llvm::Value *BoolConst::igen() const
 
 llvm::Value *UnOp::igen() const
 {
+    //std::cout << "Generating code for unary operation" << std::endl;
     llvm::AllocaInst *allocaExpr = llvm::cast<llvm::AllocaInst>(expr->igen());
     llvm::Value *loadedExpr = Builder.CreateLoad(allocaExpr->getAllocatedType(), allocaExpr, "load_unop");
     llvm::AllocaInst *alloca = Builder.CreateAlloca(loadedExpr->getType(), nullptr, "unop_tmp");
@@ -168,6 +173,7 @@ llvm::Value *UnOp::igen() const
 
 llvm::Value *BinOp::igen() const
 {
+    //std::cout << "Generating code for binary operation" << std::endl;
     llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
     llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
 
@@ -204,6 +210,7 @@ llvm::Value *BinOp::igen() const
 
 llvm::Value *CondCompOp::igen() const
 {
+    //std::cout << "Generating code for conditional comparison operation" << std::endl;
     llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
     llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
 
@@ -245,6 +252,7 @@ llvm::Value *CondCompOp::igen() const
 
 llvm::Value *CondBoolOp::igen() const
 {
+    //std::cout << "Generating code for conditional boolean operation" << std::endl;
     llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
     llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
 
@@ -274,6 +282,7 @@ llvm::Value *CondBoolOp::igen() const
 
 llvm::Value *CondUnOp::igen() const
 {
+    //std::cout << "Generating code for conditional unary operation" << std::endl;
     llvm::AllocaInst *c = llvm::cast<llvm::AllocaInst>(cond->igen());
 
     llvm::Type *condType = c->getAllocatedType();
@@ -290,6 +299,7 @@ llvm::Value *CondUnOp::igen() const
 // TODO: Remove addLocal
 llvm::Value *VarDef::igen() const
 {
+    //std::cout << "Generating code for variable definition: " << *name << std::endl;
     llvm::Type *t = nullptr;
 
     if (isArray)
@@ -326,6 +336,7 @@ llvm::Value *Id::igen() const
     }
 
     GenBlock *currentBlock = blockStack.top();
+    // std::cout << "Generating code for identifier " << *name << std::endl;
     llvm::AllocaInst *allocaInst = currentBlock->getAlloca(*name);
 
     if (allocaInst->getAllocatedType()->isPointerTy())
@@ -355,6 +366,7 @@ llvm::Value *ArrayAccess::igen() const
     llvm::AllocaInst *indexAlloc = llvm::cast<llvm::AllocaInst>(indexExpr->igen());
     llvm::Value *indexValue = Builder.CreateLoad(indexAlloc->getAllocatedType(), indexAlloc, "load_index");
 
+    //std::cout << "Generating code for array access " << *name << "[" << "]" << std::endl;
 
     llvm::Type *elementType = translateType(type, ParameterType::VALUE);
     llvm::AllocaInst *arrayPtrAlloc = currentBlock->getAlloca(*name);
@@ -383,6 +395,7 @@ llvm::Value *ArrayAccess::igen() const
 
 llvm::Value *Let::igen() const
 {
+    //std::cout << "Generating code for let statement" << std::endl;
 
     llvm::AllocaInst *rValueAlloc = llvm::cast<llvm::AllocaInst>(rexpr->igen());
     llvm::AllocaInst *lValueAlloc = llvm::cast<llvm::AllocaInst>(lexpr->igen());
@@ -398,6 +411,7 @@ llvm::Value *Let::igen() const
 
 llvm::Value *FuncCall::igen() const
 {
+    //std::cout << "Generating code for function call " << *name << std::endl;
     llvm::Function *func = scopes.getFunction(*name);
     std::vector<llvm::Value *> args;
 
@@ -408,6 +422,7 @@ llvm::Value *FuncCall::igen() const
         auto exprIt = exprList.rbegin(); 
         for (auto &arg : funcArgs)
         {
+            // std::cout << "arg: " << arg.getName().str() << std::endl;
             llvm::AllocaInst *argAlloc = llvm::cast<llvm::AllocaInst>((*exprIt)->igen());
             ++exprIt;
 
@@ -426,19 +441,23 @@ llvm::Value *FuncCall::igen() const
     }
 
     llvm::Type *returnType = func->getReturnType();
+    // std::cout << "Function return type settled" << std::endl;
 
     if (returnType->isVoidTy())
     {
         // If the function returns void, just call the function and return nullptr
         Builder.CreateCall(func, args);
+        // std::cout << "Function call generated for void return type" << std::endl;
         return nullptr;
     }
 
     // Create an alloca for the return value
     llvm::AllocaInst *retAlloca = Builder.CreateAlloca(returnType, nullptr, *name + "_ret");
+    // std::cout << "Alloca for return value created" << std::endl;
 
     // Generate the function call
     llvm::Value *callResult = Builder.CreateCall(func, args, *name + "_call");
+    // std::cout << "Function call generated" << std::endl;
 
     // Store the function call result in the alloca
     Builder.CreateStore(callResult, retAlloca);
@@ -448,6 +467,7 @@ llvm::Value *FuncCall::igen() const
 
 llvm::Value *If::igen() const
 {
+    ////std::cout << "Generating code for if statement" << std::endl;
     llvm::AllocaInst *condAlloc = llvm::cast<llvm::AllocaInst>(cond->igen());
     llvm::Value *v = Builder.CreateLoad(condAlloc->getAllocatedType(), condAlloc);
 
@@ -465,12 +485,13 @@ llvm::Value *If::igen() const
 
     Builder.SetInsertPoint(thenBB);
     blockStack.top()->setBlock(thenBB);
+    ////std::cout << "Generating code for then statement" << std::endl;
     thenStmt->igen();
     if (!blockStack.top()->hasReturn())
     {
         Builder.CreateBr(mergeBB);
     }
-    // thenBB = Builder.GetInsertBlock();
+    thenBB = Builder.GetInsertBlock();
 
     func->getBasicBlockList().push_back(elseBB);
     Builder.SetInsertPoint(elseBB);
@@ -483,7 +504,7 @@ llvm::Value *If::igen() const
     {
         Builder.CreateBr(mergeBB);
     }
-    // elseBB = Builder.GetInsertBlock();
+    elseBB = Builder.GetInsertBlock();
     func->getBasicBlockList().push_back(mergeBB);
     Builder.SetInsertPoint(mergeBB);
     blockStack.top()->setBlock(mergeBB);
@@ -493,6 +514,7 @@ llvm::Value *If::igen() const
 
 llvm::Value *While::igen() const
 {
+    ////std::cout << "Generating code for while statement" << std::endl;
     llvm::Function *TheFunction = blockStack.top()->getFunc();
     llvm::BasicBlock *condBB = llvm::BasicBlock::Create(TheContext, "cond", TheFunction);
     llvm::BasicBlock *loopBB = llvm::BasicBlock::Create(TheContext, "loop");
@@ -529,6 +551,7 @@ llvm::Value *While::igen() const
 // TODO:: Remove "if" related to blockstack.empty()
 llvm::Value *Return::igen() const
 {
+    ////std::cout << "Generating code for return statement" << std::endl;
     llvm::AllocaInst *valueAlloc = llvm::cast<llvm::AllocaInst>(expr->igen());
     llvm::Value *value = Builder.CreateLoad(valueAlloc->getAllocatedType(), valueAlloc, "ret_val");
     Builder.CreateRet(value);
@@ -547,6 +570,7 @@ llvm::Value *Return::igen() const
 
 llvm::Value *FuncDef::igen() const
 {
+    ////std::cout << "Generating code for function " << *name << std::endl;
     llvm::Type *returnType = translateType(type, ParameterType::VALUE);
     std::vector<llvm::Type *> argTypes;
     auto args = fpar ? fpar->getParameters() : std::vector<Fpar *>();
@@ -554,6 +578,7 @@ llvm::Value *FuncDef::igen() const
     for (auto it = args.rbegin(); it != args.rend(); ++it)
     {
         auto arg = *it;
+        // std::cout << "arg: " << *arg->getName() << "type: " << arg->getType()->getType() << std::endl;
         argTypes.push_back(translateType(arg->getType(), arg->getParameterType()));
     }
     llvm::FunctionType *funcType = llvm::FunctionType::get(returnType, argTypes, false);
@@ -585,7 +610,9 @@ llvm::Value *FuncDef::igen() const
 
         }
     }
+    // std::cout << "localdefs" << std::endl;
     localDef->igen();
+    ////std::cout << "stmts" << std::endl;
     stmts->igen();
 
     if (!currentBlock->hasReturn())
@@ -604,6 +631,7 @@ llvm::Value *FuncDef::igen() const
 
 llvm::Value *ExprList::igen() const
 {
+    ////std::cout << "Generating code for expression list" << std::endl;
     for (auto it = exprs.rbegin(); it != exprs.rend(); ++it)
     {
         auto expr = *it;

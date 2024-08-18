@@ -470,7 +470,7 @@ llvm::Value *If::igen() const
     {
         Builder.CreateBr(mergeBB);
     }
-    // thenBB = Builder.GetInsertBlock();
+    thenBB = Builder.GetInsertBlock();
 
     func->getBasicBlockList().push_back(elseBB);
     Builder.SetInsertPoint(elseBB);
@@ -483,7 +483,7 @@ llvm::Value *If::igen() const
     {
         Builder.CreateBr(mergeBB);
     }
-    // elseBB = Builder.GetInsertBlock();
+    elseBB = Builder.GetInsertBlock();
     func->getBasicBlockList().push_back(mergeBB);
     Builder.SetInsertPoint(mergeBB);
     blockStack.top()->setBlock(mergeBB);

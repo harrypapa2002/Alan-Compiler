@@ -44,7 +44,8 @@ void AST::llvm_igen(bool optimize)
     TheModule = std::make_unique<llvm::Module>(filename, TheContext);
 
     scopes.openScope();
-    
+    // TODO:
+    // codegenLibs();
     TheFPM = std::make_unique<llvm::legacy::FunctionPassManager>(TheModule.get());
     if (optimize)
     {
@@ -55,8 +56,6 @@ void AST::llvm_igen(bool optimize)
         TheFPM->add(llvm::createCFGSimplificationPass());
     }
     TheFPM->doInitialization();
-    // TODO:
-    codegenLibs();
 
     llvm::FunctionType *main_type = llvm::FunctionType::get(i32, {}, false);
     llvm::Function *main = llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, "main", TheModule.get());
@@ -105,6 +104,7 @@ void AST::llvm_igen(bool optimize)
 
 llvm::Value *StmtList::igen() const
 {
+    std::cout << "Generating code for statement list" << std::endl;
     for (auto it = stmts.rbegin(); it != stmts.rend(); ++it)
     {
         auto stmt = *it;
@@ -115,6 +115,7 @@ llvm::Value *StmtList::igen() const
 
 llvm::Value *LocalDefList::igen() const
 {
+    std::cout << "Generating code for local definition list" << std::endl;
     for (auto it = defs.rbegin(); it != defs.rend(); ++it)
     {
         auto def = *it;
@@ -125,6 +126,7 @@ llvm::Value *LocalDefList::igen() const
 
 llvm::Value *IntConst::igen() const
 {
+    std::cout << "Generating code for integer constant " << val << std::endl;
     llvm::AllocaInst *alloca = Builder.CreateAlloca(i32, nullptr, "int_const");
     Builder.CreateStore(c32(val), alloca);
     return alloca;
@@ -132,6 +134,7 @@ llvm::Value *IntConst::igen() const
 
 llvm::Value *CharConst::igen() const
 {
+    std::cout << "Generating code for character constant " << val << std::endl;
     llvm::AllocaInst *alloca = Builder.CreateAlloca(i8, nullptr, "char_const");
     Builder.CreateStore(c8(val), alloca);
     return alloca;
@@ -139,6 +142,7 @@ llvm::Value *CharConst::igen() const
 
 llvm::Value *BoolConst::igen() const
 {
+    std::cout << "Generating code for boolean constant " << val << std::endl;
     llvm::AllocaInst *alloca = Builder.CreateAlloca(i1, nullptr, "bool_const");
     Builder.CreateStore(c1(val), alloca);
     return alloca;
@@ -146,6 +150,7 @@ llvm::Value *BoolConst::igen() const
 
 llvm::Value *UnOp::igen() const
 {
+    std::cout << "Generating code for unary operation" << std::endl;
     llvm::AllocaInst *allocaExpr = llvm::cast<llvm::AllocaInst>(expr->igen());
     llvm::Value *loadedExpr = Builder.CreateLoad(allocaExpr->getAllocatedType(), allocaExpr, "load_unop");
     llvm::AllocaInst *alloca = Builder.CreateAlloca(loadedExpr->getType(), nullptr, "unop_tmp");
@@ -168,6 +173,7 @@ llvm::Value *UnOp::igen() const
 
 llvm::Value *BinOp::igen() const
 {
+    std::cout << "Generating code for binary operation" << std::endl;
     llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
     llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
 
@@ -204,6 +210,7 @@ llvm::Value *BinOp::igen() const
 
 llvm::Value *CondCompOp::igen() const
 {
+    std::cout << "Generating code for conditional comparison operation" << std::endl;
     llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
     llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
 
@@ -245,6 +252,7 @@ llvm::Value *CondCompOp::igen() const
 
 llvm::Value *CondBoolOp::igen() const
 {
+    std::cout << "Generating code for conditional boolean operation" << std::endl;
     llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
     llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
 
@@ -274,6 +282,7 @@ llvm::Value *CondBoolOp::igen() const
 
 llvm::Value *CondUnOp::igen() const
 {
+    std::cout << "Generating code for conditional unary operation" << std::endl;
     llvm::AllocaInst *c = llvm::cast<llvm::AllocaInst>(cond->igen());
 
     llvm::Type *condType = c->getAllocatedType();
@@ -290,6 +299,7 @@ llvm::Value *CondUnOp::igen() const
 // TODO: Remove addLocal
 llvm::Value *VarDef::igen() const
 {
+    std::cout << "Generating code for variable definition: " << *name << std::endl;
     llvm::Type *t = nullptr;
 
     if (isArray)
@@ -307,7 +317,8 @@ llvm::Value *VarDef::igen() const
     if (!blockStack.empty())
     {
         GenBlock *currentBlock = blockStack.top();
-        currentBlock->addAlloca(*name, Alloca);
+        currentBlock->addLocal(*name, type, ParameterType::VALUE);
+        currentBlock->addValue(*name, Alloca);
     }
     else
     {
@@ -326,16 +337,16 @@ llvm::Value *Id::igen() const
     }
 
     GenBlock *currentBlock = blockStack.top();
-    llvm::AllocaInst *allocaInst = currentBlock->getAlloca(*name);
-
-    if (allocaInst->getAllocatedType()->isPointerTy())
+    std::cout << "Generating code for identifier " << *name << std::endl;
+    if (currentBlock->isReference(*name))
     {
-        llvm::Type *allocatedType = allocaInst->getAllocatedType();
-        return Builder.CreateLoad(allocatedType, allocaInst, *name + "_load");
+        llvm::AllocaInst *address = currentBlock->getAddress(*name);
+        llvm::Type *allocatedType = address->getAllocatedType();
+        return Builder.CreateLoad(allocatedType, address);
     }
     else
     {
-        return allocaInst;
+        return currentBlock->getValue(*name);
     }
 }
 
@@ -350,19 +361,21 @@ llvm::Value *ArrayAccess::igen() const
     }
 
     GenBlock *currentBlock = blockStack.top();
+    llvm::AllocaInst *arrayPtrAlloc = nullptr;
 
     // Generate code for the index expression
     llvm::AllocaInst *indexAlloc = llvm::cast<llvm::AllocaInst>(indexExpr->igen());
     llvm::Value *indexValue = Builder.CreateLoad(indexAlloc->getAllocatedType(), indexAlloc, "load_index");
 
+    std::cout << "Generating code for array access " << *name << "[" << "]" << std::endl;
 
     llvm::Type *elementType = translateType(type, ParameterType::VALUE);
-    llvm::AllocaInst *arrayPtrAlloc = currentBlock->getAlloca(*name);
     llvm::Value *elementPtr = nullptr;
 
-    if (arrayPtrAlloc->getAllocatedType()->isPointerTy())
+    if (currentBlock->isReference(*name))
     {
         // If the array is a reference, load the pointer to the array
+        arrayPtrAlloc = currentBlock->getAddress(*name);
         llvm::Value *arrayLoad = Builder.CreateLoad(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, *name + "_arrayptr");
 
         // Here we expect the arrayLoad to be a pointer to an array, so we cast it as needed
@@ -371,6 +384,7 @@ llvm::Value *ArrayAccess::igen() const
     }
     else
     {
+        arrayPtrAlloc = currentBlock->getValue(*name);
         elementPtr = Builder.CreateGEP(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, std::vector<llvm::Value *>({c32(0), indexValue}), "elementptr");
     }
 
@@ -383,6 +397,7 @@ llvm::Value *ArrayAccess::igen() const
 
 llvm::Value *Let::igen() const
 {
+    std::cout << "Generating code for let statement" << std::endl;
 
     llvm::AllocaInst *rValueAlloc = llvm::cast<llvm::AllocaInst>(rexpr->igen());
     llvm::AllocaInst *lValueAlloc = llvm::cast<llvm::AllocaInst>(lexpr->igen());
@@ -398,6 +413,7 @@ llvm::Value *Let::igen() const
 
 llvm::Value *FuncCall::igen() const
 {
+    std::cout << "Generating code for function call " << *name << std::endl;
     llvm::Function *func = scopes.getFunction(*name);
     std::vector<llvm::Value *> args;
 
@@ -408,6 +424,7 @@ llvm::Value *FuncCall::igen() const
         auto exprIt = exprList.rbegin(); 
         for (auto &arg : funcArgs)
         {
+            std::cout << "arg: " << arg.getName().str() << std::endl;
             llvm::AllocaInst *argAlloc = llvm::cast<llvm::AllocaInst>((*exprIt)->igen());
             ++exprIt;
 
@@ -426,28 +443,28 @@ llvm::Value *FuncCall::igen() const
     }
 
     llvm::Type *returnType = func->getReturnType();
-
-    if (returnType->isVoidTy())
-    {
-        // If the function returns void, just call the function and return nullptr
-        Builder.CreateCall(func, args);
-        return nullptr;
-    }
+    std::cout << "Function return type settled" << std::endl;
 
     // Create an alloca for the return value
     llvm::AllocaInst *retAlloca = Builder.CreateAlloca(returnType, nullptr, *name + "_ret");
+    std::cout << "Alloca for return value created" << std::endl;
 
     // Generate the function call
     llvm::Value *callResult = Builder.CreateCall(func, args, *name + "_call");
+    std::cout << "Function call generated" << std::endl;
 
-    // Store the function call result in the alloca
-    Builder.CreateStore(callResult, retAlloca);
+    // Store the function call result in the alloca if the function does not return void
+    if (!returnType->isVoidTy())
+    {
+        Builder.CreateStore(callResult, retAlloca);
+    }
 
     return retAlloca;
 }
 
 llvm::Value *If::igen() const
 {
+    std::cout << "Generating code for if statement" << std::endl;
     llvm::AllocaInst *condAlloc = llvm::cast<llvm::AllocaInst>(cond->igen());
     llvm::Value *v = Builder.CreateLoad(condAlloc->getAllocatedType(), condAlloc);
 
@@ -465,12 +482,13 @@ llvm::Value *If::igen() const
 
     Builder.SetInsertPoint(thenBB);
     blockStack.top()->setBlock(thenBB);
+    std::cout << "Generating code for then statement" << std::endl;
     thenStmt->igen();
     if (!blockStack.top()->hasReturn())
     {
         Builder.CreateBr(mergeBB);
     }
-    // thenBB = Builder.GetInsertBlock();
+    thenBB = Builder.GetInsertBlock();
 
     func->getBasicBlockList().push_back(elseBB);
     Builder.SetInsertPoint(elseBB);
@@ -483,7 +501,7 @@ llvm::Value *If::igen() const
     {
         Builder.CreateBr(mergeBB);
     }
-    // elseBB = Builder.GetInsertBlock();
+    elseBB = Builder.GetInsertBlock();
     func->getBasicBlockList().push_back(mergeBB);
     Builder.SetInsertPoint(mergeBB);
     blockStack.top()->setBlock(mergeBB);
@@ -493,6 +511,7 @@ llvm::Value *If::igen() const
 
 llvm::Value *While::igen() const
 {
+    std::cout << "Generating code for while statement" << std::endl;
     llvm::Function *TheFunction = blockStack.top()->getFunc();
     llvm::BasicBlock *condBB = llvm::BasicBlock::Create(TheContext, "cond", TheFunction);
     llvm::BasicBlock *loopBB = llvm::BasicBlock::Create(TheContext, "loop");
@@ -529,6 +548,7 @@ llvm::Value *While::igen() const
 // TODO:: Remove "if" related to blockstack.empty()
 llvm::Value *Return::igen() const
 {
+    std::cout << "Generating code for return statement" << std::endl;
     llvm::AllocaInst *valueAlloc = llvm::cast<llvm::AllocaInst>(expr->igen());
     llvm::Value *value = Builder.CreateLoad(valueAlloc->getAllocatedType(), valueAlloc, "ret_val");
     Builder.CreateRet(value);
@@ -547,6 +567,7 @@ llvm::Value *Return::igen() const
 
 llvm::Value *FuncDef::igen() const
 {
+    std::cout << "Generating code for function " << *name << std::endl;
     llvm::Type *returnType = translateType(type, ParameterType::VALUE);
     std::vector<llvm::Type *> argTypes;
     auto args = fpar ? fpar->getParameters() : std::vector<Fpar *>();
@@ -554,6 +575,7 @@ llvm::Value *FuncDef::igen() const
     for (auto it = args.rbegin(); it != args.rend(); ++it)
     {
         auto arg = *it;
+        std::cout << "arg: " << *arg->getName() << "type: " << arg->getType()->getType() << std::endl;
         argTypes.push_back(translateType(arg->getType(), arg->getParameterType()));
     }
     llvm::FunctionType *funcType = llvm::FunctionType::get(returnType, argTypes, false);
@@ -581,11 +603,22 @@ llvm::Value *FuncDef::igen() const
             llvm::AllocaInst *Alloca = Builder.CreateAlloca(param.getType(), nullptr, *args[index]->getName());
 
             Builder.CreateStore(&param, Alloca);
-            currentBlock->addAlloca(*args[index]->getName(), Alloca);
 
+            currentBlock->addArg(*args[index]->getName(), args[index]->getType(), args[index]->getParameterType());
+
+            if (args[index]->getParameterType() == ParameterType::REFERENCE)
+            {
+                currentBlock->addAddress(*args[index]->getName(), Alloca);
+            }
+            else
+            {
+                currentBlock->addValue(*args[index]->getName(), Alloca);
+            }
         }
     }
+    std::cout << "localdefs" << std::endl;
     localDef->igen();
+    std::cout << "stmts" << std::endl;
     stmts->igen();
 
     if (!currentBlock->hasReturn())
@@ -604,6 +637,7 @@ llvm::Value *FuncDef::igen() const
 
 llvm::Value *ExprList::igen() const
 {
+    std::cout << "Generating code for expression list" << std::endl;
     for (auto it = exprs.rbegin(); it != exprs.rend(); ++it)
     {
         auto expr = *it;
@@ -612,75 +646,36 @@ llvm::Value *ExprList::igen() const
     return nullptr;
 }
 
-llvm::Value* StringConst::igen() const {
-    // Create a global string constant in the module
-    llvm::Constant* globalStr = Builder.CreateGlobalStringPtr(*name, "global_str");
+llvm::Value *StringConst::igen() const
+{
+    std::cout << "Generating code for string constant " << *name << std::endl;
 
-    // Calculate the length of the string including the null terminator
     size_t strLength = name->length() + 1;
 
-    // Create an alloca instruction to allocate space for the string on the stack
-    llvm::AllocaInst* alloca = Builder.CreateAlloca(llvm::ArrayType::get(i8, strLength), nullptr, "str_const_alloca");
+    llvm::ArrayType *arrayType = llvm::ArrayType::get(i8, strLength);
+    llvm::AllocaInst *alloca = Builder.CreateAlloca(arrayType, nullptr, "str_const_alloca");
 
-    // Copy the global string to the stack-allocated memory
-    Builder.CreateMemCpy(alloca, llvm::MaybeAlign(1), globalStr, llvm::MaybeAlign(1), c32(strLength));
+    for (size_t i = 0; i < strLength - 1; ++i)
+    {
+        llvm::Value *charPtr = Builder.CreateGEP(arrayType, alloca, {c32(0), c32(i)});
+        Builder.CreateStore(c8((*name)[i]), charPtr);
+    }
 
-    // Return the alloca instruction
+    llvm::Value *nullPtr = Builder.CreateGEP(arrayType, alloca, {c32(0), c32(strLength - 1)});
+    Builder.CreateStore(c8('\0'), nullPtr);
+
     return alloca;
 }
 
 llvm::Value *ProcCall::igen() const
 {
+    std::cout << "Generating code for procedure call " << std::endl;
     return funcCall->igen();
 }
 
+// TODO:: Remove cout
 llvm::Value *Empty::igen() const
 {
+    std::cout << "Empty" << std::endl;
     return nullptr;
-}
-
-
-void AST::codegenLibs() {
-    llvm::FunctionType *writeIntegerType =
-        llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i32}, false);
-    scopes.addFunction("writeInteger", llvm::Function::Create(writeIntegerType, llvm::Function::ExternalLinkage, "writeInteger", TheModule.get()));
-    llvm::FunctionType *writeByteType =
-        llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i8}, false);
-    scopes.addFunction("writeByte", llvm::Function::Create(writeByteType, llvm::Function::ExternalLinkage, "writeByte", TheModule.get()));
-    llvm::FunctionType *writeCharType =
-        llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i8}, false);
-    scopes.addFunction("writeChar", llvm::Function::Create(writeCharType, llvm::Function::ExternalLinkage, "writeChar", TheModule.get()));
-    llvm::FunctionType *writeStringType = 
-        llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i8->getPointerTo()}, false);
-    scopes.addFunction("writeString", llvm::Function::Create(writeStringType, llvm::Function::ExternalLinkage, "writeString", TheModule.get()));
-    llvm::FunctionType *readIntegerType =
-        llvm::FunctionType::get(i32, std::vector<llvm::Type *>{}, false);
-    scopes.addFunction("readInteger", llvm::Function::Create(readIntegerType, llvm::Function::ExternalLinkage, "readInteger", TheModule.get()));
-    llvm::FunctionType *readByteType =
-        llvm::FunctionType::get(i8, std::vector<llvm::Type *>{}, false);
-    scopes.addFunction("readByte", llvm::Function::Create(readByteType, llvm::Function::ExternalLinkage, "readByte", TheModule.get()));
-    llvm::FunctionType *readCharType =
-        llvm::FunctionType::get(i8, std::vector<llvm::Type *>{}, false);
-    scopes.addFunction("readChar", llvm::Function::Create(readCharType, llvm::Function::ExternalLinkage, "readChar", TheModule.get()));
-    llvm::FunctionType *readStringType = 
-        llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i32, i8->getPointerTo()}, false);
-    scopes.addFunction("readString", llvm::Function::Create(readStringType, llvm::Function::ExternalLinkage, "readString", TheModule.get()));
-    llvm::FunctionType *extendType =
-        llvm::FunctionType::get(i32, std::vector<llvm::Type *>{i8}, false);
-    scopes.addFunction("extend", llvm::Function::Create(extendType, llvm::Function::ExternalLinkage, "extend", TheModule.get()));
-    llvm::FunctionType *shrinkType =
-        llvm::FunctionType::get(i8, std::vector<llvm::Type *>{i32}, false);
-    scopes.addFunction("shrink", llvm::Function::Create(shrinkType, llvm::Function::ExternalLinkage, "shrink", TheModule.get()));
-    llvm::FunctionType *strlenType = 
-        llvm::FunctionType::get(i32, std::vector<llvm::Type *>{i8->getPointerTo()}, false);
-    scopes.addFunction("strlen", llvm::Function::Create(strlenType, llvm::Function::ExternalLinkage, "strlen", TheModule.get()));
-    llvm::FunctionType *strcmpType = 
-        llvm::FunctionType::get(i32, std::vector<llvm::Type *>{i8->getPointerTo(), i8->getPointerTo()}, false);
-    scopes.addFunction("strcmp", llvm::Function::Create(strcmpType, llvm::Function::ExternalLinkage, "strcmp", TheModule.get()));
-    llvm::FunctionType *strcpyType = 
-        llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i8->getPointerTo(), i8->getPointerTo()}, false);
-    scopes.addFunction("strcpy", llvm::Function::Create(strcpyType, llvm::Function::ExternalLinkage, "strcpy", TheModule.get()));
-    llvm::FunctionType *strcatType = 
-        llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i8->getPointerTo(), i8->getPointerTo()}, false);
-    scopes.addFunction("strcat", llvm::Function::Create(strcatType, llvm::Function::ExternalLinkage, "strcat", TheModule.get()));
 }

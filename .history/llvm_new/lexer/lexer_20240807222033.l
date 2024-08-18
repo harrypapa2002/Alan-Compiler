@@ -47,7 +47,7 @@ ESC [ntr0\'\"\\]
 {D}+ { yylval.num = atoi(yytext); return T_const; }
 {L}({L}|{D}|_)* { yylval.var = new std::string(yytext); return T_id; }
 \'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { yylval.chr = fixChar(yytext+1); return T_char; }
-\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { yylval.str = new std::string(yytext + 1, strlen(yytext) - 2);  return T_string; }
+\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { yylval.str = new std::string(yytext); return T_string; }
 
  /* WhiteSpace */
 \n   { ++lineno; }
