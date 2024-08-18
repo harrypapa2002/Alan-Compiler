@@ -22,11 +22,6 @@ llvm::Type *AST::i32 = llvm::IntegerType::get(TheContext, 32);
 GenScope AST::scopes;
 std::stack<GenBlock *> AST::blockStack;
 
-llvm::ConstantInt *AST::c1(bool c)
-{
-    return llvm::ConstantInt::get(TheContext, llvm::APInt(1, c, true));
-}
-
 llvm::ConstantInt *AST::c8(char c)
 {
     return llvm::ConstantInt::get(TheContext, llvm::APInt(8, c, true));
@@ -137,7 +132,14 @@ llvm::Value *CharConst::igen() const
 
 llvm::Value *BoolConst::igen() const
 {
-    return c1(val);
+    if (val)
+    {
+        return c32(1);
+    }
+    else
+    {
+        return c32(0);
+    }
 }
 
 llvm::Value *UnOp::igen() const

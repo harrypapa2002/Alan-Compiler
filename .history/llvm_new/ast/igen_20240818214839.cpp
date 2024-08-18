@@ -17,14 +17,15 @@ llvm::IRBuilder<> AST::Builder(AST::TheContext);
 std::unique_ptr<llvm::Module> AST::TheModule;
 std::unique_ptr<llvm::legacy::FunctionPassManager> AST::TheFPM;
 llvm::Type *AST::proc = llvm::Type::getVoidTy(TheContext);
+llvm ::Type *AST::i1 = llvm::IntegerType::get(TheContext, 1);
 llvm::Type *AST::i8 = llvm::IntegerType::get(TheContext, 8);
 llvm::Type *AST::i32 = llvm::IntegerType::get(TheContext, 32);
 GenScope AST::scopes;
 std::stack<GenBlock *> AST::blockStack;
 
-llvm::ConstantInt *AST::c1(bool c)
+llvm::ConstantInt *AST::c1(bool b)
 {
-    return llvm::ConstantInt::get(TheContext, llvm::APInt(1, c, true));
+    return llvm::ConstantInt::get(TheContext, llvm::APInt(1, b, true));
 }
 
 llvm::ConstantInt *AST::c8(char c)
@@ -200,11 +201,8 @@ llvm::Value *BinOp::igen() const
 
 llvm::Value *CondCompOp::igen() const
 {
-    llvm::AllocaInst *leftAlloca = llvm::cast<llvm::AllocaInst>(left->igen());
-    llvm::AllocaInst *rightAlloca = llvm::cast<llvm::AllocaInst>(right->igen());
-
-    llvm::Value *leftVal = Builder.CreateLoad(leftAlloca->getAllocatedType(), leftAlloca, "left_val");
-    llvm::Value *rightVal = Builder.CreateLoad(rightAlloca->getAllocatedType(), rightAlloca, "right_val");
+    llvm::Value *leftVal = llvm::cast<llvm::AllocaInst>(left->igen());
+    llvm::Value *rightVal = llvm::cast<llvm::AllocaInst>(right->igen());
 
     llvm::Value *result = nullptr;
     switch (op)

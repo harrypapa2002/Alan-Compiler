@@ -1,0 +1,34 @@
+gcd():proc
+	find_gcd(a:int, b:int):int
+	i:int;
+	{
+		if (a>b)
+			i=a;
+		else
+			i=b;
+
+		while (i>1)
+		{
+			if ((a%i==0) & (b%i==0))
+				i = 0;
+			else{
+				i = 5;
+			}
+			i=i-1;
+		}
+		return 1;
+
+	}
+	
+	a:int;
+	b:int;
+	
+	{
+		writeString("Give the first integer: ");
+		a=readInteger();
+		writeString("Give the second integer: ");
+		b=readInteger();
+		writeString("\nThe gcd you are looking for is ");
+		writeInteger(find_gcd(a, b));
+		return 1;
+	}

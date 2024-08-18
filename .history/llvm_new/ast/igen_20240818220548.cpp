@@ -17,12 +17,13 @@ llvm::IRBuilder<> AST::Builder(AST::TheContext);
 std::unique_ptr<llvm::Module> AST::TheModule;
 std::unique_ptr<llvm::legacy::FunctionPassManager> AST::TheFPM;
 llvm::Type *AST::proc = llvm::Type::getVoidTy(TheContext);
+llvm::Type *AST::i1 = llvm::IntegerType::get(TheContext, 1);
 llvm::Type *AST::i8 = llvm::IntegerType::get(TheContext, 8);
 llvm::Type *AST::i32 = llvm::IntegerType::get(TheContext, 32);
 GenScope AST::scopes;
 std::stack<GenBlock *> AST::blockStack;
 
-llvm::ConstantInt *AST::c1(bool c)
+llvm::ConstantInt *AST::c1(char c)
 {
     return llvm::ConstantInt::get(TheContext, llvm::APInt(1, c, true));
 }
@@ -137,7 +138,14 @@ llvm::Value *CharConst::igen() const
 
 llvm::Value *BoolConst::igen() const
 {
-    return c1(val);
+    if (val)
+    {
+        return c1(1);
+    }
+    else
+    {
+        return c1(0);
+    }
 }
 
 llvm::Value *UnOp::igen() const

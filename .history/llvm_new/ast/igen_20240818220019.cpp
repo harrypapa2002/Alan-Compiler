@@ -22,11 +22,6 @@ llvm::Type *AST::i32 = llvm::IntegerType::get(TheContext, 32);
 GenScope AST::scopes;
 std::stack<GenBlock *> AST::blockStack;
 
-llvm::ConstantInt *AST::c1(bool c)
-{
-    return llvm::ConstantInt::get(TheContext, llvm::APInt(1, c, true));
-}
-
 llvm::ConstantInt *AST::c8(char c)
 {
     return llvm::ConstantInt::get(TheContext, llvm::APInt(8, c, true));
@@ -137,7 +132,14 @@ llvm::Value *CharConst::igen() const
 
 llvm::Value *BoolConst::igen() const
 {
-    return c1(val);
+    if (val)
+    {
+        return c32(1);
+    }
+    else
+    {
+        return c32(0);
+    }
 }
 
 llvm::Value *UnOp::igen() const
@@ -200,11 +202,8 @@ llvm::Value *BinOp::igen() const
 
 llvm::Value *CondCompOp::igen() const
 {
-    llvm::AllocaInst *leftAlloca = llvm::cast<llvm::AllocaInst>(left->igen());
-    llvm::AllocaInst *rightAlloca = llvm::cast<llvm::AllocaInst>(right->igen());
-
-    llvm::Value *leftVal = Builder.CreateLoad(leftAlloca->getAllocatedType(), leftAlloca, "left_val");
-    llvm::Value *rightVal = Builder.CreateLoad(rightAlloca->getAllocatedType(), rightAlloca, "right_val");
+    llvm::Value *leftVal = llvm::cast<llvm::AllocaInst>(left->igen());
+    llvm::Value *rightVal = llvm::cast<llvm::AllocaInst>(right->igen());
 
     llvm::Value *result = nullptr;
     switch (op)
@@ -430,6 +429,7 @@ llvm::Value *If::igen() const
     llvm::BasicBlock *mergeBB = llvm::BasicBlock::Create(TheContext, "ifcont");
 
     if(!condValue->getType()->isIntegerTy(32) ){
+        std::cout << "Converting to i32" << std::endl;
         condValue = Builder.CreateZExt(condValue, i32);
     }
 

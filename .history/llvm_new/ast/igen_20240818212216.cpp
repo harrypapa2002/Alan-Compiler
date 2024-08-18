@@ -22,10 +22,6 @@ llvm::Type *AST::i32 = llvm::IntegerType::get(TheContext, 32);
 GenScope AST::scopes;
 std::stack<GenBlock *> AST::blockStack;
 
-llvm::ConstantInt *AST::c1(bool c)
-{
-    return llvm::ConstantInt::get(TheContext, llvm::APInt(1, c, true));
-}
 
 llvm::ConstantInt *AST::c8(char c)
 {
@@ -137,7 +133,9 @@ llvm::Value *CharConst::igen() const
 
 llvm::Value *BoolConst::igen() const
 {
-    return c1(val);
+    llvm::AllocaInst *alloca = Builder.CreateAlloca(i32, nullptr, "bool_const");
+    Builder.CreateStore(c32(val), alloca);
+    return alloca;
 }
 
 llvm::Value *UnOp::igen() const
@@ -200,11 +198,8 @@ llvm::Value *BinOp::igen() const
 
 llvm::Value *CondCompOp::igen() const
 {
-    llvm::AllocaInst *leftAlloca = llvm::cast<llvm::AllocaInst>(left->igen());
-    llvm::AllocaInst *rightAlloca = llvm::cast<llvm::AllocaInst>(right->igen());
-
-    llvm::Value *leftVal = Builder.CreateLoad(leftAlloca->getAllocatedType(), leftAlloca, "left_val");
-    llvm::Value *rightVal = Builder.CreateLoad(rightAlloca->getAllocatedType(), rightAlloca, "right_val");
+    llvm::Value *leftVal = llvm::cast<llvm::AllocaInst>(left->igen());
+    llvm::Value *rightVal = llvm::cast<llvm::AllocaInst>(right->igen());
 
     llvm::Value *result = nullptr;
     switch (op)
@@ -236,31 +231,46 @@ llvm::Value *CondCompOp::igen() const
 
 llvm::Value *CondBoolOp::igen() const
 {
-    llvm::Value *leftValue = left->igen();
-    llvm::Value *rightValue = right->igen();
+    llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
+    llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
+
+    llvm::Type *t = l->getAllocatedType();
+
+    llvm::AllocaInst *alloca = Builder.CreateAlloca(t, nullptr, "boolop_tmp");
+
+    llvm::Value *leftVal = Builder.CreateLoad(t, l);
+    llvm::Value *rightVal = Builder.CreateLoad(t, r);
 
     llvm::Value *result;
     switch (op)
     {
     case '&':
-        result = Builder.CreateAnd(leftValue, rightValue, "andtmp");
+        result = Builder.CreateAnd(leftVal, rightVal, "andtmp");
         break;
     case '|':
-        result = Builder.CreateOr(leftValue, rightValue, "ortmp");
+        result = Builder.CreateOr(leftVal, rightVal, "ortmp");
         break;
     default:
         return nullptr;
     }
 
-    return result;
+    Builder.CreateStore(result, alloca);
+    return alloca;
 }
 
 llvm::Value *CondUnOp::igen() const
 {
-    llvm::Value *condValue = cond->igen();
-    llvm::Value *result = Builder.CreateNot(condValue, "nottmp");
+    llvm::AllocaInst *c = llvm::cast<llvm::AllocaInst>(cond->igen());
 
-    return result;
+    llvm::Type *condType = c->getAllocatedType();
+
+    llvm::AllocaInst *alloca = Builder.CreateAlloca(condType, nullptr, "unop_tmp");
+
+    llvm::Value *condVal = Builder.CreateLoad(condType, c);
+    llvm::Value *result = Builder.CreateNot(condVal, "nottmp");
+
+    Builder.CreateStore(result, alloca);
+    return alloca;
 }
 
 // TODO: Remove addLocal
@@ -423,17 +433,14 @@ llvm::Value *FuncCall::igen() const
 
 llvm::Value *If::igen() const
 {
-    llvm::Value *condValue = cond->igen();
+    llvm::AllocaInst *condAlloc = llvm::cast<llvm::AllocaInst>(cond->igen());
+    llvm::Value *v = Builder.CreateLoad(condAlloc->getAllocatedType(), condAlloc);
+
+    llvm::Value *condValue = Builder.CreateICmpNE(v, c32(0), "if_cond");
     llvm::Function *func = blockStack.top()->getFunc();
     llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(TheContext, "then", func);
     llvm::BasicBlock *elseBB = llvm::BasicBlock::Create(TheContext, "else");
     llvm::BasicBlock *mergeBB = llvm::BasicBlock::Create(TheContext, "ifcont");
-
-    if(!condValue->getType()->isIntegerTy(32) ){
-        condValue = Builder.CreateZExt(condValue, i32);
-    }
-
-    condValue = Builder.CreateICmpNE(condValue, c32(0), "if_cond");
 
     Builder.CreateCondBr(condValue, thenBB, elseBB);
 
@@ -477,11 +484,8 @@ llvm::Value *While::igen() const
     Builder.SetInsertPoint(condBB);
     blockStack.top()->setBlock(condBB);
 
-    llvm::Value *condValue = cond->igen();
-
-    if(!condValue->getType()->isIntegerTy(32) ){
-        condValue = Builder.CreateZExt(condValue, i32);
-    }
+    llvm::AllocaInst *condAlloc = llvm::cast<llvm::AllocaInst>(cond->igen());
+    llvm::Value *condValue = Builder.CreateLoad(condAlloc->getAllocatedType(), condAlloc, "load_cond");
 
     condValue = Builder.CreateICmpNE(condValue, c32(0), "while_cond");
 
