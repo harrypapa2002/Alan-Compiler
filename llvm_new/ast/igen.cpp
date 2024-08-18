@@ -44,7 +44,7 @@ void AST::llvm_igen(bool optimize)
     TheModule = std::make_unique<llvm::Module>(filename, TheContext);
 
     scopes.openScope();
-    
+
     TheFPM = std::make_unique<llvm::legacy::FunctionPassManager>(TheModule.get());
     if (optimize)
     {
@@ -355,7 +355,6 @@ llvm::Value *ArrayAccess::igen() const
     llvm::AllocaInst *indexAlloc = llvm::cast<llvm::AllocaInst>(indexExpr->igen());
     llvm::Value *indexValue = Builder.CreateLoad(indexAlloc->getAllocatedType(), indexAlloc, "load_index");
 
-
     llvm::Type *elementType = translateType(type, ParameterType::VALUE);
     llvm::AllocaInst *arrayPtrAlloc = currentBlock->getAlloca(*name);
     llvm::Value *elementPtr = nullptr;
@@ -405,7 +404,7 @@ llvm::Value *FuncCall::igen() const
     {
         auto funcArgs = func->args();
         auto exprList = exprs->getExprs();
-        auto exprIt = exprList.rbegin(); 
+        auto exprIt = exprList.rbegin();
         for (auto &arg : funcArgs)
         {
             llvm::AllocaInst *argAlloc = llvm::cast<llvm::AllocaInst>((*exprIt)->igen());
@@ -466,11 +465,11 @@ llvm::Value *If::igen() const
     Builder.SetInsertPoint(thenBB);
     blockStack.top()->setBlock(thenBB);
     thenStmt->igen();
-    if (!blockStack.top()->hasReturn())
+
+    if (!Builder.GetInsertBlock()->getTerminator())
     {
         Builder.CreateBr(mergeBB);
     }
-    // thenBB = Builder.GetInsertBlock();
 
     func->getBasicBlockList().push_back(elseBB);
     Builder.SetInsertPoint(elseBB);
@@ -479,11 +478,12 @@ llvm::Value *If::igen() const
     {
         elseStmt->igen();
     }
-    if (!blockStack.top()->hasReturn())
+
+    if (!Builder.GetInsertBlock()->getTerminator())
     {
         Builder.CreateBr(mergeBB);
     }
-    // elseBB = Builder.GetInsertBlock();
+    
     func->getBasicBlockList().push_back(mergeBB);
     Builder.SetInsertPoint(mergeBB);
     blockStack.top()->setBlock(mergeBB);
@@ -529,17 +529,13 @@ llvm::Value *While::igen() const
 // TODO:: Remove "if" related to blockstack.empty()
 llvm::Value *Return::igen() const
 {
-    llvm::AllocaInst *valueAlloc = llvm::cast<llvm::AllocaInst>(expr->igen());
-    llvm::Value *value = Builder.CreateLoad(valueAlloc->getAllocatedType(), valueAlloc, "ret_val");
-    Builder.CreateRet(value);
-    if (!blockStack.empty())
-    {
-        GenBlock *currentBlock = blockStack.top();
-        currentBlock->addReturn();
+    if (!expr){
+        Builder.CreateRetVoid();
     }
-    else
-    {
-        std::cerr << "Error: Block stack is empty, cannot add return statement." << std::endl;
+    else{
+        llvm::AllocaInst *valueAlloc = llvm::cast<llvm::AllocaInst>(expr->igen());
+        llvm::Value *value = Builder.CreateLoad(valueAlloc->getAllocatedType(), valueAlloc, "ret_val");
+        Builder.CreateRet(value);
     }
 
     return nullptr;
@@ -572,23 +568,22 @@ llvm::Value *FuncDef::igen() const
 
     if (fpar)
     {
-        unsigned index = args.size(); 
+        unsigned index = args.size();
         for (auto &param : func->args())
         {
-            --index; 
+            --index;
             param.setName(*args[index]->getName());
 
             llvm::AllocaInst *Alloca = Builder.CreateAlloca(param.getType(), nullptr, *args[index]->getName());
 
             Builder.CreateStore(&param, Alloca);
             currentBlock->addAlloca(*args[index]->getName(), Alloca);
-
         }
     }
     localDef->igen();
     stmts->igen();
 
-    if (!currentBlock->hasReturn())
+    if (!BB->getTerminator())
     {
         Builder.CreateRetVoid();
     }
@@ -612,15 +607,16 @@ llvm::Value *ExprList::igen() const
     return nullptr;
 }
 
-llvm::Value* StringConst::igen() const {
+llvm::Value *StringConst::igen() const
+{
     // Create a global string constant in the module
-    llvm::Constant* globalStr = Builder.CreateGlobalStringPtr(*name, "global_str");
+    llvm::Constant *globalStr = Builder.CreateGlobalStringPtr(*name, "global_str");
 
     // Calculate the length of the string including the null terminator
     size_t strLength = name->length() + 1;
 
     // Create an alloca instruction to allocate space for the string on the stack
-    llvm::AllocaInst* alloca = Builder.CreateAlloca(llvm::ArrayType::get(i8, strLength), nullptr, "str_const_alloca");
+    llvm::AllocaInst *alloca = Builder.CreateAlloca(llvm::ArrayType::get(i8, strLength), nullptr, "str_const_alloca");
 
     // Copy the global string to the stack-allocated memory
     Builder.CreateMemCpy(alloca, llvm::MaybeAlign(1), globalStr, llvm::MaybeAlign(1), c32(strLength));
@@ -639,8 +635,8 @@ llvm::Value *Empty::igen() const
     return nullptr;
 }
 
-
-void AST::codegenLibs() {
+void AST::codegenLibs()
+{
     llvm::FunctionType *writeIntegerType =
         llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i32}, false);
     scopes.addFunction("writeInteger", llvm::Function::Create(writeIntegerType, llvm::Function::ExternalLinkage, "writeInteger", TheModule.get()));
@@ -650,7 +646,7 @@ void AST::codegenLibs() {
     llvm::FunctionType *writeCharType =
         llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i8}, false);
     scopes.addFunction("writeChar", llvm::Function::Create(writeCharType, llvm::Function::ExternalLinkage, "writeChar", TheModule.get()));
-    llvm::FunctionType *writeStringType = 
+    llvm::FunctionType *writeStringType =
         llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i8->getPointerTo()}, false);
     scopes.addFunction("writeString", llvm::Function::Create(writeStringType, llvm::Function::ExternalLinkage, "writeString", TheModule.get()));
     llvm::FunctionType *readIntegerType =
@@ -662,7 +658,7 @@ void AST::codegenLibs() {
     llvm::FunctionType *readCharType =
         llvm::FunctionType::get(i8, std::vector<llvm::Type *>{}, false);
     scopes.addFunction("readChar", llvm::Function::Create(readCharType, llvm::Function::ExternalLinkage, "readChar", TheModule.get()));
-    llvm::FunctionType *readStringType = 
+    llvm::FunctionType *readStringType =
         llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i32, i8->getPointerTo()}, false);
     scopes.addFunction("readString", llvm::Function::Create(readStringType, llvm::Function::ExternalLinkage, "readString", TheModule.get()));
     llvm::FunctionType *extendType =
@@ -671,16 +667,16 @@ void AST::codegenLibs() {
     llvm::FunctionType *shrinkType =
         llvm::FunctionType::get(i8, std::vector<llvm::Type *>{i32}, false);
     scopes.addFunction("shrink", llvm::Function::Create(shrinkType, llvm::Function::ExternalLinkage, "shrink", TheModule.get()));
-    llvm::FunctionType *strlenType = 
+    llvm::FunctionType *strlenType =
         llvm::FunctionType::get(i32, std::vector<llvm::Type *>{i8->getPointerTo()}, false);
     scopes.addFunction("strlen", llvm::Function::Create(strlenType, llvm::Function::ExternalLinkage, "strlen", TheModule.get()));
-    llvm::FunctionType *strcmpType = 
+    llvm::FunctionType *strcmpType =
         llvm::FunctionType::get(i32, std::vector<llvm::Type *>{i8->getPointerTo(), i8->getPointerTo()}, false);
     scopes.addFunction("strcmp", llvm::Function::Create(strcmpType, llvm::Function::ExternalLinkage, "strcmp", TheModule.get()));
-    llvm::FunctionType *strcpyType = 
+    llvm::FunctionType *strcpyType =
         llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i8->getPointerTo(), i8->getPointerTo()}, false);
     scopes.addFunction("strcpy", llvm::Function::Create(strcpyType, llvm::Function::ExternalLinkage, "strcpy", TheModule.get()));
-    llvm::FunctionType *strcatType = 
+    llvm::FunctionType *strcatType =
         llvm::FunctionType::get(proc, std::vector<llvm::Type *>{i8->getPointerTo(), i8->getPointerTo()}, false);
     scopes.addFunction("strcat", llvm::Function::Create(strcatType, llvm::Function::ExternalLinkage, "strcat", TheModule.get()));
 }
