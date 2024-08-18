@@ -1,0 +1,7 @@
+comp () : proc {
+    if(5 > 15) {
+        writeString("correct\n");
+    }
+    else writeString("wrong\n");
+    return;
+}
