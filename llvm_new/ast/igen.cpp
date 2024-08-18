@@ -178,7 +178,7 @@ llvm::Value *BinOp::igen() const
     llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
     llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
 
-    llvm::Type *t = l->getAllocatedType(); 
+    llvm::Type *t = l->getAllocatedType();
 
     llvm::AllocaInst *alloca = Builder.CreateAlloca(t, nullptr, "binop_tmp");
 
@@ -215,7 +215,7 @@ llvm::Value *CondCompOp::igen() const
     llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
     llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
 
-    llvm::Type *t = l->getAllocatedType(); 
+    llvm::Type *t = l->getAllocatedType();
 
     llvm::AllocaInst *alloca = Builder.CreateAlloca(t, nullptr, "compop_tmp");
 
@@ -257,7 +257,7 @@ llvm::Value *CondBoolOp::igen() const
     llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
     llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
 
-    llvm::Type *t = l->getAllocatedType(); 
+    llvm::Type *t = l->getAllocatedType();
 
     llvm::AllocaInst *alloca = Builder.CreateAlloca(t, nullptr, "boolop_tmp");
 
@@ -286,7 +286,7 @@ llvm::Value *CondUnOp::igen() const
     //std::cout << "Generating code for conditional unary operation" << std::endl;
     llvm::AllocaInst *c = llvm::cast<llvm::AllocaInst>(cond->igen());
 
-    llvm::Type *condType = c->getAllocatedType(); 
+    llvm::Type *condType = c->getAllocatedType();
 
     llvm::AllocaInst *alloca = Builder.CreateAlloca(condType, nullptr, "unop_tmp");
 
@@ -297,26 +297,31 @@ llvm::Value *CondUnOp::igen() const
     return alloca;
 }
 
-//TODO: Remove addLocal
+// TODO: Remove addLocal
 llvm::Value *VarDef::igen() const
 {
     //std::cout << "Generating code for variable definition: " << *name << std::endl;
     llvm::Type *t = nullptr;
 
-    if (isArray) {
-        llvm::Type* elementType = translateType(type, ParameterType::VALUE);
+    if (isArray)
+    {
+        llvm::Type *elementType = translateType(type, ParameterType::VALUE);
         t = llvm::ArrayType::get(elementType, size);
-    } else {
+    }
+    else
+    {
         t = translateType(type, ParameterType::VALUE);
     }
 
     llvm::AllocaInst *Alloca = Builder.CreateAlloca(t, nullptr, *name);
 
-    if (!blockStack.empty()) {
+    if (!blockStack.empty())
+    {
         GenBlock *currentBlock = blockStack.top();
-        currentBlock->addLocal(*name, type, ParameterType::VALUE);
-        currentBlock->addValue(*name, Alloca);
-    } else {
+        currentBlock->addAlloca(*name, Alloca);
+    }
+    else
+    {
         std::cerr << "Error: Block stack is empty, cannot add variable definition." << std::endl;
     }
 
@@ -332,30 +337,31 @@ llvm::Value *Id::igen() const
     }
 
     GenBlock *currentBlock = blockStack.top();
-    //std::cout << "Generating code for identifier " << *name << std::endl;
-    if (currentBlock->isReference(*name))
+    std::cout << "Generating code for identifier " << *name << std::endl;
+    llvm::AllocaInst *allocaInst = currentBlock->getAlloca(*name);
+
+    if (allocaInst->getAllocatedType()->isPointerTy())
     {
-        llvm::AllocaInst *address = currentBlock->getAddress(*name);
-        llvm::Type *allocatedType = address->getAllocatedType();
-        return Builder.CreateLoad(allocatedType, address);
+        llvm::Type *allocatedType = allocaInst->getAllocatedType();
+        return Builder.CreateLoad(allocatedType, allocaInst, *name + "_load");
     }
     else
     {
-        return currentBlock->getValue(*name);
+        return allocaInst;
     }
 }
 
+// TODO: Check references here
+llvm::Value *ArrayAccess::igen() const
+{
 
-//TODO: Check references here
-llvm::Value *ArrayAccess::igen() const {
-
-    if (blockStack.empty()) {
+    if (blockStack.empty())
+    {
         std::cerr << "Error: Block stack is empty, cannot generate code for array access." << std::endl;
         return nullptr;
     }
 
     GenBlock *currentBlock = blockStack.top();
-    llvm::AllocaInst *arrayPtrAlloc = nullptr;
 
     // Generate code for the index expression
     llvm::AllocaInst *indexAlloc = llvm::cast<llvm::AllocaInst>(indexExpr->igen());
@@ -364,19 +370,20 @@ llvm::Value *ArrayAccess::igen() const {
     //std::cout << "Generating code for array access " << *name << "[" << "]" << std::endl;
 
     llvm::Type *elementType = translateType(type, ParameterType::VALUE);
+    llvm::AllocaInst *arrayPtrAlloc = currentBlock->getAlloca(*name);
     llvm::Value *elementPtr = nullptr;
 
-    if (currentBlock->isReference(*name)) {
+    if (arrayPtrAlloc->getAllocatedType()->isPointerTy())
+    {
         // If the array is a reference, load the pointer to the array
-        arrayPtrAlloc = currentBlock->getAddress(*name);
         llvm::Value *arrayLoad = Builder.CreateLoad(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, *name + "_arrayptr");
 
         // Here we expect the arrayLoad to be a pointer to an array, so we cast it as needed
         elementPtr = Builder.CreateGEP(elementType, arrayLoad, indexValue, "elementptr");
         std::cerr << "Generated GEP for element access" << std::endl;
-
-    } else {
-        arrayPtrAlloc = currentBlock->getValue(*name);
+    }
+    else
+    {
         elementPtr = Builder.CreateGEP(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, std::vector<llvm::Value *>({c32(0), indexValue}), "elementptr");
     }
 
@@ -408,34 +415,56 @@ llvm::Value *FuncCall::igen() const
     //std::cout << "Generating code for function call " << *name << std::endl;
     llvm::Function *func = scopes.getFunction(*name);
     std::vector<llvm::Value *> args;
+
     if (exprs)
     {
+        auto funcArgs = func->args();
         auto exprList = exprs->getExprs();
-        auto arg = func->arg_begin();
-        for (auto it = exprList.rbegin(); it != exprList.rend(); ++it)
+        auto exprIt = exprList.rbegin(); 
+        for (auto &arg : funcArgs)
         {
-            llvm::Value *argValue = (*it)->igen();
+            std::cout << "arg: " << arg.getName().str() << std::endl;
+            llvm::AllocaInst *argAlloc = llvm::cast<llvm::AllocaInst>((*exprIt)->igen());
+            ++exprIt;
 
-            if (arg->getType()->isPointerTy())
+            if (arg.getType()->isPointerTy())
             {
-                args.push_back(argValue);
+                // If the function argument expects a pointer, pass the alloca directly (handles references)
+                args.push_back(argAlloc);
             }
             else
             {
-                args.push_back(Builder.CreateLoad(arg->getType(), argValue, *name + "_arg"));
+                // If the function argument expects a value, load the value from the alloca
+                llvm::Value *loadedValue = Builder.CreateLoad(argAlloc->getAllocatedType(), argAlloc, *name + "_arg");
+                args.push_back(loadedValue);
             }
-            ++arg;
         }
-
-    }
-    if(func->getReturnType()->isVoidTy()) {
-        return Builder.CreateCall(func, args);
     }
 
-    return Builder.CreateCall(func, args, *name + "_call");
+    llvm::Type *returnType = func->getReturnType();
+    std::cout << "Function return type settled" << std::endl;
 
+    if (returnType->isVoidTy())
+    {
+        // If the function returns void, just call the function and return nullptr
+        Builder.CreateCall(func, args);
+        std::cout << "Function call generated for void return type" << std::endl;
+        return nullptr;
+    }
+
+    // Create an alloca for the return value
+    llvm::AllocaInst *retAlloca = Builder.CreateAlloca(returnType, nullptr, *name + "_ret");
+    std::cout << "Alloca for return value created" << std::endl;
+
+    // Generate the function call
+    llvm::Value *callResult = Builder.CreateCall(func, args, *name + "_call");
+    std::cout << "Function call generated" << std::endl;
+
+    // Store the function call result in the alloca
+    Builder.CreateStore(callResult, retAlloca);
+
+    return retAlloca;
 }
-
 
 llvm::Value *If::igen() const
 {
@@ -545,49 +574,44 @@ llvm::Value *FuncDef::igen() const
     ////std::cout << "Generating code for function " << *name << std::endl;
     llvm::Type *returnType = translateType(type, ParameterType::VALUE);
     std::vector<llvm::Type *> argTypes;
-    auto args = fpar ? fpar->getParameters() : std::vector<Fpar*>();
+    auto args = fpar ? fpar->getParameters() : std::vector<Fpar *>();
 
     for (auto it = args.rbegin(); it != args.rend(); ++it)
     {
         auto arg = *it;
+        std::cout << "arg: " << *arg->getName() << "type: " << arg->getType()->getType() << std::endl;
         argTypes.push_back(translateType(arg->getType(), arg->getParameterType()));
     }
     llvm::FunctionType *funcType = llvm::FunctionType::get(returnType, argTypes, false);
     llvm::Function *func = llvm::Function::Create(funcType, llvm::Function::ExternalLinkage, *name, TheModule.get());
-    llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, *name + "_entry", func);
 
+    llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, *name + "_entry", func);
     Builder.SetInsertPoint(BB);
 
     GenBlock *currentBlock = new GenBlock();
     currentBlock->setFunc(func);
     currentBlock->setBlock(BB);
     blockStack.push(currentBlock);
+
     scopes.addFunction(*name, func);
     scopes.openScope();
 
     if (fpar)
     {
-        unsigned index = 0;
+        unsigned index = args.size(); 
         for (auto &param : func->args())
         {
+            --index; 
             param.setName(*args[index]->getName());
+
             llvm::AllocaInst *Alloca = Builder.CreateAlloca(param.getType(), nullptr, *args[index]->getName());
+
             Builder.CreateStore(&param, Alloca);
-            currentBlock->addArg(*args[index]->getName(), args[index]->getType(), args[index]->getParameterType());
-            currentBlock->addLocal(*args[index]->getName(), args[index]->getType(), args[index]->getParameterType());
-            if (args[index]->getParameterType() == ParameterType::REFERENCE)
-            {
-                currentBlock->addDeref(*args[index]->getName(), args[index]->getType(), ParameterType::VALUE);
-                currentBlock->addAddress(*args[index]->getName(), Alloca);
-            }
-            else
-            {
-                currentBlock->addValue(*args[index]->getName(), Alloca);
-            }
-            ++index;
+            currentBlock->addAlloca(*args[index]->getName(), Alloca);
+
         }
     }
-    ////std::cout << "localdefs" << std::endl;
+    std::cout << "localdefs" << std::endl;
     localDef->igen();
     ////std::cout << "stmts" << std::endl;
     stmts->igen();
@@ -617,28 +641,28 @@ llvm::Value *ExprList::igen() const
     return nullptr;
 }
 
-llvm::Value *StringConst::igen() const {
-    ////std::cout << "Generating code for string constant " << *name << std::endl;
+llvm::Value* StringConst::igen() const {
+    std::cout << "Generating code for string constant " << *name << std::endl;
 
-    size_t strLength = name->length() + 1; 
+    // Create a global string constant in the module
+    llvm::Constant* globalStr = Builder.CreateGlobalStringPtr(*name, "global_str");
 
-    llvm::ArrayType *arrayType = llvm::ArrayType::get(i8, strLength);
-    llvm::AllocaInst *alloca = Builder.CreateAlloca(arrayType, nullptr, "str_const_alloca");
+    // Calculate the length of the string including the null terminator
+    size_t strLength = name->length() + 1;
 
-    for (size_t i = 0; i < strLength - 1; ++i) {
-        llvm::Value *charPtr = Builder.CreateGEP(arrayType, alloca, {c32(0), c32(i)});
-        Builder.CreateStore(c8((*name)[i]), charPtr);
-    }
+    // Create an alloca instruction to allocate space for the string on the stack
+    llvm::AllocaInst* alloca = Builder.CreateAlloca(llvm::ArrayType::get(i8, strLength), nullptr, "str_const_alloca");
 
-    llvm::Value *nullPtr = Builder.CreateGEP(arrayType, alloca, {c32(0), c32(strLength - 1)});
-    Builder.CreateStore(c8('\0'), nullPtr);
+    // Copy the global string to the stack-allocated memory
+    Builder.CreateMemCpy(alloca, llvm::MaybeAlign(1), globalStr, llvm::MaybeAlign(1), c32(strLength));
 
+    // Return the alloca instruction
     return alloca;
 }
 
 llvm::Value *ProcCall::igen() const
-{    
-    ////std::cout << "Generating code for procedure call " << std::endl;
+{
+    std::cout << "Generating code for procedure call " << std::endl;
     return funcCall->igen();
 }
 

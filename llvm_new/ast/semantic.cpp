@@ -40,6 +40,9 @@ void Fpar::sem()
     }
     parameterSymbol = new ParameterSymbol(*name, type, parameterType);
     st.addSymbol(*name, parameterSymbol);
+
+    isArray = (type->getType() == TypeEnum::ARRAY);
+
 }
 
 // FparList Class Semantic Method Implementation

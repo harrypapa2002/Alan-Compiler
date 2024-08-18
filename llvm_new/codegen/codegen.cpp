@@ -7,7 +7,7 @@ llvm::Type* i8 =  llvm::IntegerType::get(AST::TheContext, 8);
 llvm::Type* proc =  llvm::Type::getVoidTy(AST::TheContext);
 
 llvm::Type* translateType(Type* type, ParameterType pt) {
-    llvm::Type* t;
+    llvm::Type* t = nullptr;
     if (type->getType() == TypeEnum::INT) {
         //std::cout << "int" << std::endl;
         t = i32;
@@ -17,9 +17,7 @@ llvm::Type* translateType(Type* type, ParameterType pt) {
     } else if (type->getType() == TypeEnum::VOID) {
         t = proc;
     } else if (type->getType() == TypeEnum::ARRAY) {
-        t = llvm::ArrayType::get(translateType(type->getBaseType(), ParameterType::VALUE), type->getSize());
-    } else if (type->getType() == TypeEnum::REFERENCE) {
-        t = translateType(type->getBaseType(), ParameterType::VALUE);
+        t = translateType(type->getBaseType(), ParameterType::VALUE)->getPointerTo();
     }
     if (pt == ParameterType::REFERENCE) {
         t = t->getPointerTo();
@@ -43,57 +41,14 @@ llvm::Function* GenBlock::getFunc() {
     return func;
 }
 
-// Add argument for GenBlock
-void GenBlock::addArg(std::string name, Type* type, ParameterType pt) {
-    llvm::Type* t = translateType(type, pt);
-    args.push_back(t);
-    locals[name] = t;
-}
-
-// Get arguments for GenBlock
-const std::vector<llvm::Type*>& GenBlock::getArgs() {
-    return args;
-}
-
-// Add local variable for GenBlock
-void GenBlock::addLocal(std::string name, Type* type, ParameterType pt) {
-    locals[name] = translateType(type, pt);
-}
-
-// Get local variable type for GenBlock
-llvm::Type* GenBlock::getLocal(std::string name) {
-    return locals[name];
-}
-
-// Add dereference for GenBlock
-void GenBlock::addDeref(std::string name, Type* type, ParameterType pt) {
-    derefs[name] = translateType(type, pt);
-}
-
-// Get dereference for GenBlock
-
-llvm::Type* GenBlock::getDeref(std::string name) {
-    return derefs[name];
-}
-
 // Add value for GenBlock
-void GenBlock::addValue(std::string name, llvm::AllocaInst* value) {
-    values[name] = value;
+void GenBlock::addAlloca(std::string name, llvm::AllocaInst* value) {
+    allocas[name] = value;
 }
 
 // Get value for GenBlock
-llvm::AllocaInst* GenBlock::getValue(std::string name) {
-    return values[name];
-}
-
-// Add address for GenBlock
-void GenBlock::addAddress(std::string name, llvm::AllocaInst* address) {
-    addresses[name] = address;
-}
-
-// Get address for GenBlock
-llvm::AllocaInst* GenBlock::getAddress(std::string name) {
-    return addresses[name];
+llvm::AllocaInst* GenBlock::getAlloca(std::string name) {
+    return allocas[name];
 }
 
 // Set block for GenBlock
@@ -114,11 +69,6 @@ void GenBlock::addReturn() {
 // Check if block has return for GenBlock
 bool GenBlock::hasReturn() {
     return hasReturnFlag;
-}
-
-// Check if variable is a reference in GenBlock
-bool GenBlock::isReference(std::string name) {
-    return locals[name]->isPointerTy();
 }
 
 // GenScope constructor

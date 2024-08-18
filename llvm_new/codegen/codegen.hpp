@@ -25,13 +25,10 @@ llvm::Type* translateType(Type* type, ParameterType pt);
 class GenBlock {
 private:
     llvm::Function* func;
-    std::vector<llvm::Type*> args;
-    std::unordered_map<std::string, llvm::Type*> locals;
-    std::unordered_map<std::string, llvm::Type*> derefs;
-    std::unordered_map<std::string, llvm::AllocaInst*> values;
-    std::unordered_map<std::string, llvm::AllocaInst*> addresses;
     llvm::BasicBlock* block;
     bool hasReturnFlag; 
+    std::unordered_map<std::string, llvm::AllocaInst*> allocas;
+
 
 public:
     GenBlock();
@@ -40,28 +37,14 @@ public:
     void setFunc(llvm::Function* f);
     llvm::Function* getFunc();
 
-    void addArg(std::string name, Type* type, ParameterType pt);
-    const std::vector<llvm::Type*>& getArgs();
-
-    void addLocal(std::string name, Type* type, ParameterType pt);
-    llvm::Type* getLocal(std::string name);
-
-    void addDeref(std::string name, Type* type, ParameterType pt);
-    llvm::Type* getDeref(std::string name);
-
-    void addValue(std::string name, llvm::AllocaInst* value);
-    llvm::AllocaInst* getValue(std::string name);
-
-    void addAddress(std::string name, llvm::AllocaInst* address);
-    llvm::AllocaInst* getAddress(std::string name);
+    void addAlloca(std::string name, llvm::AllocaInst* value);
+    llvm::AllocaInst* getAlloca(std::string name);
 
     void setBlock(llvm::BasicBlock* b);
     llvm::BasicBlock* getBlock();
 
     void addReturn();
     bool hasReturn();
-
-    bool isReference(std::string name);
 };
 
 class GenScope {

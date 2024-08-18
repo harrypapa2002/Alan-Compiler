@@ -11,8 +11,7 @@ enum class TypeEnum
     INT,
     BYTE,
     VOID,
-    ARRAY,
-    REFERENCE
+    ARRAY
 };
 
 // Base class for different types
@@ -88,22 +87,6 @@ public:
 private:
     Type *baseType;
     int size;
-};
-
-// Derived class for Array Reference type
-class ArrayReferenceType : public Type
-{
-public:
-    ArrayReferenceType(Type *baseType);
-
-    int getSize() const override;
-
-    Type *getBaseType() const override;
-
-    void printOn(std::ostream &out) const override;
-
-private:
-    Type *baseType;
 };
 
 // Function to compare types

@@ -82,30 +82,3 @@ void ArrayType::printOn(std::ostream &out) const
 {
     out << "array of " << *baseType << "[" << size << "]";
 }
-
-// Implementation of ArrayReferenceType constructor
-ArrayReferenceType::ArrayReferenceType(Type *baseType) : baseType(baseType)
-{
-    if (baseType->getType() == TypeEnum::VOID)
-        yyerror("Array cannot have void type");
-    type = TypeEnum::REFERENCE;
-}
-
-// Implementation of getSize for ArrayReferenceType
-int ArrayReferenceType::getSize() const
-{
-    return INT_SIZE;
-}
-
-// Implementation of getBaseType for ArrayReferenceType
-Type *ArrayReferenceType::getBaseType() const
-{
-    return baseType;
-}
-
-// Implementation of printOn for ArrayReferenceType
-void ArrayReferenceType::printOn(std::ostream &out) const
-{
-    out << "reference to array of " << *baseType;
-}
-

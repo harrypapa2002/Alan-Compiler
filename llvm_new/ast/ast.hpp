@@ -142,12 +142,15 @@ public:
     ParameterType getParameterType() const;
     std::string* getName() const;
     Type *getType() const;
+    bool getIsArray() const;
     
 private:
     ParameterType parameterType;
     std::string *name;
     Type *type;
     ParameterSymbol *parameterSymbol;
+    bool isArray;
+    
 };
 
 // FparList Class

@@ -58,9 +58,6 @@ std::ostream &operator<<(std::ostream &out, TypeEnum t)
     case TypeEnum::ARRAY:
         out << "Array";
         break;
-    case TypeEnum::REFERENCE:
-        out << "Reference";
-        break;
     }
     return out;
 }
@@ -171,10 +168,13 @@ void LocalDefList::printOn(std::ostream &out) const
 
 // Fpar Class Method Implementations
 
-Fpar::Fpar(std::string *n, Type *t, ParameterType p) : name(n), type(t)
+Fpar::Fpar(std::string *n, Type *t, ParameterType p)
+    : name(n), type(t), parameterType(p), parameterSymbol(nullptr)
 {
-    parameterType = p;
-    parameterSymbol = nullptr;
+}
+
+bool Fpar::getIsArray() const {
+    return isArray;
 }
 
 Fpar::~Fpar()
