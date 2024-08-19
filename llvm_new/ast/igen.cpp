@@ -164,15 +164,30 @@ llvm::Value *UnOp::igen() const
 
 llvm::Value *BinOp::igen() const
 {
-    llvm::AllocaInst *l = llvm::cast<llvm::AllocaInst>(left->igen());
-    llvm::AllocaInst *r = llvm::cast<llvm::AllocaInst>(right->igen());
+    llvm::Value *leftVal = left->igen();
+    llvm::Value *rightVal = right->igen();
 
-    llvm::Type *t = l->getAllocatedType();
+    if(llvm::isa<llvm::AllocaInst>(leftVal)){
+        llvm::AllocaInst *leftAlloc = llvm::cast<llvm::AllocaInst>(leftVal);
+        leftVal = Builder.CreateLoad(leftAlloc->getAllocatedType(), leftAlloc, "left_load");
+    }
+    else {
+        leftVal = Builder.CreateLoad(leftVal->getType(), leftVal, "left_load");
+    }
+
+    if(llvm::isa<llvm::AllocaInst>(rightVal)){
+        llvm::AllocaInst *rightAlloc = llvm::cast<llvm::AllocaInst>(rightVal);
+        rightVal = Builder.CreateLoad(rightAlloc->getAllocatedType(), rightAlloc, "right_load");
+    }
+    else {
+        rightVal = Builder.CreateLoad(rightVal->getType(), rightVal, "right_load");
+    }
+
+    std::cout << "right done\n";
+
+    llvm::Type *t = translateType(type, ParameterType::VALUE);
 
     llvm::AllocaInst *alloca = Builder.CreateAlloca(t, nullptr, "binop_tmp");
-
-    llvm::Value *leftVal = Builder.CreateLoad(t, l);
-    llvm::Value *rightVal = Builder.CreateLoad(t, r);
 
     switch (op)
     {
@@ -194,21 +209,39 @@ llvm::Value *BinOp::igen() const
     default:
         return nullptr;
     }
-
+    std::cout << "binop done\n";
     return alloca;
 }
 
 llvm::Value *CondCompOp::igen() const
 {
-    llvm::AllocaInst *leftAlloca = llvm::cast<llvm::AllocaInst>(left->igen());
-    llvm::AllocaInst *rightAlloca = llvm::cast<llvm::AllocaInst>(right->igen());
+    llvm::Value *leftVal = left->igen();
+    llvm::Value *rightVal = right->igen();
+    std::cout << "op left done\n";
+    if(llvm::isa<llvm::AllocaInst>(leftVal)){
+        llvm::AllocaInst *leftAlloc = llvm::cast<llvm::AllocaInst>(leftVal);
+        leftVal = Builder.CreateLoad(leftAlloc->getAllocatedType(), leftAlloc, "left_load");
+    }
+    else {
+        leftVal = Builder.CreateLoad(leftVal->getType(), leftVal, "left_load");
+    }
 
-    llvm::Value *leftVal = Builder.CreateLoad(leftAlloca->getAllocatedType(), leftAlloca, "left_val");
-    llvm::Value *rightVal = Builder.CreateLoad(rightAlloca->getAllocatedType(), rightAlloca, "right_val");
+    if(llvm::isa<llvm::AllocaInst>(rightVal)){
+        llvm::AllocaInst *rightAlloc = llvm::cast<llvm::AllocaInst>(rightVal);
+        rightVal = Builder.CreateLoad(rightAlloc->getAllocatedType(), rightAlloc, "right_load");
+    }
+    else {
+        rightVal = Builder.CreateLoad(rightVal->getType(), rightVal, "right_load");
+    }
+
+    std::cout << "op right done\n";
+
+    std::cout << leftVal->getType()->getTypeID() << " " << rightVal->getType()->getTypeID() << std::endl;
 
     llvm::Value *result = nullptr;
     switch (op)
     {
+        std::cout << "op switch\n";
     case lt:
         result = Builder.CreateICmpSLT(leftVal, rightVal, "lttmp");
         break;
@@ -231,6 +264,7 @@ llvm::Value *CondCompOp::igen() const
         return nullptr;
     }
 
+    std::cout << "op done\n";
     return result;
 }
 
@@ -304,16 +338,17 @@ llvm::Value *Id::igen() const
     GenBlock *currentBlock = blockStack.top();
     llvm::AllocaInst *allocaInst = currentBlock->getAlloca(*name);
 
-    if (allocaInst->getAllocatedType()->isPointerTy())
-    {
-        llvm::Type *allocatedType = allocaInst->getAllocatedType();
-        return Builder.CreateLoad(allocatedType, allocaInst, *name + "_load");
-    }
-    else
-    {
+      if (allocaInst->getAllocatedType()->isPointerTy())
+      {
+          std::cout << *name << " is a reference" << std::endl;
+          llvm::Type *allocatedType = allocaInst->getAllocatedType();
+          return Builder.CreateLoad(allocatedType, allocaInst, *name + "_load");
+      }
+      else
+     {
         return allocaInst;
-    }
-}
+     }
+}   
 
 // TODO: Check references here
 llvm::Value *ArrayAccess::igen() const
@@ -328,8 +363,19 @@ llvm::Value *ArrayAccess::igen() const
     GenBlock *currentBlock = blockStack.top();
 
     // Generate code for the index expression
-    llvm::AllocaInst *indexAlloc = llvm::cast<llvm::AllocaInst>(indexExpr->igen());
-    llvm::Value *indexValue = Builder.CreateLoad(indexAlloc->getAllocatedType(), indexAlloc, "load_index");
+    llvm::Value *indexValue = indexExpr->igen();
+
+    if (llvm::isa<llvm::AllocaInst>(indexValue))
+    {
+        llvm::AllocaInst *indexAllocInst = llvm::cast<llvm::AllocaInst>(indexValue);
+        indexValue = Builder.CreateLoad(indexAllocInst->getAllocatedType(), indexAllocInst, "load_index");
+    }
+    else
+    {
+        indexValue = Builder.CreateLoad(indexValue->getType(), indexValue, "load_index");
+    }
+
+    std::cout << "Generated code for index expression" << std::endl;
 
     llvm::Type *elementType = translateType(type, ParameterType::VALUE);
     llvm::AllocaInst *arrayPtrAlloc = currentBlock->getAlloca(*name);
@@ -342,31 +388,35 @@ llvm::Value *ArrayAccess::igen() const
 
         // Here we expect the arrayLoad to be a pointer to an array, so we cast it as needed
         elementPtr = Builder.CreateGEP(elementType, arrayLoad, indexValue, "elementptr");
-        std::cerr << "Generated GEP for element access" << std::endl;
+        //`std::cerr << "Generated GEP for element access" << std::endl;
+
     }
     else
     {
         elementPtr = Builder.CreateGEP(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, std::vector<llvm::Value *>({c32(0), indexValue}), "elementptr");
     }
 
-    llvm::AllocaInst *alloca = Builder.CreateAlloca(elementType, nullptr, "array_element");
-    llvm::Value *elementValue = Builder.CreateLoad(elementType, elementPtr, "element_value");
-    Builder.CreateStore(elementValue, alloca);
+    std::cout << "Generated code for array access" << std::endl;
 
-    return alloca;
+    return elementPtr;
 }
 
 llvm::Value *Let::igen() const
 {
+    std::cout << "Let::igen()" << *lexpr << "\n"<< *rexpr << std::endl;
+    llvm::Value *rValue = rexpr->igen();
+    if (llvm::isa<llvm::AllocaInst>(rValue)) {
+        llvm::AllocaInst *rValueAlloc = llvm::cast<llvm::AllocaInst>(rValue);
+        rValue = Builder.CreateLoad(rValueAlloc->getAllocatedType(), rValueAlloc);
+    }
 
-    llvm::AllocaInst *rValueAlloc = llvm::cast<llvm::AllocaInst>(rexpr->igen());
-    llvm::AllocaInst *lValueAlloc = llvm::cast<llvm::AllocaInst>(lexpr->igen());
+    if(rValue->getType()->isPointerTy()){
+        rValue = Builder.CreateLoad(translateType(lexpr->getType(), ParameterType::VALUE), rValue);
+    }
 
-    llvm::Type *rValueType = rValueAlloc->getAllocatedType();
-
-    llvm::Value *rValue = Builder.CreateLoad(rValueType, rValueAlloc);
-
-    Builder.CreateStore(rValue, lValueAlloc);
+    llvm::Value *lValue = lexpr->igen();
+ 
+    Builder.CreateStore(rValue, lValue);
 
     return nullptr;
 }
@@ -383,7 +433,7 @@ llvm::Value *FuncCall::igen() const
         auto exprIt = exprList.rbegin();
         for (auto &arg : funcArgs)
         {
-            llvm::AllocaInst *argAlloc = llvm::cast<llvm::AllocaInst>((*exprIt)->igen());
+            llvm::Value *argAlloc = (*exprIt)->igen();
             ++exprIt;
 
             if (arg.getType()->isPointerTy())
@@ -394,7 +444,7 @@ llvm::Value *FuncCall::igen() const
             else
             {
                 // If the function argument expects a value, load the value from the alloca
-                llvm::Value *loadedValue = Builder.CreateLoad(argAlloc->getAllocatedType(), argAlloc, *name + "_arg");
+                llvm::Value *loadedValue = Builder.CreateLoad(arg.getType(), argAlloc, *name + "_arg");
                 args.push_back(loadedValue);
             }
         }
@@ -409,16 +459,9 @@ llvm::Value *FuncCall::igen() const
         return nullptr;
     }
 
-    // Create an alloca for the return value
-    llvm::AllocaInst *retAlloca = Builder.CreateAlloca(returnType, nullptr, *name + "_ret");
-
     // Generate the function call
-    llvm::Value *callResult = Builder.CreateCall(func, args, *name + "_call");
+    return Builder.CreateCall(func, args, *name + "_call");
 
-    // Store the function call result in the alloca
-    Builder.CreateStore(callResult, retAlloca);
-
-    return retAlloca;
 }
 
 llvm::Value *If::igen() const
@@ -507,8 +550,7 @@ llvm::Value *Return::igen() const
         Builder.CreateRetVoid();
     }
     else{
-        llvm::AllocaInst *valueAlloc = llvm::cast<llvm::AllocaInst>(expr->igen());
-        llvm::Value *value = Builder.CreateLoad(valueAlloc->getAllocatedType(), valueAlloc, "ret_val");
+        llvm::Value *value = Builder.CreateLoad(translateType(expr->getType(), ParameterType::VALUE), expr->igen(), "ret_val");
         Builder.CreateRet(value);
     }
 

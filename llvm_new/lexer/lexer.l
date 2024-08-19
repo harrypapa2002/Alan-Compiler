@@ -47,7 +47,7 @@ ESC [ntr0\'\"\\]
 {D}+ { yylval.num = atoi(yytext); return T_const; }
 {L}({L}|{D}|_)* { yylval.var = new std::string(yytext); return T_id; }
 \'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { yylval.chr = fixChar(yytext+1); return T_char; }
-\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { yylval.str = new std::string(fixString(yytext+1).c_str(), strlen(yytext)-3) ;  return T_string; }
+\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { yylval.str = new std::string(fixString(yytext+1));  return T_string; }
 
  /* WhiteSpace */
 \n   { ++lineno; }
@@ -111,7 +111,7 @@ unsigned char fixChar(char *s){
 
 std::string fixString(char *s) {
     std::string res = "";
-    for(int i = 0; s[i] != '\0'; i++){
+    for(int i = 0; s[i] != '\"' && s[i] != '\0' ; i++){
         if(s[i] != '\\') res += s[i];
         else {
             switch(s[i+1]){
@@ -128,6 +128,5 @@ std::string fixString(char *s) {
             i++;
         }
     }
-
     return res;
 }
