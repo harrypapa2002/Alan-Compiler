@@ -1,0 +1,16 @@
+ref () : proc 
+    
+    aux (y : reference int, x : reference int) : int {
+        y = x;
+        return x;
+    }
+
+    g : int;
+    f : int;
+    {
+        g = 3;
+        f = 2;
+        aux(g, f);
+        writeInteger(g);
+        writeInteger(f);
+    }

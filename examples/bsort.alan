@@ -1,20 +1,5 @@
 main () : proc
-(*
-   writeInteger (n : int) : proc {}
-   writeByte (b : byte) : proc {}
-   writeChar (b : byte) : proc {}
-   writeString (s : reference byte []) : proc {}
-   readInteger () : int {}
-   readByte () : byte {}
-   readChar () : byte {}
-   readString (n : int, s : reference byte []) : proc {}
-   extend (b : byte) : int {}
-   shrink (i : int) : byte {}
-   strlen (s : reference byte []) : int {}
-   strcmp (s1 : reference byte [], s2 : reference byte []) : int {}
-   strcpy (trg : reference byte [], src : reference byte []) : proc {}
-   strcat (trg : reference byte [], src : reference byte []) : proc {}
-*)
+
    bsort (n : int, x : reference int []) : proc
 
       swap (x : reference int, y : reference int) : proc
@@ -46,14 +31,14 @@ main () : proc
    writeArray (msg : reference byte [], n : int, x : reference int []) : proc
       i : int;
    {
-      --writeString(msg);
+      writeString(msg);
       i = 0;
       while (i < n) {
-         if (i > 0) {} --writeString(", ");
-         --writeInteger(x[i]);
+         if (i > 0) {} writeString(", ");
+         writeInteger(x[i]);
          i = i+1;
       }
-      --writeString("\n");
+      writeString("\n");
    }
    
    seed : int;
