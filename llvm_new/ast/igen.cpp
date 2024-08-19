@@ -183,7 +183,7 @@ llvm::Value *BinOp::igen() const
         rightVal = Builder.CreateLoad(rightVal->getType(), rightVal, "right_load");
     }
 
-    std::cout << "right done\n";
+    //std::cout << "right done\n";
 
     llvm::Type *t = translateType(type, ParameterType::VALUE);
 
@@ -209,7 +209,7 @@ llvm::Value *BinOp::igen() const
     default:
         return nullptr;
     }
-    std::cout << "binop done\n";
+    //std::cout << "binop done\n";
     return alloca;
 }
 
@@ -217,13 +217,16 @@ llvm::Value *CondCompOp::igen() const
 {
     llvm::Value *leftVal = left->igen();
     llvm::Value *rightVal = right->igen();
-    std::cout << "op left done\n";
+    //std::cout << "op left done\n";
     if(llvm::isa<llvm::AllocaInst>(leftVal)){
+        //std::cout << "left is an alloca\n";
         llvm::AllocaInst *leftAlloc = llvm::cast<llvm::AllocaInst>(leftVal);
         leftVal = Builder.CreateLoad(leftAlloc->getAllocatedType(), leftAlloc, "left_load");
     }
     else {
-        leftVal = Builder.CreateLoad(leftVal->getType(), leftVal, "left_load");
+        if(leftVal->getType()->isPointerTy()){
+            leftVal = Builder.CreateLoad(translateType(left->getType(), ParameterType::VALUE), leftVal, "left_load");
+        }
     }
 
     if(llvm::isa<llvm::AllocaInst>(rightVal)){
@@ -231,17 +234,19 @@ llvm::Value *CondCompOp::igen() const
         rightVal = Builder.CreateLoad(rightAlloc->getAllocatedType(), rightAlloc, "right_load");
     }
     else {
-        rightVal = Builder.CreateLoad(rightVal->getType(), rightVal, "right_load");
+        if(rightVal->getType()->isPointerTy()){
+            rightVal = Builder.CreateLoad(translateType(right->getType(), ParameterType::VALUE), rightVal, "right_load");
+        }
     }
 
-    std::cout << "op right done\n";
+    //std::cout << "op right done\n";
 
-    std::cout << leftVal->getType()->getTypeID() << " " << rightVal->getType()->getTypeID() << std::endl;
+    //std::cout << leftVal->getType()->getTypeID() << " " << rightVal->getType()->getTypeID() << std::endl;
 
     llvm::Value *result = nullptr;
     switch (op)
     {
-        std::cout << "op switch\n";
+        //std::cout << "op switch\n";
     case lt:
         result = Builder.CreateICmpSLT(leftVal, rightVal, "lttmp");
         break;
@@ -264,7 +269,7 @@ llvm::Value *CondCompOp::igen() const
         return nullptr;
     }
 
-    std::cout << "op done\n";
+    //std::cout << "op done\n";
     return result;
 }
 
@@ -304,7 +309,7 @@ llvm::Value *VarDef::igen() const
 
     if (isArray)
     {
-        llvm::Type *elementType = translateType(type, ParameterType::VALUE);
+        llvm::Type *elementType = translateType(type->getBaseType(), ParameterType::VALUE);
         t = llvm::ArrayType::get(elementType, size);
     }
     else
@@ -340,7 +345,7 @@ llvm::Value *Id::igen() const
 
       if (allocaInst->getAllocatedType()->isPointerTy())
       {
-          std::cout << *name << " is a reference" << std::endl;
+          //std::cout << *name << " is a reference" << std::endl;
           llvm::Type *allocatedType = allocaInst->getAllocatedType();
           return Builder.CreateLoad(allocatedType, allocaInst, *name + "_load");
       }
@@ -367,6 +372,7 @@ llvm::Value *ArrayAccess::igen() const
 
     if (llvm::isa<llvm::AllocaInst>(indexValue))
     {
+        //std::cout << "Index is an alloca" << std::endl;
         llvm::AllocaInst *indexAllocInst = llvm::cast<llvm::AllocaInst>(indexValue);
         indexValue = Builder.CreateLoad(indexAllocInst->getAllocatedType(), indexAllocInst, "load_index");
     }
@@ -375,13 +381,16 @@ llvm::Value *ArrayAccess::igen() const
         indexValue = Builder.CreateLoad(indexValue->getType(), indexValue, "load_index");
     }
 
-    std::cout << "Generated code for index expression" << std::endl;
+    //std::cout << "Generated code for index expression" << std::endl;
 
     llvm::Type *elementType = translateType(type, ParameterType::VALUE);
+
+    //std::cout << elementType->getTypeID() << std::endl;
+
     llvm::AllocaInst *arrayPtrAlloc = currentBlock->getAlloca(*name);
     llvm::Value *elementPtr = nullptr;
 
-    if (arrayPtrAlloc->getAllocatedType()->isPointerTy())
+    if (!arrayPtrAlloc->getAllocatedType()->isArrayTy())
     {
         // If the array is a reference, load the pointer to the array
         llvm::Value *arrayLoad = Builder.CreateLoad(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, *name + "_arrayptr");
@@ -393,17 +402,20 @@ llvm::Value *ArrayAccess::igen() const
     }
     else
     {
+        //llvm::Value *arrayPtr = Builder.CreateLoad(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, *name + "_arrayptr");
         elementPtr = Builder.CreateGEP(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, std::vector<llvm::Value *>({c32(0), indexValue}), "elementptr");
+        //llvm::Value *elementPtrLoad = Builder.CreateLoad(elementType, elementPtr, *name + "_element");
+        //elementPtr = elementPtrLoad;
     }
 
-    std::cout << "Generated code for array access" << std::endl;
+    //std::cout << "Generated code for array access" << std::endl;
 
     return elementPtr;
 }
 
 llvm::Value *Let::igen() const
 {
-    std::cout << "Let::igen()" << *lexpr << "\n"<< *rexpr << std::endl;
+    //std::cout << "Let::igen()" << *lexpr << "\n"<< *rexpr << std::endl;
     llvm::Value *rValue = rexpr->igen();
     if (llvm::isa<llvm::AllocaInst>(rValue)) {
         llvm::AllocaInst *rValueAlloc = llvm::cast<llvm::AllocaInst>(rValue);
@@ -444,8 +456,13 @@ llvm::Value *FuncCall::igen() const
             else
             {
                 // If the function argument expects a value, load the value from the alloca
-                llvm::Value *loadedValue = Builder.CreateLoad(arg.getType(), argAlloc, *name + "_arg");
-                args.push_back(loadedValue);
+                if(argAlloc->getType()->isPointerTy()){
+                    llvm::Value *loadedValue = Builder.CreateLoad(arg.getType(), argAlloc, *name + "_arg");
+                    args.push_back(loadedValue);
+                }
+                else {
+                    args.push_back(argAlloc);
+                }
             }
         }
     }

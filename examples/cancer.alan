@@ -5,7 +5,7 @@ cancer() : proc
 		{
 			n = n-1;
 			i = 0;
-			while ( i < (n/2 + 1) )
+			while ( i <= (n/2 + 1) )
 			{
 				if(source[i] != source[n-i])
 					return 1;
@@ -23,9 +23,8 @@ cancer() : proc
 		n = 0;
 		while (source1[n]!='\0')
 			n = n+1;
-		n = n-1;
 		if (is_it(n, source1) == 1)
-			writeString("\nIs not palindrome...");
+			writeString("\nIs not palindrome...\n");
 		else
-			writeString("\nIs palindrome...");
+			writeString("\nIs palindrome...\n");
 	}
