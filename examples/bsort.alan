@@ -14,7 +14,7 @@ main () : proc
       i : int;
       
    { -- bsort
-      changed = '\xff';
+      changed = 'y';
       while (changed == 'y') {
          changed = 'n';
          i = 0;
@@ -34,7 +34,7 @@ main () : proc
       writeString(msg);
       i = 0;
       while (i < n) {
-         if (i > 0) {} writeString(", ");
+         if (i > 0) { writeString(", ");}
          writeInteger(x[i]);
          i = i+1;
       }
