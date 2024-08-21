@@ -348,6 +348,12 @@ void FuncCall::sem()
                 yyerror("Type mismatch in function call parameters");
             }
 
+            if (params[i].getParameterType() == ParameterType::REFERENCE) {
+                if (dynamic_cast<Lval*>(exprs->getExprs()[i]) == nullptr) {
+                    yyerror("Only lvalues can be passed as reference parameters");
+                }
+            }
+
             if (exprType == TypeEnum::ARRAY)
             {
                 if (params[i].getType()->getBaseType()->getType() != exprs->getExprs()[i]->getType()->getBaseType()->getType())

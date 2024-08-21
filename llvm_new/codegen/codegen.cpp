@@ -29,7 +29,11 @@ llvm::Type* translateType(Type* type, ParameterType pt) {
 GenBlock::GenBlock() : func(nullptr), block(nullptr), hasReturnFlag(false) {}
 
 // GenBlock destructor
-GenBlock::~GenBlock() {}
+GenBlock::~GenBlock() {
+    for (auto& it : allocas) {
+        delete it.second;
+    }
+}
 
 // Set function for GenBlock
 void GenBlock::setFunc(llvm::Function* f) {
