@@ -292,17 +292,6 @@ void Let::sem()
     lexpr->sem();
     rexpr->sem();
 
-    Symbol *entry = st.findSymbol(*lexpr->getName());
-    if (!entry)
-    {
-        yyerror("Variable not declared");
-    }
-    SymbolType symbolType = entry->getSymbolType();
-    if (symbolType == SymbolType::FUNCTION)
-    {
-        yyerror("Function cannot be used as a variable");
-    }
-
     if (!equalTypes(lexpr->getTypeEnum(), rexpr->getTypeEnum()))
     {
         yyerror("Type mismatch in assignment");
@@ -327,6 +316,8 @@ void FuncCall::sem()
     }
 
     FunctionSymbol *func = static_cast<FunctionSymbol *>(entry);
+    capturedSymbols = func->getCapturedSymbols();
+
     if (exprs)
     {
         exprs->sem();

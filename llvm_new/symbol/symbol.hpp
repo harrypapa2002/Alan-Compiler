@@ -3,52 +3,61 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include <iostream>
 #include "types.hpp"
 
 // Enum for symbol types
-enum class SymbolType {
+enum class SymbolType
+{
     VARIABLE,
     FUNCTION,
     PARAMETER
 };
 
 // Enum for parameter types
-enum class ParameterType {
+enum class ParameterType
+{
     VALUE,
     REFERENCE
 };
 
 // Base Symbol class
-class Symbol {
+class Symbol
+{
 public:
     virtual ~Symbol() = default;
 
     std::string getName() const { return name; }
-    Type* getType() const { return type; }
+    Type *getType() const { return type; }
     SymbolType getSymbolType() const { return symbolType; }
-    Symbol* getNext() const { return next; }
-    void setNext(Symbol* nextSymbol) { next = nextSymbol; }
+    Symbol *getNext() const { return next; }
+    void setNext(Symbol *nextSymbol) { next = nextSymbol; }
+    int getNestingLevel() const { return nestingLevel; }
+    void setNestingLevel(int nestingLevel) { this->nestingLevel = nestingLevel; }
 
 protected:
     std::string name;
-    Type* type;
-    Symbol* next;
+    Type *type;
+    Symbol *next;
     SymbolType symbolType;
+    int nestingLevel;
 };
 
 // Derived class for variable symbols
-class VariableSymbol : public Symbol {
+class VariableSymbol : public Symbol
+{
 public:
-    VariableSymbol(std::string name, Type* type);
+    VariableSymbol(std::string name, Type *type);
 };
 
 // Derived class for parameter symbols
-class ParameterSymbol : public Symbol {
+class ParameterSymbol : public Symbol
+{
 public:
-    ParameterSymbol(std::string name, Type* type, ParameterType parameterType);
-    
-    void printOn(std::ostream& out) const;
+    ParameterSymbol(std::string name, Type *type, ParameterType parameterType);
+
+    void printOn(std::ostream &out) const;
     ParameterType getParameterType() const;
 
 private:
@@ -56,17 +65,19 @@ private:
 };
 
 // Overload operator for parameter symbols
-inline std::ostream& operator<<(std::ostream& out, const ParameterSymbol& p) {
+inline std::ostream &operator<<(std::ostream &out, const ParameterSymbol &p)
+{
     p.printOn(out);
     return out;
 }
 
 // Derived class for function symbols
-class FunctionSymbol : public Symbol {
+class FunctionSymbol : public Symbol
+{
 public:
-    FunctionSymbol(std::string name, Type* type);
+    FunctionSymbol(std::string name, Type *type);
 
-    const std::vector<ParameterSymbol>& getParameters() const;
+    const std::vector<ParameterSymbol> &getParameters() const;
     TypeEnum getReturnType() const;
 
     void addParameter(ParameterSymbol parameter);
@@ -75,9 +86,12 @@ public:
     void setNeedsReturn(bool needsReturn);
     void setReturnStatementFound();
     bool getReturnStatementFound() const;
+    void addCapturedSymbol(Symbol *symbol);
+    const std::unordered_set<Symbol*>& getCapturedSymbols() const;
 
 private:
     std::vector<ParameterSymbol> parameters;
+    std::unordered_set<Symbol*> capturedSymbols;    
     TypeEnum returnType;
     bool needsReturn;
     bool returnStatementFound;

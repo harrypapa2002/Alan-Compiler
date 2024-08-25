@@ -32,6 +32,7 @@ private:
     std::stack<Scope*> scopes;
     std::unordered_map<std::string, Symbol*> globalSymbols;
     std::stack<FunctionSymbol*> currentFunctionContext;
+    int currentFunctionNestingLevel;
 };
 
 #endif // SYMBOL_TABLE_HPP

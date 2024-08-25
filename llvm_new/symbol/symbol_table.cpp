@@ -3,7 +3,7 @@
 #include "../symbol/types.hpp"
 
 // Constructor for SymbolTable
-SymbolTable::SymbolTable() {
+SymbolTable::SymbolTable() : currentFunctionNestingLevel(0) {
     enterScope();
     // Adding predefined functions
     FunctionSymbol* writeInteger = new FunctionSymbol("writeInteger", typeVoid);
@@ -93,6 +93,7 @@ void SymbolTable::exitScope() {
 void SymbolTable::enterFunctionScope(FunctionSymbol* function) {
     currentFunctionContext.push(function);
     enterScope();
+    currentFunctionNestingLevel++;
 }
 
 // Exit a function scope
@@ -101,6 +102,7 @@ void SymbolTable::exitFunctionScope() {
         currentFunctionContext.pop();
     }
     exitScope();
+    currentFunctionNestingLevel--;
 }
 
 // Get the current function's return type
@@ -114,11 +116,36 @@ void SymbolTable::addSymbol(std::string name, Symbol* symbol) {
     symbol->setNext(findGlobalSymbol(name));
     globalSymbols[name] = symbol;
     scopes.top()->addSymbol(name, symbol);
+    symbol->setNestingLevel(currentFunctionNestingLevel);
 }
 
 // Find a symbol in the global scope
 Symbol* SymbolTable::findSymbol(std::string name) {
-    return findGlobalSymbol(name);
+    Symbol* symbol = findGlobalSymbol(name);
+
+    if (symbol) {
+
+        if (symbol->getSymbolType() == SymbolType::FUNCTION) {
+            return symbol;
+        }
+
+
+        int symbolFunctionNestingLevel = symbol->getNestingLevel();
+        if (symbolFunctionNestingLevel < currentFunctionNestingLevel) {
+            int levelDifference = currentFunctionNestingLevel - symbolFunctionNestingLevel - 1;
+
+            std::stack<FunctionSymbol*> tempStack = currentFunctionContext;
+
+            while (levelDifference >= 0) {
+                FunctionSymbol* currentFunction = tempStack.top();
+                currentFunction->addCapturedSymbol(symbol);
+                tempStack.pop();
+                --levelDifference;
+            }
+
+        }
+    }
+    return symbol;
 }
 
 // Find a symbol in the current scope
