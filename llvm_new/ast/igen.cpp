@@ -144,7 +144,7 @@ llvm::Value *UnOp::igen() const
     {
         loadedExpr = Builder.CreateLoad(translateType(expr->getType(), ParameterType::VALUE), loadedExpr, "load_expr");
     }
-    
+
     llvm::Value *result = nullptr;
 
     switch (op)
@@ -167,11 +167,13 @@ llvm::Value *BinOp::igen() const
     llvm::Value *leftVal = left->igen();
     llvm::Value *rightVal = right->igen();
 
-    if(leftVal->getType()->isPointerTy()){
+    if (leftVal->getType()->isPointerTy())
+    {
         leftVal = Builder.CreateLoad(translateType(left->getType(), ParameterType::VALUE), leftVal, "left_load");
     }
 
-    if(rightVal->getType()->isPointerTy()){
+    if (rightVal->getType()->isPointerTy())
+    {
         rightVal = Builder.CreateLoad(translateType(right->getType(), ParameterType::VALUE), rightVal, "right_load");
     }
 
@@ -197,7 +199,7 @@ llvm::Value *BinOp::igen() const
     default:
         return nullptr;
     }
-    
+
     return result;
 }
 
@@ -206,14 +208,16 @@ llvm::Value *CondCompOp::igen() const
     llvm::Value *leftVal = left->igen();
     llvm::Value *rightVal = right->igen();
 
-    if(leftVal->getType()->isPointerTy()){
+    if (leftVal->getType()->isPointerTy())
+    {
         leftVal = Builder.CreateLoad(translateType(left->getType(), ParameterType::VALUE), leftVal, "left_load");
     }
 
-    if(rightVal->getType()->isPointerTy()){
+    if (rightVal->getType()->isPointerTy())
+    {
         rightVal = Builder.CreateLoad(translateType(right->getType(), ParameterType::VALUE), rightVal, "right_load");
     }
-    
+
     llvm::Value *result = nullptr;
     switch (op)
     {
@@ -313,7 +317,6 @@ llvm::Value *Id::igen() const
     }
 }
 
-// TODO: Check references here
 llvm::Value *ArrayAccess::igen() const
 {
     GenBlock *currentBlock = blockStack.top();
@@ -356,7 +359,8 @@ llvm::Value *Let::igen() const
     // std::cout << "Let::igen()" << *lexpr << "\n"<< *rexpr << std::endl;
     llvm::Value *rValue = rexpr->igen();
 
-    if(rValue->getType()->isPointerTy()){
+    if (rValue->getType()->isPointerTy())
+    {
         rValue = Builder.CreateLoad(translateType(lexpr->getType(), ParameterType::VALUE), rValue, "load_rvalue");
     }
 
@@ -372,6 +376,25 @@ llvm::Value *FuncCall::igen() const
     llvm::Function *func = scopes.getFunction(*name);
     std::vector<llvm::Value *> args;
 
+    if (!capturedVars.empty())
+    {
+        llvm::StructType *closureType = llvm::StructType::getTypeByName(TheContext, *name + "_closure");
+
+        llvm::Value *closureAlloc = Builder.CreateAlloca(closureType, nullptr, *name + "_closure_instance");
+
+        size_t index = 0;
+        for (const auto &capturedVar : capturedVars)
+        {
+            llvm::Value *varValue = blockStack.top()->getAlloca(capturedVar->getName());
+
+            llvm::Value *fieldPtr = Builder.CreateStructGEP(closureType, closureAlloc, index, capturedVar->getName() + "_ptr");
+            Builder.CreateStore(varValue, fieldPtr);
+            ++index;
+        }
+
+        args.push_back(closureAlloc);
+    }
+
     if (exprs)
     {
         auto funcArgs = func->args();
@@ -379,6 +402,11 @@ llvm::Value *FuncCall::igen() const
         auto exprIt = exprList.rbegin();
         for (auto &arg : funcArgs)
         {
+            if (!capturedVars.empty() && &arg == func->arg_begin())
+            {
+                continue; 
+            }
+
             llvm::Value *argAlloc = (*exprIt)->igen();
             ++exprIt;
 
@@ -403,7 +431,7 @@ llvm::Value *FuncCall::igen() const
         }
     }
 
-    if ( func->getReturnType()->isVoidTy())
+    if (func->getReturnType()->isVoidTy())
     {
         Builder.CreateCall(func, args);
         return nullptr;
@@ -501,7 +529,7 @@ llvm::Value *Return::igen() const
     {
         Builder.CreateRetVoid();
     }
-    else 
+    else
     {
         llvm::Value *value = expr->igen();
         if (!llvm::isa<llvm::ConstantInt>(value))
@@ -509,7 +537,7 @@ llvm::Value *Return::igen() const
             // std::cout << "Return value is not a constant" << std::endl;
             value = Builder.CreateLoad(translateType(expr->getType(), ParameterType::VALUE), value, "ret_val");
         }
-        
+
         Builder.CreateRet(value);
     }
 
@@ -523,6 +551,23 @@ llvm::Value *FuncDef::igen() const
     llvm::Type *returnType = translateType(type, ParameterType::VALUE);
     std::vector<llvm::Type *> argTypes;
     auto args = fpar ? fpar->getParameters() : std::vector<Fpar *>();
+
+    llvm::StructType *closureType = nullptr;
+    if (!capturedVars.empty())
+    {
+        std::vector<llvm::Type *> closureFieldTypes;
+        for (const auto &capturedVar : capturedVars)
+        {
+            llvm::Type *varType = translateType(capturedVar->getType(), ParameterType::REFERENCE);
+            closureFieldTypes.push_back(varType);
+        }
+        closureType = llvm::StructType::create(TheContext, closureFieldTypes, *name + "_closure");
+    }
+
+    if (closureType)
+    {
+        argTypes.push_back(closureType->getPointerTo());
+    }
 
     for (auto it = args.rbegin(); it != args.rend(); ++it)
     {
@@ -543,20 +588,55 @@ llvm::Value *FuncDef::igen() const
     scopes.addFunction(*name, func);
     scopes.openScope();
 
+    auto argIter = func->arg_begin();
+    llvm::Value *closureArg = nullptr;
+    if (closureType)
+    {
+        closureArg = &*argIter++;
+        closureArg->setName("closure");
+    }
+
+    if (closureArg)
+    {
+        size_t index = 0;
+        for (const auto &capturedVar : capturedVars)
+        {
+            llvm::Value *fieldPtr = Builder.CreateStructGEP(closureType, closureArg, index, capturedVar->getName() + "_ptr");
+
+            llvm::Value *varValue = Builder.CreateLoad(
+                translateType(capturedVar->getType(), ParameterType::REFERENCE),
+                fieldPtr,
+                capturedVar->getName());
+
+            llvm::AllocaInst *varAlloca = Builder.CreateAlloca(varValue->getType(), nullptr, capturedVar->getName());
+
+            Builder.CreateStore(varValue, varAlloca);
+
+            blockStack.top()->addAlloca(capturedVar->getName(), varAlloca);
+
+            ++index;
+        }
+    }
+
     if (fpar)
     {
         unsigned index = args.size();
         for (auto &param : func->args())
         {
+            if (closureType && &param == func->arg_begin())
+            {
+                continue;
+            }
             --index;
             param.setName(*args[index]->getName());
 
-            llvm::AllocaInst *Alloca = Builder.CreateAlloca(param.getType(), nullptr, *args[index]->getName());
+            llvm::AllocaInst *alloca = Builder.CreateAlloca(param.getType(), nullptr, *args[index]->getName());
 
-            Builder.CreateStore(&param, Alloca);
-            currentBlock->addAlloca(*args[index]->getName(), Alloca);
+            Builder.CreateStore(&param, alloca);
+            blockStack.top()->addAlloca(*args[index]->getName(), alloca);
         }
     }
+
     localDef->igen();
     stmts->igen();
 

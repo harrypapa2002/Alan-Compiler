@@ -94,9 +94,7 @@ bool FunctionSymbol::getReturnStatementFound() const
 
 void FunctionSymbol::addCapturedSymbol(Symbol *symbol)
 {
-    std::cout << "Captured symbol: " << symbol->getName() << " in function: " << name << std::endl;
     capturedSymbols.insert(symbol);
-    std::cout << "Captured symbols: " << capturedSymbols.size() << std::endl;
 }
 
 const std::unordered_set<Symbol*>& FunctionSymbol::getCapturedSymbols() const

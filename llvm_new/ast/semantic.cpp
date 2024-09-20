@@ -1,7 +1,6 @@
 #include "ast.hpp"
 #include "../symbol/symbol_table.hpp"
 
-
 SymbolTable st;
 
 // StmtList Class Semantic Method Implementation
@@ -15,7 +14,6 @@ void StmtList::sem()
         stmt->sem();
         if (stmt->isReturnStatement())
             st.setReturnStatementFound();
-        
     }
     isReturn = false;
 }
@@ -43,7 +41,6 @@ void Fpar::sem()
     st.addSymbol(*name, parameterSymbol);
 
     isArray = (type->getType() == TypeEnum::ARRAY);
-
 }
 
 // FparList Class Semantic Method Implementation
@@ -66,7 +63,7 @@ void FuncDef::sem()
         yyerror(("Function name '" + *name + "' already declared").c_str());
     }
 
-    funcSymbol = new FunctionSymbol(*name, type);
+    FunctionSymbol *funcSymbol = new FunctionSymbol(*name, type);
     st.addSymbol(*name, funcSymbol);
 
     st.enterFunctionScope(funcSymbol);
@@ -101,7 +98,31 @@ void FuncDef::sem()
         setReturn();
     }
 
+    for (auto &captured : funcSymbol->getCapturedSymbols())
+    {
+        if (captured->getSymbolType() == SymbolType::VARIABLE)
+        {
+            capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType()));
+        }
+
+        else
+        {
+            capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType(), true, static_cast<ParameterSymbol *>(captured)->getParameterType()));
+        }
+    }
+
     st.exitFunctionScope();
+
+    if (capturedVars.size() > 0)
+    {
+        // std::cout << "Function definition: " << *name << std::endl;
+        // std::cout << "Captured variables: " << std::endl;
+        // std::cout << "Name\tType\tIsParam\tParamType" << std::endl;
+        for (auto &captured : capturedVars)
+        {
+            // std::cout << captured->getName() << "\t" << captured->getType()->getType() << "\t" << captured->getIsParam() << "\t" << captured->getParameterType() << std::endl;
+        }
+    }
 }
 
 // VarDef Class Semantic Method Implementation
@@ -219,7 +240,6 @@ void CharConst::sem()
 
 void Lval::sem()
 {
-    
 }
 
 // StringConst Class Semantic Method Implementation
@@ -233,7 +253,6 @@ void StringConst::sem()
 
 void BoolConst::sem()
 {
-
 }
 
 // Id Class Semantic Method Implementation
@@ -316,13 +335,12 @@ void FuncCall::sem()
     }
 
     FunctionSymbol *func = static_cast<FunctionSymbol *>(entry);
-    capturedSymbols = func->getCapturedSymbols();
 
     if (exprs)
     {
         exprs->sem();
         const std::vector<ParameterSymbol> &params = func->getParameters();
-        
+
         if (exprs->getExprs().size() != params.size())
         {
             yyerror("Number of parameters does not match the function signature");
@@ -335,12 +353,14 @@ void FuncCall::sem()
 
             if (exprType != paramType)
             {
-                //std::cout << exprType  << paramType << std::endl;
+                // // std::cout << exprType  << paramType << std::endl;
                 yyerror("Type mismatch in function call parameters");
             }
 
-            if (params[i].getParameterType() == ParameterType::REFERENCE) {
-                if (dynamic_cast<Lval*>(exprs->getExprs()[i]) == nullptr) {
+            if (params[i].getParameterType() == ParameterType::REFERENCE)
+            {
+                if (dynamic_cast<Lval *>(exprs->getExprs()[i]) == nullptr)
+                {
                     yyerror("Only lvalues can be passed as reference parameters");
                 }
             }
@@ -356,6 +376,30 @@ void FuncCall::sem()
     }
 
     type = func->getType();
+
+    for (auto &captured : func->getCapturedSymbols())
+    {
+        if (captured->getSymbolType() == SymbolType::VARIABLE)
+        {
+            capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType()));
+        }
+
+        else
+        {
+            capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType(), true, static_cast<ParameterSymbol *>(captured)->getParameterType()));
+        }
+    }
+
+    if (capturedVars.size() > 0)
+    {
+        // std::cout << "Function call: " << *name << std::endl;
+        // std::cout << "Captured variables: " << std::endl;
+        // std::cout << "Name\tType\tIsParam\tParamType" << std::endl;
+        for (auto &captured : capturedVars)
+        {
+            // std::cout << captured->getName() << "\t" << captured->getType()->getType() << "\t" << captured->getIsParam() << "\t" << captured->getParameterType() << std::endl;
+        }
+    }
 }
 
 // ProcCall Class Semantic Method Implementation

@@ -205,6 +205,27 @@ ParameterType Fpar::getParameterType() const {
     return parameterType;
 }
 
+// CapturedVar Class Method Implementations
+
+CapturedVar::CapturedVar(const std::string& name, Type* type, bool isParam, ParameterType paramType)
+    : name(name), type(type), isParam(isParam), parameterType(paramType) {}
+
+const std::string& CapturedVar::getName() const {
+    return name;
+}
+
+Type* CapturedVar::getType() const {
+    return type;
+}
+
+bool CapturedVar::getIsParam() const {
+    return isParam;
+}
+
+ParameterType CapturedVar::getParameterType() const {
+    return parameterType;
+}
+
 // FparList Class Method Implementations
 
 FparList::FparList() : fpar() {}
@@ -250,7 +271,7 @@ const std::vector<Fpar *> &FparList::getParameters() const
 
 FuncDef::FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f) : name(n), fpar(f), type(t), localDef(l), stmts(s), hasReturn(false)
 {
-    funcSymbol = nullptr;
+    capturedVars = std::vector<CapturedVar*>();
 }
 
 FuncDef::~FuncDef()
@@ -534,7 +555,9 @@ void Let::printOn(std::ostream &out) const
 
 // FuncCall Class Method Implementations
 
-FuncCall::FuncCall(std::string *n, ExprList *e) : name(n), exprs(e) {}
+FuncCall::FuncCall(std::string *n, ExprList *e) : name(n), exprs(e) {
+    capturedVars = std::vector<CapturedVar*>();
+}
 
 FuncCall::~FuncCall()
 {

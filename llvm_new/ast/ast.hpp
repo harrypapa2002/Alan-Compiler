@@ -153,6 +153,22 @@ private:
     
 };
 
+class CapturedVar {
+public:
+    CapturedVar(const std::string& name, Type* type, bool isParam = false, ParameterType paramType = ParameterType::VALUE);
+
+    const std::string& getName() const;
+    Type* getType() const;
+    bool getIsParam() const;
+    ParameterType getParameterType() const;
+
+private:
+    std::string name;
+    Type* type;
+    bool isParam;
+    ParameterType parameterType;
+};
+
 // FparList Class
 class FparList : public AST
 {
@@ -186,8 +202,9 @@ private:
     Type *type;
     LocalDefList *localDef;
     Stmt *stmts;
-    FunctionSymbol *funcSymbol;
     bool hasReturn;
+    std::vector<CapturedVar*> capturedVars;
+
 };
 
 // VarDef Class
@@ -436,6 +453,7 @@ public:
 protected:
     std::string *name;
     ExprList *exprs;
+    std::vector<CapturedVar*> capturedVars;
 };
 
 // ProcCall Class
