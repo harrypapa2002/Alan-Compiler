@@ -204,7 +204,6 @@ private:
     Stmt *stmts;
     bool hasReturn;
     std::vector<CapturedVar*> capturedVars;
-
 };
 
 // VarDef Class
@@ -454,6 +453,7 @@ protected:
     std::string *name;
     ExprList *exprs;
     std::vector<CapturedVar*> capturedVars;
+    bool isNested;
 };
 
 // ProcCall Class

@@ -20,25 +20,46 @@ _main:                                  ; @main
 _main.1:                                ; @main.1
 	.cfi_startproc
 ; %bb.0:                                ; %main_entry
-	sub	sp, sp, #80
-	.cfi_def_cfa_offset 80
-	stp	x29, x30, [sp, #64]             ; 16-byte Folded Spill
+	sub	sp, sp, #32
+	.cfi_def_cfa_offset 32
+	stp	x29, x30, [sp, #16]             ; 16-byte Folded Spill
 	.cfi_offset w30, -8
 	.cfi_offset w29, -16
-	add	x8, sp, #28
-	add	x9, sp, #32
 Lloh0:
-	adrp	x1, l_global_str.3@PAGE
+	adrp	x0, l_global_str.7@PAGE
 Lloh1:
-	add	x1, x1, l_global_str.3@PAGEOFF
-	add	x0, sp, #8
-	stp	x8, x9, [sp, #8]
-	bl	_reverse
-	add	x0, sp, #32
+	add	x0, x0, l_global_str.7@PAGEOFF
+	str	wzr, [sp, #12]
 	bl	_writeString
-	ldp	x29, x30, [sp, #64]             ; 16-byte Folded Reload
-	add	sp, sp, #80
+	ldr	w0, [sp, #12]
+	bl	_writeInteger
+Lloh2:
+	adrp	x0, l_global_str.8@PAGE
+Lloh3:
+	add	x0, x0, l_global_str.8@PAGEOFF
+	bl	_writeString
+	add	x8, sp, #12
+	mov	x0, sp
+	str	x8, [sp]
+	bl	_reverse
+Lloh4:
+	adrp	x0, l_global_str.9@PAGE
+Lloh5:
+	add	x0, x0, l_global_str.9@PAGEOFF
+	bl	_writeString
+	ldr	w0, [sp, #12]
+	bl	_writeInteger
+Lloh6:
+	adrp	x0, l_global_str.10@PAGE
+Lloh7:
+	add	x0, x0, l_global_str.10@PAGEOFF
+	bl	_writeString
+	ldp	x29, x30, [sp, #16]             ; 16-byte Folded Reload
+	add	sp, sp, #32
 	ret
+	.loh AdrpAdd	Lloh6, Lloh7
+	.loh AdrpAdd	Lloh4, Lloh5
+	.loh AdrpAdd	Lloh2, Lloh3
 	.loh AdrpAdd	Lloh0, Lloh1
 	.cfi_endproc
                                         ; -- End function
@@ -47,70 +68,118 @@ Lloh1:
 _reverse:                               ; @reverse
 	.cfi_startproc
 ; %bb.0:                                ; %reverse_entry
-	sub	sp, sp, #48
-	.cfi_def_cfa_offset 48
-	stp	x29, x30, [sp, #32]             ; 16-byte Folded Spill
+	sub	sp, sp, #32
+	.cfi_def_cfa_offset 32
+	stp	x29, x30, [sp, #16]             ; 16-byte Folded Spill
 	.cfi_offset w30, -8
 	.cfi_offset w29, -16
-	ldp	x8, x9, [x0]
-	mov	x0, x1
-	str	x1, [sp, #8]
-	stp	x9, x8, [sp, #16]
-	bl	_strlen
-	stp	w0, wzr, [sp]
-LBB2_1:                                 ; %cond
-                                        ; =>This Inner Loop Header: Depth=1
-	ldp	w9, w8, [sp]
-	cmp	w8, w9
-	b.ge	LBB2_3
-; %bb.2:                                ; %loop
-                                        ;   in Loop: Header=BB2_1 Depth=1
-	ldp	w9, w8, [sp]
-                                        ; kill: def $w8 killed $w8 def $x8
-	sxtw	x8, w8
-	mvn	w10, w8
-	add	w11, w8, #1
-	add	w9, w10, w9
-	ldr	x10, [sp, #8]
-	str	w11, [sp, #4]
-	ldrb	w9, [x10, w9, sxtw]
-	ldr	x10, [sp, #16]
-	strb	w9, [x10, x8]
-	b	LBB2_1
-LBB2_3:                                 ; %afterloop
-	ldp	x9, x11, [sp, #16]
-	mov	w10, #5
-Lloh2:
-	adrp	x0, l_global_str@PAGE
-Lloh3:
-	add	x0, x0, l_global_str@PAGEOFF
-	ldrsw	x8, [sp, #4]
-	strb	wzr, [x9, x8]
-	str	w10, [x11]
+	mov	w8, #5
+	ldr	x9, [x0]
+Lloh8:
+	adrp	x0, l_global_str.3@PAGE
+Lloh9:
+	add	x0, x0, l_global_str.3@PAGEOFF
+	str	x9, [sp, #8]
+	str	w8, [x9]
 	bl	_writeString
-	ldr	x8, [sp, #24]
+	ldr	x8, [sp, #8]
 	ldr	w0, [x8]
 	bl	_writeInteger
-Lloh4:
+Lloh10:
+	adrp	x0, l_global_str.4@PAGE
+Lloh11:
+	add	x0, x0, l_global_str.4@PAGEOFF
+	bl	_writeString
+	ldr	x8, [sp, #8]
+	mov	x0, sp
+	str	x8, [sp]
+	bl	_innerIncrement
+Lloh12:
+	adrp	x0, l_global_str.5@PAGE
+Lloh13:
+	add	x0, x0, l_global_str.5@PAGEOFF
+	bl	_writeString
+	ldr	x8, [sp, #8]
+	ldr	w0, [x8]
+	bl	_writeInteger
+Lloh14:
+	adrp	x0, l_global_str.6@PAGE
+Lloh15:
+	add	x0, x0, l_global_str.6@PAGEOFF
+	bl	_writeString
+	ldp	x29, x30, [sp, #16]             ; 16-byte Folded Reload
+	add	sp, sp, #32
+	ret
+	.loh AdrpAdd	Lloh14, Lloh15
+	.loh AdrpAdd	Lloh12, Lloh13
+	.loh AdrpAdd	Lloh10, Lloh11
+	.loh AdrpAdd	Lloh8, Lloh9
+	.cfi_endproc
+                                        ; -- End function
+	.globl	_innerIncrement                 ; -- Begin function innerIncrement
+	.p2align	2
+_innerIncrement:                        ; @innerIncrement
+	.cfi_startproc
+; %bb.0:                                ; %innerIncrement_entry
+	sub	sp, sp, #32
+	.cfi_def_cfa_offset 32
+	stp	x29, x30, [sp, #16]             ; 16-byte Folded Spill
+	.cfi_offset w30, -8
+	.cfi_offset w29, -16
+	ldr	x8, [x0]
+Lloh16:
+	adrp	x0, l_global_str@PAGE
+Lloh17:
+	add	x0, x0, l_global_str@PAGEOFF
+	ldr	w9, [x8]
+	str	x8, [sp, #8]
+	add	w9, w9, #1
+	str	w9, [x8]
+	bl	_writeString
+	ldr	x8, [sp, #8]
+	ldr	w0, [x8]
+	bl	_writeInteger
+Lloh18:
 	adrp	x0, l_global_str.2@PAGE
-Lloh5:
+Lloh19:
 	add	x0, x0, l_global_str.2@PAGEOFF
 	bl	_writeString
-	ldp	x29, x30, [sp, #32]             ; 16-byte Folded Reload
-	add	sp, sp, #48
+	ldp	x29, x30, [sp, #16]             ; 16-byte Folded Reload
+	add	sp, sp, #32
 	ret
-	.loh AdrpAdd	Lloh4, Lloh5
-	.loh AdrpAdd	Lloh2, Lloh3
+	.loh AdrpAdd	Lloh18, Lloh19
+	.loh AdrpAdd	Lloh16, Lloh17
 	.cfi_endproc
                                         ; -- End function
 	.section	__TEXT,__cstring,cstring_literals
 l_global_str:                           ; @global_str
-	.asciz	"k = "
+	.asciz	"y in innerIncrement = "
 
 l_global_str.2:                         ; @global_str.2
 	.asciz	"\n"
 
 l_global_str.3:                         ; @global_str.3
-	.asciz	"\n!dlrow olleH"
+	.asciz	"y in reverse = "
+
+l_global_str.4:                         ; @global_str.4
+	.asciz	"\n"
+
+l_global_str.5:                         ; @global_str.5
+	.asciz	"y in reverse after innerIncrement = "
+
+l_global_str.6:                         ; @global_str.6
+	.asciz	"\n"
+
+l_global_str.7:                         ; @global_str.7
+	.asciz	"y in main = "
+
+l_global_str.8:                         ; @global_str.8
+	.asciz	"\n"
+
+l_global_str.9:                         ; @global_str.9
+	.asciz	"y in main after reverse = "
+
+l_global_str.10:                        ; @global_str.10
+	.asciz	"\n"
 
 .subsections_via_symbols

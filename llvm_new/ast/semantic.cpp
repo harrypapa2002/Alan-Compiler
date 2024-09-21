@@ -390,15 +390,9 @@ void FuncCall::sem()
         }
     }
 
-    if (capturedVars.size() > 0)
+    if (func->getNestingLevel() > 1)
     {
-        // std::cout << "Function call: " << *name << std::endl;
-        // std::cout << "Captured variables: " << std::endl;
-        // std::cout << "Name\tType\tIsParam\tParamType" << std::endl;
-        for (auto &captured : capturedVars)
-        {
-            // std::cout << captured->getName() << "\t" << captured->getType()->getType() << "\t" << captured->getIsParam() << "\t" << captured->getParameterType() << std::endl;
-        }
+        isNested = true;
     }
 }
 

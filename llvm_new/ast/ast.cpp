@@ -555,7 +555,7 @@ void Let::printOn(std::ostream &out) const
 
 // FuncCall Class Method Implementations
 
-FuncCall::FuncCall(std::string *n, ExprList *e) : name(n), exprs(e) {
+FuncCall::FuncCall(std::string *n, ExprList *e) : name(n), exprs(e), isNested(false) {
     capturedVars = std::vector<CapturedVar*>();
 }
 

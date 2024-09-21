@@ -1,7 +1,37 @@
-comp () : proc {
-    if(5 > 15) {
-        writeString("correct\n");
-    }
-    else writeString("wrong\n");
-    return;
-}
+main () : proc
+
+   y : int;
+
+   reverse () : proc
+      innerIncrement () : proc
+      {
+         y = y + 1;
+         writeString("y in innerIncrement = ");
+         writeInteger(y);
+         writeString("\n");
+
+      }
+
+   {
+      y = 5;
+      writeString("y in reverse = ");
+      writeInteger(y);
+      writeString("\n");
+      innerIncrement();
+      writeString("y in reverse after innerIncrement = ");
+      writeInteger(y);
+      writeString("\n");
+
+   }
+
+{ -- main
+   writeString("y in main = ");
+   writeInteger(y);
+   writeString("\n");
+   reverse();
+   writeString("y in main after reverse = ");
+   writeInteger(y);
+   writeString("\n");
+
+} -- main
+

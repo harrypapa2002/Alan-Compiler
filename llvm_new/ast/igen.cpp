@@ -283,19 +283,44 @@ llvm::Value *CondUnOp::igen() const
 llvm::Value *VarDef::igen() const
 {
     llvm::Type *t = nullptr;
+    llvm::Value *defaultValue = nullptr;
 
     if (isArray)
     {
         llvm::Type *elementType = translateType(type->getBaseType(), ParameterType::VALUE);
         t = llvm::ArrayType::get(elementType, size);
+
+        llvm::Constant *defaultElement = nullptr;
+        if (elementType->isIntegerTy(32))
+        {
+            defaultElement = c32(0);
+        }
+        else if (elementType->isIntegerTy(8))
+        {
+            defaultElement = c8('\0');
+        }
+
+        defaultValue = llvm::ConstantArray::get(
+            llvm::cast<llvm::ArrayType>(t),
+            llvm::Constant::getNullValue(elementType));
     }
     else
     {
         t = translateType(type, ParameterType::VALUE);
+
+        if (t->isIntegerTy(32))
+        {
+            defaultValue = c32(0);
+        }
+        else if (t->isIntegerTy(8))
+        {
+            defaultValue = c8('\0');
+        }
     }
 
     llvm::AllocaInst *Alloca = Builder.CreateAlloca(t, nullptr, *name);
 
+    Builder.CreateStore(defaultValue, Alloca);
     GenBlock *currentBlock = blockStack.top();
     currentBlock->addAlloca(*name, Alloca);
 
@@ -388,6 +413,11 @@ llvm::Value *FuncCall::igen() const
             llvm::Value *varValue = blockStack.top()->getAlloca(capturedVar->getName());
 
             llvm::Value *fieldPtr = Builder.CreateStructGEP(closureType, closureAlloc, index, capturedVar->getName() + "_ptr");
+
+            if(isNested){
+                varValue = Builder.CreateLoad(llvm::dyn_cast<llvm::AllocaInst>(varValue)->getAllocatedType(), varValue, capturedVar->getName() + "_load");
+            }
+            
             Builder.CreateStore(varValue, fieldPtr);
             ++index;
         }
@@ -404,7 +434,7 @@ llvm::Value *FuncCall::igen() const
         {
             if (!capturedVars.empty() && &arg == func->arg_begin())
             {
-                continue; 
+                continue;
             }
 
             llvm::Value *argAlloc = (*exprIt)->igen();
@@ -594,10 +624,7 @@ llvm::Value *FuncDef::igen() const
     {
         closureArg = &*argIter++;
         closureArg->setName("closure");
-    }
 
-    if (closureArg)
-    {
         size_t index = 0;
         for (const auto &capturedVar : capturedVars)
         {
