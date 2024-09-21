@@ -410,12 +410,12 @@ llvm::Value *FuncCall::igen() const
         size_t index = 0;
         for (const auto &capturedVar : capturedVars)
         {
-            llvm::Value *varValue = blockStack.top()->getAlloca(capturedVar->getName());
-
+            llvm::AllocaInst *varAlloca = blockStack.top()->getAlloca(capturedVar->getName());
+            llvm::Value *varValue = varAlloca;
             llvm::Value *fieldPtr = Builder.CreateStructGEP(closureType, closureAlloc, index, capturedVar->getName() + "_ptr");
 
-            if(isNested){
-                varValue = Builder.CreateLoad(llvm::dyn_cast<llvm::AllocaInst>(varValue)->getAllocatedType(), varValue, capturedVar->getName() + "_load");
+            if(isNested && varAlloca->getAllocatedType()->isPointerTy()){
+                varValue = Builder.CreateLoad(varAlloca->getAllocatedType(), varValue, capturedVar->getName() + "_load");
             }
             
             Builder.CreateStore(varValue, fieldPtr);
