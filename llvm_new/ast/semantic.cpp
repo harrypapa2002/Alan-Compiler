@@ -58,7 +58,7 @@ void FparList::sem()
 
 void FuncDef::sem()
 {
-    if (st.findSymbol(*name))
+    if (st.findSymbolInCurrentScope(*name))
     {
         yyerror(("Function name '" + *name + "' already declared").c_str());
     }
@@ -112,17 +112,6 @@ void FuncDef::sem()
     }
 
     st.exitFunctionScope();
-
-    if (capturedVars.size() > 0)
-    {
-        // std::cout << "Function definition: " << *name << std::endl;
-        // std::cout << "Captured variables: " << std::endl;
-        // std::cout << "Name\tType\tIsParam\tParamType" << std::endl;
-        for (auto &captured : capturedVars)
-        {
-            // std::cout << captured->getName() << "\t" << captured->getType()->getType() << "\t" << captured->getIsParam() << "\t" << captured->getParameterType() << std::endl;
-        }
-    }
 }
 
 // VarDef Class Semantic Method Implementation

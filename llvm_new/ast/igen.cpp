@@ -491,7 +491,8 @@ llvm::Value *If::igen() const
     blockStack.top()->setBlock(thenBB);
     thenStmt->igen();
 
-    if (!Builder.GetInsertBlock()->getTerminator())
+    bool thenHasTerminator = Builder.GetInsertBlock()->getTerminator() != nullptr;
+    if (!thenHasTerminator)
     {
         Builder.CreateBr(mergeBB);
     }
@@ -504,14 +505,18 @@ llvm::Value *If::igen() const
         elseStmt->igen();
     }
 
-    if (!Builder.GetInsertBlock()->getTerminator())
+    bool elseHasTerminator = Builder.GetInsertBlock()->getTerminator() != nullptr;
+    if (!elseHasTerminator)
     {
         Builder.CreateBr(mergeBB);
     }
 
-    func->getBasicBlockList().push_back(mergeBB);
-    Builder.SetInsertPoint(mergeBB);
-    blockStack.top()->setBlock(mergeBB);
+    if (!thenHasTerminator || !elseHasTerminator)
+    {
+        func->getBasicBlockList().push_back(mergeBB);
+        Builder.SetInsertPoint(mergeBB);
+        blockStack.top()->setBlock(mergeBB);
+    }
 
     return nullptr;
 }
@@ -562,7 +567,7 @@ llvm::Value *Return::igen() const
     else
     {
         llvm::Value *value = expr->igen();
-        if (!llvm::isa<llvm::ConstantInt>(value))
+        if (value->getType()->isPointerTy())
         {
             // std::cout << "Return value is not a constant" << std::endl;
             value = Builder.CreateLoad(translateType(expr->getType(), ParameterType::VALUE), value, "ret_val");
