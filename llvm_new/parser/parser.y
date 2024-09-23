@@ -1,19 +1,30 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
 #include "../lexer/lexer.hpp"
 #include "../ast/ast.hpp"
 #include "../symbol/types.hpp"
 #include "../symbol/symbol.hpp"
 #include "../symbol/symbol_table.hpp"
 
+// Track error state
+int syntax_errors = 0;
+extern int lexical_errors;
+std::vector<std::string> syntax_error_buffer;  
+
+// Global line and column tracking
+extern int lineno;
+extern int column;
+
+void yyerror(const char *msg);  
+
 Type *typeInteger = new IntType();
 Type *typeByte = new ByteType();
 Type *typeVoid = new VoidType();
-
-
 %}
 
+%error-verbose
 
 %union {
     ExprList *exprlist;
@@ -39,6 +50,7 @@ Type *typeVoid = new VoidType();
     FuncCall *fun;
 }
 
+// Tokens
 %token T_byte "byte"
 %token T_else "else"
 %token T_false "false"
@@ -54,10 +66,10 @@ Type *typeVoid = new VoidType();
 %token T_eq "=="
 %token T_neq "!="
 
-%token<str> T_string 
-%token<num> T_const 
-%token<str> T_id 
-%token<chr> T_char 
+%token<str> T_string "string"
+%token<num> T_const "constant"
+%token<str> T_id "identifier"
+%token<chr> T_char "char"
 
 %left<op> '&' '|'
 %nonassoc<comp> T_lte T_gte '<' '>' T_eq T_neq
@@ -83,16 +95,17 @@ Type *typeVoid = new VoidType();
 %type <type> datatype type rtype
 %type <fun> funccall
 
-
 %%
 
 program :
     funcdef {   
-            $1->sem();
-            $1->llvm_igen();
-        } 
-                
-         
+        if (lexical_errors > 0 || syntax_errors > 0) {
+            YYABORT; 
+        }
+        $1->sem();
+        $1->llvm_igen();
+    }
+;
 
 funcdef : 
     T_id '(' fparlist ')' ':' rtype localdefs compoundstmt { $$ = new FuncDef($1, $6, $7, $8, $3); }
@@ -199,7 +212,32 @@ cond :
 %%
 
 int main() {
-  int result = yyparse();
-  //if (result == 0) printf("Success.\n");
-  return result;
+    int result = yyparse();
+    
+    // Print lexical errors first
+    if (lexical_errors > 0) {
+        for (const std::string &error : error_buffer) {
+            fprintf(stderr, "%s\n", error.c_str());
+        }
+        return 1;
+    }
+
+    // Print syntax errors second
+    if (syntax_errors > 0) {
+        for (const std::string &error : syntax_error_buffer) {
+            fprintf(stderr, "%s\n", error.c_str());
+        }
+    }
+
+    return result;
+}
+
+// Custom yyerror function that provides specific syntax error messages
+void yyerror(const char *msg) {
+    syntax_errors++;
+
+    std::string error_message = "Syntax Error at line " + std::to_string(lineno) +
+                                ", column " + std::to_string(column) + ": " + msg;
+
+    syntax_error_buffer.push_back(error_message);
 }

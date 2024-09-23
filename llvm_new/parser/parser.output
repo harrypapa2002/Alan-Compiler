@@ -7,13 +7,13 @@ Grammar
 
     1 program: funcdef
 
-    2 funcdef: T_id '(' fparlist ')' ':' rtype localdefs compoundstmt
-    3        | T_id '(' ')' ':' rtype localdefs compoundstmt
+    2 funcdef: "identifier" '(' fparlist ')' ':' rtype localdefs compoundstmt
+    3        | "identifier" '(' ')' ':' rtype localdefs compoundstmt
 
     4 fparlist: fpardef fpardefs
 
-    5 fpardef: T_id ':' "reference" type
-    6        | T_id ':' type
+    5 fpardef: "identifier" ':' "reference" type
+    6        | "identifier" ':' type
 
     7 fpardefs: /* empty */
     8         | ',' fpardef fpardefs
@@ -33,8 +33,8 @@ Grammar
    17 localdefs: /* empty */
    18          | localdef localdefs
 
-   19 vardef: T_id ':' datatype '[' T_const ']' ';'
-   20       | T_id ':' datatype ';'
+   19 vardef: "identifier" ':' datatype '[' "constant" ']' ';'
+   20       | "identifier" ':' datatype ';'
 
    21 stmt: ';'
    22     | lvalue '=' expr ';'
@@ -51,13 +51,13 @@ Grammar
 
    32 compoundstmt: '{' stmts '}'
 
-   33 funccall: T_id '(' exprlist ')'
-   34         | T_id '(' ')'
+   33 funccall: "identifier" '(' exprlist ')'
+   34         | "identifier" '(' ')'
 
    35 exprlist: expr exprs
 
-   36 expr: T_const
-   37     | T_char
+   36 expr: "constant"
+   37     | "char"
    38     | lvalue
    39     | '(' expr ')'
    40     | funccall
@@ -72,9 +72,9 @@ Grammar
    48 exprs: /* empty */
    49      | ',' expr exprs
 
-   50 lvalue: T_id '[' expr ']'
-   51       | T_id
-   52       | T_string
+   50 lvalue: "identifier" '[' expr ']'
+   51       | "identifier"
+   52       | "string"
 
    53 cond: "true"
    54     | "false"
@@ -128,10 +128,10 @@ error (256)
 ">=" (269) 62
 "==" (270) 57
 "!=" (271) 58
-T_string (272) 52
-T_const (273) 19 36
-T_id (274) 2 3 5 6 19 20 33 34 50 51
-T_char (275) 37
+"string" (272) 52
+"constant" (273) 19 36
+"identifier" (274) 2 3 5 6 19 20 33 34 50 51
+"char" (275) 37
 UNOP (276)
 
 
@@ -187,7 +187,7 @@ state 0
 
     0 $accept: . program $end
 
-    T_id  shift, and go to state 1
+    "identifier"  shift, and go to state 1
 
     program  go to state 2
     funcdef  go to state 3
@@ -195,8 +195,8 @@ state 0
 
 state 1
 
-    2 funcdef: T_id . '(' fparlist ')' ':' rtype localdefs compoundstmt
-    3        | T_id . '(' ')' ':' rtype localdefs compoundstmt
+    2 funcdef: "identifier" . '(' fparlist ')' ':' rtype localdefs compoundstmt
+    3        | "identifier" . '(' ')' ':' rtype localdefs compoundstmt
 
     '('  shift, and go to state 4
 
@@ -217,11 +217,11 @@ state 3
 
 state 4
 
-    2 funcdef: T_id '(' . fparlist ')' ':' rtype localdefs compoundstmt
-    3        | T_id '(' . ')' ':' rtype localdefs compoundstmt
+    2 funcdef: "identifier" '(' . fparlist ')' ':' rtype localdefs compoundstmt
+    3        | "identifier" '(' . ')' ':' rtype localdefs compoundstmt
 
-    T_id  shift, and go to state 6
-    ')'   shift, and go to state 7
+    "identifier"  shift, and go to state 6
+    ')'           shift, and go to state 7
 
     fparlist  go to state 8
     fpardef   go to state 9
@@ -236,22 +236,22 @@ state 5
 
 state 6
 
-    5 fpardef: T_id . ':' "reference" type
-    6        | T_id . ':' type
+    5 fpardef: "identifier" . ':' "reference" type
+    6        | "identifier" . ':' type
 
     ':'  shift, and go to state 10
 
 
 state 7
 
-    3 funcdef: T_id '(' ')' . ':' rtype localdefs compoundstmt
+    3 funcdef: "identifier" '(' ')' . ':' rtype localdefs compoundstmt
 
     ':'  shift, and go to state 11
 
 
 state 8
 
-    2 funcdef: T_id '(' fparlist . ')' ':' rtype localdefs compoundstmt
+    2 funcdef: "identifier" '(' fparlist . ')' ':' rtype localdefs compoundstmt
 
     ')'  shift, and go to state 12
 
@@ -269,8 +269,8 @@ state 9
 
 state 10
 
-    5 fpardef: T_id ':' . "reference" type
-    6        | T_id ':' . type
+    5 fpardef: "identifier" ':' . "reference" type
+    6        | "identifier" ':' . type
 
     "byte"       shift, and go to state 15
     "int"        shift, and go to state 16
@@ -282,7 +282,7 @@ state 10
 
 state 11
 
-    3 funcdef: T_id '(' ')' ':' . rtype localdefs compoundstmt
+    3 funcdef: "identifier" '(' ')' ':' . rtype localdefs compoundstmt
 
     "byte"  shift, and go to state 15
     "int"   shift, and go to state 16
@@ -294,7 +294,7 @@ state 11
 
 state 12
 
-    2 funcdef: T_id '(' fparlist ')' . ':' rtype localdefs compoundstmt
+    2 funcdef: "identifier" '(' fparlist ')' . ':' rtype localdefs compoundstmt
 
     ':'  shift, and go to state 23
 
@@ -303,7 +303,7 @@ state 13
 
     8 fpardefs: ',' . fpardef fpardefs
 
-    T_id  shift, and go to state 6
+    "identifier"  shift, and go to state 6
 
     fpardef  go to state 24
 
@@ -331,7 +331,7 @@ state 16
 
 state 17
 
-    5 fpardef: T_id ':' "reference" . type
+    5 fpardef: "identifier" ':' "reference" . type
 
     "byte"  shift, and go to state 15
     "int"   shift, and go to state 16
@@ -352,7 +352,7 @@ state 18
 
 state 19
 
-    6 fpardef: T_id ':' type .
+    6 fpardef: "identifier" ':' type .
 
     $default  reduce using rule 6 (fpardef)
 
@@ -373,9 +373,9 @@ state 21
 
 state 22
 
-    3 funcdef: T_id '(' ')' ':' rtype . localdefs compoundstmt
+    3 funcdef: "identifier" '(' ')' ':' rtype . localdefs compoundstmt
 
-    T_id  shift, and go to state 27
+    "identifier"  shift, and go to state 27
 
     $default  reduce using rule 17 (localdefs)
 
@@ -387,7 +387,7 @@ state 22
 
 state 23
 
-    2 funcdef: T_id '(' fparlist ')' ':' . rtype localdefs compoundstmt
+    2 funcdef: "identifier" '(' fparlist ')' ':' . rtype localdefs compoundstmt
 
     "byte"  shift, and go to state 15
     "int"   shift, and go to state 16
@@ -410,7 +410,7 @@ state 24
 
 state 25
 
-    5 fpardef: T_id ':' "reference" type .
+    5 fpardef: "identifier" ':' "reference" type .
 
     $default  reduce using rule 5 (fpardef)
 
@@ -424,10 +424,10 @@ state 26
 
 state 27
 
-    2 funcdef: T_id . '(' fparlist ')' ':' rtype localdefs compoundstmt
-    3        | T_id . '(' ')' ':' rtype localdefs compoundstmt
-   19 vardef: T_id . ':' datatype '[' T_const ']' ';'
-   20       | T_id . ':' datatype ';'
+    2 funcdef: "identifier" . '(' fparlist ')' ':' rtype localdefs compoundstmt
+    3        | "identifier" . '(' ')' ':' rtype localdefs compoundstmt
+   19 vardef: "identifier" . ':' datatype '[' "constant" ']' ';'
+   20       | "identifier" . ':' datatype ';'
 
     '('  shift, and go to state 4
     ':'  shift, and go to state 35
@@ -444,7 +444,7 @@ state 29
 
    18 localdefs: localdef . localdefs
 
-    T_id  shift, and go to state 27
+    "identifier"  shift, and go to state 27
 
     $default  reduce using rule 17 (localdefs)
 
@@ -456,7 +456,7 @@ state 29
 
 state 30
 
-    3 funcdef: T_id '(' ')' ':' rtype localdefs . compoundstmt
+    3 funcdef: "identifier" '(' ')' ':' rtype localdefs . compoundstmt
 
     '{'  shift, and go to state 37
 
@@ -472,9 +472,9 @@ state 31
 
 state 32
 
-    2 funcdef: T_id '(' fparlist ')' ':' rtype . localdefs compoundstmt
+    2 funcdef: "identifier" '(' fparlist ')' ':' rtype . localdefs compoundstmt
 
-    T_id  shift, and go to state 27
+    "identifier"  shift, and go to state 27
 
     $default  reduce using rule 17 (localdefs)
 
@@ -500,8 +500,8 @@ state 34
 
 state 35
 
-   19 vardef: T_id ':' . datatype '[' T_const ']' ';'
-   20       | T_id ':' . datatype ';'
+   19 vardef: "identifier" ':' . datatype '[' "constant" ']' ';'
+   20       | "identifier" ':' . datatype ';'
 
     "byte"  shift, and go to state 15
     "int"   shift, and go to state 16
@@ -520,13 +520,13 @@ state 37
 
    32 compoundstmt: '{' . stmts '}'
 
-    "if"      shift, and go to state 41
-    "return"  shift, and go to state 42
-    "while"   shift, and go to state 43
-    T_string  shift, and go to state 44
-    T_id      shift, and go to state 45
-    ';'       shift, and go to state 46
-    '{'       shift, and go to state 37
+    "if"          shift, and go to state 41
+    "return"      shift, and go to state 42
+    "while"       shift, and go to state 43
+    "string"      shift, and go to state 44
+    "identifier"  shift, and go to state 45
+    ';'           shift, and go to state 46
+    '{'           shift, and go to state 37
 
     $default  reduce using rule 30 (stmts)
 
@@ -539,14 +539,14 @@ state 37
 
 state 38
 
-    3 funcdef: T_id '(' ')' ':' rtype localdefs compoundstmt .
+    3 funcdef: "identifier" '(' ')' ':' rtype localdefs compoundstmt .
 
     $default  reduce using rule 3 (funcdef)
 
 
 state 39
 
-    2 funcdef: T_id '(' fparlist ')' ':' rtype localdefs . compoundstmt
+    2 funcdef: "identifier" '(' fparlist ')' ':' rtype localdefs . compoundstmt
 
     '{'  shift, and go to state 37
 
@@ -555,8 +555,8 @@ state 39
 
 state 40
 
-   19 vardef: T_id ':' datatype . '[' T_const ']' ';'
-   20       | T_id ':' datatype . ';'
+   19 vardef: "identifier" ':' datatype . '[' "constant" ']' ';'
+   20       | "identifier" ':' datatype . ';'
 
     '['  shift, and go to state 53
     ';'  shift, and go to state 54
@@ -575,14 +575,14 @@ state 42
    28 stmt: "return" . expr ';'
    29     | "return" . ';'
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
-    ';'       shift, and go to state 61
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
+    ';'           shift, and go to state 61
 
     funccall  go to state 62
     expr      go to state 63
@@ -598,17 +598,17 @@ state 43
 
 state 44
 
-   52 lvalue: T_string .
+   52 lvalue: "string" .
 
     $default  reduce using rule 52 (lvalue)
 
 
 state 45
 
-   33 funccall: T_id . '(' exprlist ')'
-   34         | T_id . '(' ')'
-   50 lvalue: T_id . '[' expr ']'
-   51       | T_id .
+   33 funccall: "identifier" . '(' exprlist ')'
+   34         | "identifier" . '(' ')'
+   50 lvalue: "identifier" . '[' expr ']'
+   51       | "identifier" .
 
     '('  shift, and go to state 66
     '['  shift, and go to state 67
@@ -627,13 +627,13 @@ state 47
 
    31 stmts: stmt . stmts
 
-    "if"      shift, and go to state 41
-    "return"  shift, and go to state 42
-    "while"   shift, and go to state 43
-    T_string  shift, and go to state 44
-    T_id      shift, and go to state 45
-    ';'       shift, and go to state 46
-    '{'       shift, and go to state 37
+    "if"          shift, and go to state 41
+    "return"      shift, and go to state 42
+    "while"       shift, and go to state 43
+    "string"      shift, and go to state 44
+    "identifier"  shift, and go to state 45
+    ';'           shift, and go to state 46
+    '{'           shift, and go to state 37
 
     $default  reduce using rule 30 (stmts)
 
@@ -674,21 +674,21 @@ state 51
 
 state 52
 
-    2 funcdef: T_id '(' fparlist ')' ':' rtype localdefs compoundstmt .
+    2 funcdef: "identifier" '(' fparlist ')' ':' rtype localdefs compoundstmt .
 
     $default  reduce using rule 2 (funcdef)
 
 
 state 53
 
-   19 vardef: T_id ':' datatype '[' . T_const ']' ';'
+   19 vardef: "identifier" ':' datatype '[' . "constant" ']' ';'
 
-    T_const  shift, and go to state 72
+    "constant"  shift, and go to state 72
 
 
 state 54
 
-   20 vardef: T_id ':' datatype ';' .
+   20 vardef: "identifier" ':' datatype ';' .
 
     $default  reduce using rule 20 (vardef)
 
@@ -698,16 +698,16 @@ state 55
    25 stmt: "if" '(' . cond ')' stmt "else" stmt
    26     | "if" '(' . cond ')' stmt
 
-    "false"   shift, and go to state 73
-    "true"    shift, and go to state 74
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 75
-    '!'       shift, and go to state 76
+    "false"       shift, and go to state 73
+    "true"        shift, and go to state 74
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 75
+    '!'           shift, and go to state 76
 
     funccall  go to state 62
     expr      go to state 77
@@ -717,14 +717,14 @@ state 55
 
 state 56
 
-   36 expr: T_const .
+   36 expr: "constant" .
 
     $default  reduce using rule 36 (expr)
 
 
 state 57
 
-   37 expr: T_char .
+   37 expr: "char" .
 
     $default  reduce using rule 37 (expr)
 
@@ -733,13 +733,13 @@ state 58
 
    41 expr: '+' . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 79
@@ -750,13 +750,13 @@ state 59
 
    42 expr: '-' . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 80
@@ -767,13 +767,13 @@ state 60
 
    39 expr: '(' . expr ')'
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 81
@@ -822,16 +822,16 @@ state 65
 
    27 stmt: "while" '(' . cond ')' stmt
 
-    "false"   shift, and go to state 73
-    "true"    shift, and go to state 74
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 75
-    '!'       shift, and go to state 76
+    "false"       shift, and go to state 73
+    "true"        shift, and go to state 74
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 75
+    '!'           shift, and go to state 76
 
     funccall  go to state 62
     expr      go to state 77
@@ -841,17 +841,17 @@ state 65
 
 state 66
 
-   33 funccall: T_id '(' . exprlist ')'
-   34         | T_id '(' . ')'
+   33 funccall: "identifier" '(' . exprlist ')'
+   34         | "identifier" '(' . ')'
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
-    ')'       shift, and go to state 89
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
+    ')'           shift, and go to state 89
 
     funccall  go to state 62
     exprlist  go to state 90
@@ -861,15 +861,15 @@ state 66
 
 state 67
 
-   50 lvalue: T_id '[' . expr ']'
+   50 lvalue: "identifier" '[' . expr ']'
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 92
@@ -901,13 +901,13 @@ state 71
 
    22 stmt: lvalue '=' . expr ';'
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 93
@@ -916,7 +916,7 @@ state 71
 
 state 72
 
-   19 vardef: T_id ':' datatype '[' T_const . ']' ';'
+   19 vardef: "identifier" ':' datatype '[' "constant" . ']' ';'
 
     ']'  shift, and go to state 94
 
@@ -940,16 +940,16 @@ state 75
    39 expr: '(' . expr ')'
    55 cond: '(' . cond ')'
 
-    "false"   shift, and go to state 73
-    "true"    shift, and go to state 74
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 75
-    '!'       shift, and go to state 76
+    "false"       shift, and go to state 73
+    "true"        shift, and go to state 74
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 75
+    '!'           shift, and go to state 76
 
     funccall  go to state 62
     expr      go to state 95
@@ -961,16 +961,16 @@ state 76
 
    56 cond: '!' . cond
 
-    "false"   shift, and go to state 73
-    "true"    shift, and go to state 74
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 75
-    '!'       shift, and go to state 76
+    "false"       shift, and go to state 73
+    "true"        shift, and go to state 74
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 75
+    '!'           shift, and go to state 76
 
     funccall  go to state 62
     expr      go to state 77
@@ -1062,13 +1062,13 @@ state 82
 
    43 expr: expr '+' . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 108
@@ -1079,13 +1079,13 @@ state 83
 
    44 expr: expr '-' . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 109
@@ -1096,13 +1096,13 @@ state 84
 
    45 expr: expr '*' . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 110
@@ -1113,13 +1113,13 @@ state 85
 
    46 expr: expr '/' . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 111
@@ -1130,13 +1130,13 @@ state 86
 
    47 expr: expr '%' . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 112
@@ -1163,14 +1163,14 @@ state 88
 
 state 89
 
-   34 funccall: T_id '(' ')' .
+   34 funccall: "identifier" '(' ')' .
 
     $default  reduce using rule 34 (funccall)
 
 
 state 90
 
-   33 funccall: T_id '(' exprlist . ')'
+   33 funccall: "identifier" '(' exprlist . ')'
 
     ')'  shift, and go to state 114
 
@@ -1203,7 +1203,7 @@ state 92
    45     | expr . '*' expr
    46     | expr . '/' expr
    47     | expr . '%' expr
-   50 lvalue: T_id '[' expr . ']'
+   50 lvalue: "identifier" '[' expr . ']'
 
     '+'  shift, and go to state 82
     '-'  shift, and go to state 83
@@ -1232,7 +1232,7 @@ state 93
 
 state 94
 
-   19 vardef: T_id ':' datatype '[' T_const ']' . ';'
+   19 vardef: "identifier" ':' datatype '[' "constant" ']' . ';'
 
     ';'  shift, and go to state 119
 
@@ -1290,13 +1290,13 @@ state 98
 
    61 cond: expr "<=" . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 121
@@ -1307,13 +1307,13 @@ state 99
 
    62 cond: expr ">=" . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 122
@@ -1324,13 +1324,13 @@ state 100
 
    57 cond: expr "==" . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 123
@@ -1341,13 +1341,13 @@ state 101
 
    58 cond: expr "!=" . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 124
@@ -1358,13 +1358,13 @@ state 102
 
    59 cond: expr '<' . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 125
@@ -1375,13 +1375,13 @@ state 103
 
    60 cond: expr '>' . expr
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 126
@@ -1392,16 +1392,16 @@ state 104
 
    63 cond: cond '&' . cond
 
-    "false"   shift, and go to state 73
-    "true"    shift, and go to state 74
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 75
-    '!'       shift, and go to state 76
+    "false"       shift, and go to state 73
+    "true"        shift, and go to state 74
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 75
+    '!'           shift, and go to state 76
 
     funccall  go to state 62
     expr      go to state 77
@@ -1413,16 +1413,16 @@ state 105
 
    64 cond: cond '|' . cond
 
-    "false"   shift, and go to state 73
-    "true"    shift, and go to state 74
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 75
-    '!'       shift, and go to state 76
+    "false"       shift, and go to state 73
+    "true"        shift, and go to state 74
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 75
+    '!'           shift, and go to state 76
 
     funccall  go to state 62
     expr      go to state 77
@@ -1435,13 +1435,13 @@ state 106
    25 stmt: "if" '(' cond ')' . stmt "else" stmt
    26     | "if" '(' cond ')' . stmt
 
-    "if"      shift, and go to state 41
-    "return"  shift, and go to state 42
-    "while"   shift, and go to state 43
-    T_string  shift, and go to state 44
-    T_id      shift, and go to state 45
-    ';'       shift, and go to state 46
-    '{'       shift, and go to state 37
+    "if"          shift, and go to state 41
+    "return"      shift, and go to state 42
+    "while"       shift, and go to state 43
+    "string"      shift, and go to state 44
+    "identifier"  shift, and go to state 45
+    ';'           shift, and go to state 46
+    '{'           shift, and go to state 37
 
     stmt          go to state 129
     compoundstmt  go to state 49
@@ -1528,13 +1528,13 @@ state 113
 
    27 stmt: "while" '(' cond ')' . stmt
 
-    "if"      shift, and go to state 41
-    "return"  shift, and go to state 42
-    "while"   shift, and go to state 43
-    T_string  shift, and go to state 44
-    T_id      shift, and go to state 45
-    ';'       shift, and go to state 46
-    '{'       shift, and go to state 37
+    "if"          shift, and go to state 41
+    "return"      shift, and go to state 42
+    "while"       shift, and go to state 43
+    "string"      shift, and go to state 44
+    "identifier"  shift, and go to state 45
+    ';'           shift, and go to state 46
+    '{'           shift, and go to state 37
 
     stmt          go to state 130
     compoundstmt  go to state 49
@@ -1544,7 +1544,7 @@ state 113
 
 state 114
 
-   33 funccall: T_id '(' exprlist ')' .
+   33 funccall: "identifier" '(' exprlist ')' .
 
     $default  reduce using rule 33 (funccall)
 
@@ -1553,13 +1553,13 @@ state 115
 
    49 exprs: ',' . expr exprs
 
-    T_string  shift, and go to state 44
-    T_const   shift, and go to state 56
-    T_id      shift, and go to state 45
-    T_char    shift, and go to state 57
-    '+'       shift, and go to state 58
-    '-'       shift, and go to state 59
-    '('       shift, and go to state 60
+    "string"      shift, and go to state 44
+    "constant"    shift, and go to state 56
+    "identifier"  shift, and go to state 45
+    "char"        shift, and go to state 57
+    '+'           shift, and go to state 58
+    '-'           shift, and go to state 59
+    '('           shift, and go to state 60
 
     funccall  go to state 62
     expr      go to state 131
@@ -1575,7 +1575,7 @@ state 116
 
 state 117
 
-   50 lvalue: T_id '[' expr ']' .
+   50 lvalue: "identifier" '[' expr ']' .
 
     $default  reduce using rule 50 (lvalue)
 
@@ -1589,7 +1589,7 @@ state 118
 
 state 119
 
-   19 vardef: T_id ':' datatype '[' T_const ']' ';' .
+   19 vardef: "identifier" ':' datatype '[' "constant" ']' ';' .
 
     $default  reduce using rule 19 (vardef)
 
@@ -1770,13 +1770,13 @@ state 132
 
    25 stmt: "if" '(' cond ')' stmt "else" . stmt
 
-    "if"      shift, and go to state 41
-    "return"  shift, and go to state 42
-    "while"   shift, and go to state 43
-    T_string  shift, and go to state 44
-    T_id      shift, and go to state 45
-    ';'       shift, and go to state 46
-    '{'       shift, and go to state 37
+    "if"          shift, and go to state 41
+    "return"      shift, and go to state 42
+    "while"       shift, and go to state 43
+    "string"      shift, and go to state 44
+    "identifier"  shift, and go to state 45
+    ';'           shift, and go to state 46
+    '{'           shift, and go to state 37
 
     stmt          go to state 134
     compoundstmt  go to state 49

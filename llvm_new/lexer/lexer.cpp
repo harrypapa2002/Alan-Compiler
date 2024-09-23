@@ -526,16 +526,33 @@ char *yytext;
 #line 4 "lexer/lexer.l"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
+#include <ctype.h> 
+#include <vector>
 #include "../ast/ast.hpp"
 #include "lexer.hpp"
 #include "../parser/parser.hpp"
-#include <string>
-int lineno = 1;
-int is_balanced = 0;
 
-#line 536 "lexer/lexer.cpp"
+enum LexicalErrorType {
+    ILLEGAL_CHARACTER,
+    UNFINISHED_COMMENT
+};
 
-#line 538 "lexer/lexer.cpp"
+int lineno = 1;       
+int column = 1;        
+int lexical_errors = 0; 
+std::vector<std::string> error_buffer; 
+int is_balanced = 0;  
+void trackLexicalError(LexicalErrorType errorType);
+
+int comment_start_line = 0;
+int comment_start_column = 0;
+
+
+
+#line 553 "lexer/lexer.cpp"
+
+#line 555 "lexer/lexer.cpp"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -753,12 +770,12 @@ YY_DECL
 		}
 
 	{
-#line 23 "lexer/lexer.l"
+#line 40 "lexer/lexer.l"
 
 
-#line 26 "lexer/lexer.l"
+#line 43 "lexer/lexer.l"
  /* Keywords */
-#line 761 "lexer/lexer.cpp"
+#line 778 "lexer/lexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -817,188 +834,198 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 27 "lexer/lexer.l"
-{ return T_byte; }
+#line 44 "lexer/lexer.l"
+{ column += yyleng; return T_byte; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 28 "lexer/lexer.l"
-{ return T_else; }
+#line 45 "lexer/lexer.l"
+{ column += yyleng; return T_else; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 29 "lexer/lexer.l"
-{ return T_false; }
+#line 46 "lexer/lexer.l"
+{ column += yyleng; return T_false; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 30 "lexer/lexer.l"
-{ return T_if; }
+#line 47 "lexer/lexer.l"
+{ column += yyleng; return T_if; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 31 "lexer/lexer.l"
-{ return T_int; }
+#line 48 "lexer/lexer.l"
+{ column += yyleng; return T_int; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 32 "lexer/lexer.l"
-{ return T_proc; }
+#line 49 "lexer/lexer.l"
+{ column += yyleng; return T_proc; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 33 "lexer/lexer.l"
-{ return T_reference; }
+#line 50 "lexer/lexer.l"
+{ column += yyleng; return T_reference; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 34 "lexer/lexer.l"
-{ return T_return; }
+#line 51 "lexer/lexer.l"
+{ column += yyleng; return T_return; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 35 "lexer/lexer.l"
-{ return T_while; }
+#line 52 "lexer/lexer.l"
+{ column += yyleng; return T_while; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 36 "lexer/lexer.l"
-{ return T_true; }
+#line 53 "lexer/lexer.l"
+{ column += yyleng; return T_true; }
 	YY_BREAK
 /* Symbols */
 case 11:
 YY_RULE_SETUP
-#line 39 "lexer/lexer.l"
-{ yylval.op = yytext[0]; return yytext[0]; }
+#line 56 "lexer/lexer.l"
+{ column += yyleng; yylval.op = yytext[0]; return yytext[0]; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 40 "lexer/lexer.l"
-{yylval.comp = lt; return yytext[0]; }
+#line 57 "lexer/lexer.l"
+{ column += yyleng; yylval.comp = lt; return yytext[0]; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 41 "lexer/lexer.l"
-{yylval.comp = gt; return yytext[0]; }
+#line 58 "lexer/lexer.l"
+{ column += yyleng; yylval.comp = gt; return yytext[0]; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 42 "lexer/lexer.l"
-{ yylval.comp = lte; return T_lte; }
+#line 59 "lexer/lexer.l"
+{ column += yyleng; yylval.comp = lte; return T_lte; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 43 "lexer/lexer.l"
-{ yylval.comp = gte; return T_gte; }
+#line 60 "lexer/lexer.l"
+{ column += yyleng; yylval.comp = gte; return T_gte; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 44 "lexer/lexer.l"
-{ yylval.comp = eq; return T_eq; }
+#line 61 "lexer/lexer.l"
+{ column += yyleng; yylval.comp = eq; return T_eq; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 45 "lexer/lexer.l"
-{ yylval.comp = neq; return T_neq; }
+#line 62 "lexer/lexer.l"
+{ column += yyleng; yylval.comp = neq; return T_neq; }
 	YY_BREAK
 /* Constants. Names. Chars. Strings. */
 case 18:
 YY_RULE_SETUP
-#line 48 "lexer/lexer.l"
-{ yylval.num = atoi(yytext); return T_const; }
+#line 65 "lexer/lexer.l"
+{ column += yyleng; yylval.num = atoi(yytext); return T_const; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 49 "lexer/lexer.l"
-{ yylval.var = new std::string(yytext); return T_id; }
+#line 66 "lexer/lexer.l"
+{ column += yyleng; yylval.var = new std::string(yytext); return T_id; }
 	YY_BREAK
 case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
-#line 50 "lexer/lexer.l"
-{ yylval.chr = fixChar(yytext+1); return T_char; }
+#line 67 "lexer/lexer.l"
+{ column += yyleng; yylval.chr = fixChar(yytext+1); return T_char; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 51 "lexer/lexer.l"
-{ yylval.str = new std::string(fixString(yytext+1));  return T_string; }
+#line 68 "lexer/lexer.l"
+{ column += yyleng; yylval.str = new std::string(fixString(yytext+1)); return T_string; }
 	YY_BREAK
 /* WhiteSpace */
 case 22:
 /* rule 22 can match eol */
 YY_RULE_SETUP
-#line 54 "lexer/lexer.l"
-{ ++lineno; }
+#line 71 "lexer/lexer.l"
+{ lineno++; column = 1; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 55 "lexer/lexer.l"
-{ /* nothing */ }
+#line 72 "lexer/lexer.l"
+{ column += yyleng;  }
 	YY_BREAK
 /* Comments */
 case 24:
 /* rule 24 can match eol */
 YY_RULE_SETUP
-#line 58 "lexer/lexer.l"
-{ ++lineno; }
+#line 75 "lexer/lexer.l"
+{ column = 1; lineno++; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 59 "lexer/lexer.l"
-{ BEGIN(COMMENT); }
+#line 76 "lexer/lexer.l"
+{ 
+    comment_start_line = lineno;        
+    comment_start_column = column;     
+    BEGIN(COMMENT); 
+    is_balanced = 0; 
+}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 60 "lexer/lexer.l"
-{  ++is_balanced; }
+#line 82 "lexer/lexer.l"
+{ ++is_balanced; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 61 "lexer/lexer.l"
-{  if(is_balanced) --is_balanced; else { BEGIN(INITIAL);} }
+#line 83 "lexer/lexer.l"
+{ if(is_balanced) --is_balanced; else { BEGIN(INITIAL); } }
 	YY_BREAK
 case 28:
 /* rule 28 can match eol */
 YY_RULE_SETUP
-#line 62 "lexer/lexer.l"
-{ lineno++; }
+#line 84 "lexer/lexer.l"
+{ lineno++; column = 1; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 63 "lexer/lexer.l"
-{ /* nothing */ }
+#line 85 "lexer/lexer.l"
+{ column += yyleng; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 64 "lexer/lexer.l"
-{ /* nothing */ }
+#line 86 "lexer/lexer.l"
+{ column += yyleng; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 65 "lexer/lexer.l"
-{ /* nothing */ }
+#line 87 "lexer/lexer.l"
+{ column += yyleng; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 66 "lexer/lexer.l"
-{ /* nothing */ }
+#line 88 "lexer/lexer.l"
+{ column += yyleng; }
 	YY_BREAK
 case YY_STATE_EOF(COMMENT):
-#line 67 "lexer/lexer.l"
-{yyerror("Unfinished comment"); }
+#line 89 "lexer/lexer.l"
+{ 
+    trackLexicalError(UNFINISHED_COMMENT);
+    BEGIN(INITIAL);
+}
 	YY_BREAK
 /* Illegal characters */
 case 33:
 YY_RULE_SETUP
-#line 71 "lexer/lexer.l"
-{ yyerror("Illegal character"); }
+#line 95 "lexer/lexer.l"
+{ 
+    trackLexicalError(ILLEGAL_CHARACTER); 
+}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 73 "lexer/lexer.l"
+#line 101 "lexer/lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1001 "lexer/lexer.cpp"
+#line 1028 "lexer/lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2003,33 +2030,58 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 73 "lexer/lexer.l"
+#line 101 "lexer/lexer.l"
 
 
+void trackLexicalError(LexicalErrorType errorType) {
+    char error_message[256];
 
-void yyerror(const char *msg) {
-    fprintf(stderr, "Error, lexeme %s, line %d: %s\n", yytext, lineno, msg);
-    exit(1);
+    switch (errorType) {
+        case ILLEGAL_CHARACTER:
+            if (isprint(yytext[0])) {
+                snprintf(error_message, sizeof(error_message),
+                         "Illegal character '%s' encountered at line %d, column %d.",
+                         yytext, lineno, column);
+            } else {
+                snprintf(error_message, sizeof(error_message),
+                         "Illegal non-printable character (ASCII code %d) encountered at line %d, column %d.",
+                         (int)yytext[0], lineno, column);
+            }
+            break;
+
+        case UNFINISHED_COMMENT:
+            snprintf(error_message, sizeof(error_message),
+                     "Unfinished comment starting at line %d, column %d. Make sure all comments are properly closed.",
+                     comment_start_line, comment_start_column);
+            break;
+
+        default:
+            snprintf(error_message, sizeof(error_message),
+                     "lexical error at line %d, column %d.", lineno, column);
+            break;
+    }
+
+    error_buffer.push_back(error_message);
+    lexical_errors++;
 }
 
-int findChar(char c){
+
+int findChar(char c) {
     if(c >= '0' && c <= '9') return c - '0';
     else if(c >= 'a' && c <= 'f') return c - 'a' + 10;
     else if(c >= 'A' && c <= 'F') return c - 'A' + 10;
     return -1;
 }
 
-unsigned char fixHex(char *s){
+unsigned char fixHex(char *s) {
     return findChar(s[0]) * 16 + findChar(s[1]);
 }
-unsigned char fixChar(char *s){
+
+unsigned char fixChar(char *s) {
     if(s[0] != '\\') return s[0];
-
-    else if (s[1] == 'x'){
+    else if (s[1] == 'x') {
         return fixHex(s+2);
-    }
-
-    else {
+    } else {
         switch(s[1]){
             case 'n': return '\n';
             case 't': return '\t';
@@ -2040,13 +2092,12 @@ unsigned char fixChar(char *s){
             case '\\': return '\\';
             default: return s[1];
         }
-
     }
 }
 
 std::string fixString(char *s) {
     std::string res = "";
-    for(int i = 0; s[i] != '\"' && s[i] != '\0' ; i++){
+    for(int i = 0; s[i] != '\"' && s[i] != '\0' ; i++) {
         if(s[i] != '\\') res += s[i];
         else {
             switch(s[i+1]){
