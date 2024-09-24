@@ -117,6 +117,11 @@ program :
         if (semantic_errors > 0) {
             YYABORT;
         }
+        if (semantic_warnings > 0) {
+            for (const std::string &warning : semantic_warning_buffer) {
+                fprintf(stderr, "%s\n", warning.c_str());
+            }
+        }
         $1->llvm_igen();
     }
 ;
@@ -267,12 +272,6 @@ int main() {
         return 1;
     }
 
-    if (semantic_warnings > 0) {
-        for (const std::string &warning : semantic_warning_buffer) {
-            fprintf(stderr, "%s\n", warning.c_str());
-        }
-    }
-
     return result;
 }
 
@@ -307,7 +306,6 @@ void semantic_error(const std::string &msg) {
 
 void semantic_warning(const std::string &msg) {
     char warning_message[512];
-
     snprintf(warning_message, sizeof(warning_message),
              "Semantic Warning at line %d, column %d: %s",
              token_start_line, token_start_column, msg.c_str());
