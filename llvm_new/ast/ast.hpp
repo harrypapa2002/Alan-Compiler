@@ -25,6 +25,8 @@ std::ostream &operator<<(std::ostream &out, compare c);
 std::ostream &operator<<(std::ostream &out, ParameterType p);
 std::ostream &operator<<(std::ostream &out, TypeEnum t);
 
+std::string compareToString(compare op);
+
 // AST Base Class
 class AST
 {

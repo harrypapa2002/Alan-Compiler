@@ -1,6 +1,7 @@
 #include "types.hpp"
 #include "../lexer/lexer.hpp"
 #include <iostream>
+#include <string>
 
 // Implementation of VoidType constructor
 VoidType::VoidType()
@@ -82,3 +83,24 @@ void ArrayType::printOn(std::ostream &out) const
 {
     out << "array of " << *baseType << "[" << size << "]";
 }
+
+
+std::string typeToString(TypeEnum type)
+{
+    switch(type)
+    {
+        case TypeEnum::INT:
+            return "int";
+        case TypeEnum::BYTE:
+            return "byte";
+        case TypeEnum::VOID:
+            return "void";
+        case TypeEnum::ARRAY:
+            return "array";
+        case TypeEnum::ERROR:
+            return "undefined";
+        default:
+            return "unknown";
+    }
+}
+

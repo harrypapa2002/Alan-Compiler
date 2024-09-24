@@ -26,6 +26,8 @@ public:
     void setReturnStatementFound();
     bool getReturnStatementFound() const;
 
+    std::string getCurrentFunctionName() const;
+
 private:
     Symbol* findGlobalSymbol(std::string name);
 

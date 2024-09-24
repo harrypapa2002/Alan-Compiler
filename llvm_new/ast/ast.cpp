@@ -2,6 +2,19 @@
 
 // Operator Overload Implementations
 
+std::string compareToString(compare op) {
+    switch (op) {
+        case lt:   return "<";
+        case gt:   return ">";
+        case lte:  return "<=";
+        case gte:  return ">=";
+        case eq:   return "==";
+        case neq:  return "!=";
+        default:   return "unknown";
+    }
+}
+
+
 std::ostream &operator<<(std::ostream &out, compare c)
 {
     switch (c)
@@ -58,6 +71,9 @@ std::ostream &operator<<(std::ostream &out, TypeEnum t)
     case TypeEnum::ARRAY:
         out << "Array";
         break;
+    case TypeEnum::ERROR:
+        out << "Undefined";
+        break;
     }
     return out;
 }
@@ -79,7 +95,7 @@ Type *Expr::getType() const
 
 TypeEnum Expr::getTypeEnum() const
 {
-    return type->getType();
+    return type ? type->getType() : TypeEnum::ERROR;
 }
 
 // Stmt Class Method Implementations

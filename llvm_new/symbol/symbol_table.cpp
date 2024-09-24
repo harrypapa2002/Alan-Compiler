@@ -172,3 +172,8 @@ Symbol* SymbolTable::findGlobalSymbol(std::string name) {
     if (it != globalSymbols.end()) return it->second;
     return nullptr;
 }
+
+// Get the name of the current function
+std::string SymbolTable::getCurrentFunctionName() const {
+    return currentFunctionContext.top()->getName();
+}

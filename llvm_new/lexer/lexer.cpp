@@ -548,11 +548,14 @@ void trackLexicalError(LexicalErrorType errorType);
 int comment_start_line = 0;
 int comment_start_column = 0;
 
+int token_start_line = 1;
+int token_start_column = 1;
 
+#define SET_TOKEN_POSITION token_start_line = lineno; token_start_column = column;
 
-#line 553 "lexer/lexer.cpp"
+#line 556 "lexer/lexer.cpp"
 
-#line 555 "lexer/lexer.cpp"
+#line 558 "lexer/lexer.cpp"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -770,12 +773,13 @@ YY_DECL
 		}
 
 	{
-#line 40 "lexer/lexer.l"
-
-
 #line 43 "lexer/lexer.l"
+
+
+
+#line 47 "lexer/lexer.l"
  /* Keywords */
-#line 778 "lexer/lexer.cpp"
+#line 782 "lexer/lexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -834,134 +838,167 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 44 "lexer/lexer.l"
-{ column += yyleng; return T_byte; }
+#line 48 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_byte; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 45 "lexer/lexer.l"
-{ column += yyleng; return T_else; }
+#line 49 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_else; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 46 "lexer/lexer.l"
-{ column += yyleng; return T_false; }
+#line 50 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_false; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 47 "lexer/lexer.l"
-{ column += yyleng; return T_if; }
+#line 51 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_if; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 48 "lexer/lexer.l"
-{ column += yyleng; return T_int; }
+#line 52 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_int; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 49 "lexer/lexer.l"
-{ column += yyleng; return T_proc; }
+#line 53 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_proc; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 50 "lexer/lexer.l"
-{ column += yyleng; return T_reference; }
+#line 54 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_reference; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 51 "lexer/lexer.l"
-{ column += yyleng; return T_return; }
+#line 55 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_return; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 52 "lexer/lexer.l"
-{ column += yyleng; return T_while; }
+#line 56 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_while; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 53 "lexer/lexer.l"
-{ column += yyleng; return T_true; }
+#line 57 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; return T_true; }
 	YY_BREAK
 /* Symbols */
 case 11:
 YY_RULE_SETUP
-#line 56 "lexer/lexer.l"
-{ column += yyleng; yylval.op = yytext[0]; return yytext[0]; }
+#line 60 "lexer/lexer.l"
+{
+    SET_TOKEN_POSITION;
+    column += yyleng; 
+    yylval.op = yytext[0]; 
+    return yytext[0]; 
+}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 57 "lexer/lexer.l"
-{ column += yyleng; yylval.comp = lt; return yytext[0]; }
+#line 66 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; yylval.comp = lt; return yytext[0]; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 58 "lexer/lexer.l"
-{ column += yyleng; yylval.comp = gt; return yytext[0]; }
+#line 67 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; yylval.comp = gt; return yytext[0]; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 59 "lexer/lexer.l"
-{ column += yyleng; yylval.comp = lte; return T_lte; }
+#line 68 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; yylval.comp = lte; return T_lte; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 60 "lexer/lexer.l"
-{ column += yyleng; yylval.comp = gte; return T_gte; }
+#line 69 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; yylval.comp = gte; return T_gte; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 61 "lexer/lexer.l"
-{ column += yyleng; yylval.comp = eq; return T_eq; }
+#line 70 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; yylval.comp = eq; return T_eq; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 62 "lexer/lexer.l"
-{ column += yyleng; yylval.comp = neq; return T_neq; }
+#line 71 "lexer/lexer.l"
+{ SET_TOKEN_POSITION; column += yyleng; yylval.comp = neq; return T_neq; }
 	YY_BREAK
 /* Constants. Names. Chars. Strings. */
 case 18:
 YY_RULE_SETUP
-#line 65 "lexer/lexer.l"
-{ column += yyleng; yylval.num = atoi(yytext); return T_const; }
+#line 74 "lexer/lexer.l"
+{ 
+    SET_TOKEN_POSITION; 
+    column += yyleng; 
+    yylval.num = atoi(yytext); 
+    return T_const; 
+}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 66 "lexer/lexer.l"
-{ column += yyleng; yylval.var = new std::string(yytext); return T_id; }
+#line 80 "lexer/lexer.l"
+{ 
+    SET_TOKEN_POSITION; 
+    column += yyleng; 
+    yylval.var = new std::string(yytext); 
+    return T_id; 
+}
 	YY_BREAK
 case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
-#line 67 "lexer/lexer.l"
-{ column += yyleng; yylval.chr = fixChar(yytext+1); return T_char; }
+#line 86 "lexer/lexer.l"
+{ 
+    SET_TOKEN_POSITION; 
+    column += yyleng; 
+    yylval.chr = fixChar(yytext+1); 
+    return T_char; 
+}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 68 "lexer/lexer.l"
-{ column += yyleng; yylval.str = new std::string(fixString(yytext+1)); return T_string; }
+#line 92 "lexer/lexer.l"
+{ 
+    SET_TOKEN_POSITION; 
+    column += yyleng; 
+    yylval.str = new std::string(fixString(yytext+1)); 
+    return T_string; 
+}
 	YY_BREAK
 /* WhiteSpace */
 case 22:
 /* rule 22 can match eol */
 YY_RULE_SETUP
-#line 71 "lexer/lexer.l"
-{ lineno++; column = 1; }
+#line 100 "lexer/lexer.l"
+{ 
+    lineno++; 
+    column = 1; 
+}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 72 "lexer/lexer.l"
-{ column += yyleng;  }
+#line 104 "lexer/lexer.l"
+{ 
+    column += yyleng;  
+}
 	YY_BREAK
 /* Comments */
 case 24:
 /* rule 24 can match eol */
 YY_RULE_SETUP
-#line 75 "lexer/lexer.l"
-{ column = 1; lineno++; }
+#line 109 "lexer/lexer.l"
+{ 
+    column = 1; 
+    lineno++; 
+}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 76 "lexer/lexer.l"
+#line 113 "lexer/lexer.l"
 { 
     comment_start_line = lineno;        
     comment_start_column = column;     
@@ -971,42 +1008,60 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 82 "lexer/lexer.l"
-{ ++is_balanced; }
+#line 119 "lexer/lexer.l"
+{ 
+    SET_TOKEN_POSITION; 
+    ++is_balanced; 
+}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 83 "lexer/lexer.l"
-{ if(is_balanced) --is_balanced; else { BEGIN(INITIAL); } }
+#line 123 "lexer/lexer.l"
+{ 
+    SET_TOKEN_POSITION; 
+    if(is_balanced) --is_balanced; 
+    else { BEGIN(INITIAL); } 
+}
 	YY_BREAK
 case 28:
 /* rule 28 can match eol */
 YY_RULE_SETUP
-#line 84 "lexer/lexer.l"
-{ lineno++; column = 1; }
+#line 128 "lexer/lexer.l"
+{ 
+    lineno++; 
+    column = 1; 
+}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 85 "lexer/lexer.l"
-{ column += yyleng; }
+#line 132 "lexer/lexer.l"
+{ 
+    column += yyleng; 
+}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 86 "lexer/lexer.l"
-{ column += yyleng; }
+#line 135 "lexer/lexer.l"
+{ 
+    column += yyleng; 
+}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 87 "lexer/lexer.l"
-{ column += yyleng; }
+#line 138 "lexer/lexer.l"
+{ 
+    column += yyleng; 
+}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 88 "lexer/lexer.l"
-{ column += yyleng; }
+#line 141 "lexer/lexer.l"
+{ 
+    column += yyleng; 
+}
 	YY_BREAK
 case YY_STATE_EOF(COMMENT):
-#line 89 "lexer/lexer.l"
+#line 144 "lexer/lexer.l"
 { 
     trackLexicalError(UNFINISHED_COMMENT);
     BEGIN(INITIAL);
@@ -1015,17 +1070,18 @@ case YY_STATE_EOF(COMMENT):
 /* Illegal characters */
 case 33:
 YY_RULE_SETUP
-#line 95 "lexer/lexer.l"
+#line 150 "lexer/lexer.l"
 { 
+    SET_TOKEN_POSITION;
     trackLexicalError(ILLEGAL_CHARACTER); 
 }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 101 "lexer/lexer.l"
+#line 156 "lexer/lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1028 "lexer/lexer.cpp"
+#line 1084 "lexer/lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2030,7 +2086,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 101 "lexer/lexer.l"
+#line 156 "lexer/lexer.l"
 
 
 void trackLexicalError(LexicalErrorType errorType) {

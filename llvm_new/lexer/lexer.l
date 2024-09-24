@@ -25,7 +25,10 @@ void trackLexicalError(LexicalErrorType errorType);
 int comment_start_line = 0;
 int comment_start_column = 0;
 
+int token_start_line = 1;
+int token_start_column = 1;
 
+#define SET_TOKEN_POSITION token_start_line = lineno; token_start_column = column;
 
 %}
 
@@ -39,62 +42,114 @@ ESC [ntr0\'\"\\]
 
 %%
 
+
  /* Keywords */
-"byte" { column += yyleng; return T_byte; }
-"else" { column += yyleng; return T_else; }
-"false" { column += yyleng; return T_false; }
-"if" { column += yyleng; return T_if; }
-"int" { column += yyleng; return T_int; }
-"proc" { column += yyleng; return T_proc; }
-"reference" { column += yyleng; return T_reference; }
-"return" { column += yyleng; return T_return; }
-"while" { column += yyleng; return T_while; }
-"true" { column += yyleng; return T_true; }
+"byte"    { SET_TOKEN_POSITION; column += yyleng; return T_byte; }
+"else"    { SET_TOKEN_POSITION; column += yyleng; return T_else; }
+"false"   { SET_TOKEN_POSITION; column += yyleng; return T_false; }
+"if"      { SET_TOKEN_POSITION; column += yyleng; return T_if; }
+"int"     { SET_TOKEN_POSITION; column += yyleng; return T_int; }
+"proc"    { SET_TOKEN_POSITION; column += yyleng; return T_proc; }
+"reference" { SET_TOKEN_POSITION; column += yyleng; return T_reference; }
+"return"  { SET_TOKEN_POSITION; column += yyleng; return T_return; }
+"while"   { SET_TOKEN_POSITION; column += yyleng; return T_while; }
+"true"    { SET_TOKEN_POSITION; column += yyleng; return T_true; }
 
  /* Symbols */
-[\(\)\[\]\{\}\,\:\;\=\+\/\-\*\%\&\|\!] { column += yyleng; yylval.op = yytext[0]; return yytext[0]; }
-\< { column += yyleng; yylval.comp = lt; return yytext[0]; }
-\> { column += yyleng; yylval.comp = gt; return yytext[0]; }
-"<=" { column += yyleng; yylval.comp = lte; return T_lte; }
-">=" { column += yyleng; yylval.comp = gte; return T_gte; }
-"==" { column += yyleng; yylval.comp = eq; return T_eq; }
-"!=" { column += yyleng; yylval.comp = neq; return T_neq; }
+[\(\)\[\]\{\}\,\:\;\=\+\/\-\*\%\&\|\!] {
+    SET_TOKEN_POSITION;
+    column += yyleng; 
+    yylval.op = yytext[0]; 
+    return yytext[0]; 
+}
+\< { SET_TOKEN_POSITION; column += yyleng; yylval.comp = lt; return yytext[0]; }
+\> { SET_TOKEN_POSITION; column += yyleng; yylval.comp = gt; return yytext[0]; }
+"<=" { SET_TOKEN_POSITION; column += yyleng; yylval.comp = lte; return T_lte; }
+">=" { SET_TOKEN_POSITION; column += yyleng; yylval.comp = gte; return T_gte; }
+"==" { SET_TOKEN_POSITION; column += yyleng; yylval.comp = eq; return T_eq; }
+"!=" { SET_TOKEN_POSITION; column += yyleng; yylval.comp = neq; return T_neq; }
 
  /* Constants. Names. Chars. Strings. */
-{D}+ { column += yyleng; yylval.num = atoi(yytext); return T_const; }
-{L}({L}|{D}|_)* { column += yyleng; yylval.var = new std::string(yytext); return T_id; }
-\'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { column += yyleng; yylval.chr = fixChar(yytext+1); return T_char; }
-\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { column += yyleng; yylval.str = new std::string(fixString(yytext+1)); return T_string; }
+{D}+ { 
+    SET_TOKEN_POSITION; 
+    column += yyleng; 
+    yylval.num = atoi(yytext); 
+    return T_const; 
+}
+{L}({L}|{D}|_)* { 
+    SET_TOKEN_POSITION; 
+    column += yyleng; 
+    yylval.var = new std::string(yytext); 
+    return T_id; 
+}
+\'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { 
+    SET_TOKEN_POSITION; 
+    column += yyleng; 
+    yylval.chr = fixChar(yytext+1); 
+    return T_char; 
+}
+\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { 
+    SET_TOKEN_POSITION; 
+    column += yyleng; 
+    yylval.str = new std::string(fixString(yytext+1)); 
+    return T_string; 
+}
 
  /* WhiteSpace */
-\n   { lineno++; column = 1; }
-{W}+ { column += yyleng;  }
+\n   { 
+    lineno++; 
+    column = 1; 
+}
+{W}+ { 
+    column += yyleng;  
+}
 
  /* Comments */
-\-\-.*\n? { column = 1; lineno++; }
+\-\-.*\n? { 
+    column = 1; 
+    lineno++; 
+}
 "(*" { 
     comment_start_line = lineno;        
     comment_start_column = column;     
     BEGIN(COMMENT); 
     is_balanced = 0; 
 }
-<COMMENT>"(*" { ++is_balanced; }
-<COMMENT>"*)" { if(is_balanced) --is_balanced; else { BEGIN(INITIAL); } }
-<COMMENT>\n { lineno++; column = 1; }
-<COMMENT>"*" { column += yyleng; }
-<COMMENT>"(" { column += yyleng; }
-<COMMENT>")" { column += yyleng; }
-<COMMENT>[^\(\)*\n]+ { column += yyleng; }
+<COMMENT>"(*" { 
+    SET_TOKEN_POSITION; 
+    ++is_balanced; 
+}
+<COMMENT>"*)" { 
+    SET_TOKEN_POSITION; 
+    if(is_balanced) --is_balanced; 
+    else { BEGIN(INITIAL); } 
+}
+<COMMENT>\n { 
+    lineno++; 
+    column = 1; 
+}
+<COMMENT>"*" { 
+    column += yyleng; 
+}
+<COMMENT>"(" { 
+    column += yyleng; 
+}
+<COMMENT>")" { 
+    column += yyleng; 
+}
+<COMMENT>[^\(\)*\n]+ { 
+    column += yyleng; 
+}
 <COMMENT><<EOF>> { 
     trackLexicalError(UNFINISHED_COMMENT);
     BEGIN(INITIAL);
 }
 
-    /* Illegal characters */
+ /* Illegal characters */
 . { 
+    SET_TOKEN_POSITION;
     trackLexicalError(ILLEGAL_CHARACTER); 
 }
-
 
 
 %%

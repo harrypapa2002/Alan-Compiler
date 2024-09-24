@@ -7,6 +7,7 @@ SymbolTable st;
 
 void StmtList::sem()
 {
+
     for (auto it = stmts.rbegin(); it != stmts.rend(); ++it)
     {
         auto stmt = *it;
@@ -35,12 +36,17 @@ void Fpar::sem()
 {
     if (st.findSymbolInCurrentScope(*name))
     {
-        yyerror(("Parameter '" + *name + "' already declared in the same scope").c_str());
+        semantic_error("Parameter '" + *name + "' already declared in the scope of function '" + st.getCurrentFunctionName() + "'");
     }
-    parameterSymbol = new ParameterSymbol(*name, type, parameterType);
-    st.addSymbol(*name, parameterSymbol);
+    else
+    {
+        parameterSymbol = new ParameterSymbol(*name, type, parameterType);
+        st.addSymbol(*name, parameterSymbol);
 
-    isArray = (type->getType() == TypeEnum::ARRAY);
+        if(type){
+            isArray = (type->getType() == TypeEnum::ARRAY);
+        }
+    }
 }
 
 // FparList Class Semantic Method Implementation
@@ -60,58 +66,63 @@ void FuncDef::sem()
 {
     if (st.findSymbolInCurrentScope(*name))
     {
-        yyerror(("Function name '" + *name + "' already declared").c_str());
+        semantic_error("Function name '" + *name + "' already declared in the same scope.");
     }
-
-    FunctionSymbol *funcSymbol = new FunctionSymbol(*name, type);
-    st.addSymbol(*name, funcSymbol);
-
-    st.enterFunctionScope(funcSymbol);
-
-    if (fpar)
+    else
     {
-        fpar->sem();
-        for (auto &param : fpar->getParameters())
+        FunctionSymbol *funcSymbol = new FunctionSymbol(*name, type);
+        st.addSymbol(*name, funcSymbol);
+
+        st.enterFunctionScope(funcSymbol);
+
+        if (fpar)
         {
-            funcSymbol->addParameter(*param->getParameterSymbol());
+            fpar->sem();
+            for (auto &param : fpar->getParameters())
+            {
+                funcSymbol->addParameter(*param->getParameterSymbol());
+            }
         }
-    }
 
-    if (localDef)
-    {
-        localDef->sem();
-    }
-
-    if (stmts)
-    {
-        stmts->setExternal(true);
-        stmts->sem();
-    }
-
-    if (funcSymbol->getNeedsReturn())
-    {
-        yyerror(("Non-void function '" + *name + "' does not have a return statement").c_str());
-    }
-
-    if (funcSymbol->getReturnStatementFound())
-    {
-        setReturn();
-    }
-
-    for (auto &captured : funcSymbol->getCapturedSymbols())
-    {
-        if (captured->getSymbolType() == SymbolType::VARIABLE)
+        if (localDef)
         {
-            capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType()));
+            localDef->sem();
+        }
+
+        if (stmts)
+        {
+            stmts->setExternal(true);
+            stmts->sem();
+        }
+
+        if (funcSymbol->getNeedsReturn())
+        {
+            semantic_warning("Non-void function '" + *name + "' does not have a return statement.");
         }
 
         else
         {
-            capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType(), true, static_cast<ParameterSymbol *>(captured)->getParameterType()));
+            if (funcSymbol->getReturnStatementFound())
+            {
+                setReturn();
+            }
+
+            for (auto &captured : funcSymbol->getCapturedSymbols())
+            {
+                if (captured->getSymbolType() == SymbolType::VARIABLE)
+                {
+                    capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType()));
+                }
+
+                else
+                {
+                    capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType(), true, static_cast<ParameterSymbol *>(captured)->getParameterType()));
+                }
+            }
+
+            st.exitFunctionScope();
         }
     }
-
-    st.exitFunctionScope();
 }
 
 // VarDef Class Semantic Method Implementation
@@ -120,20 +131,25 @@ void VarDef::sem()
 {
     if (st.findSymbolInCurrentScope(*name))
     {
-        yyerror(("Variable name '" + *name + "' already declared").c_str());
+        semantic_error("Variable name '" + *name + "' is already declared in the current scope.");
     }
 
-    if (isArray)
+    else if (isArray)
     {
         if (size <= 0)
         {
-            yyerror("Array size must be greater than 0");
+            semantic_error("Array size for variable '" + *name + "' must be greater than 0.");
         }
-
-        type = new ArrayType(type, size);
+        else
+        {
+            type = new ArrayType(type, size);
+        }
     }
 
-    st.addSymbol(*name, new VariableSymbol(*name, type));
+    else
+    {
+        st.addSymbol(*name, new VariableSymbol(*name, type));
+    }
 }
 
 // ExprList Class Semantic Method Implementation
@@ -152,13 +168,16 @@ void ExprList::sem()
 void UnOp::sem()
 {
     expr->sem();
+
     if (expr->getTypeEnum() != TypeEnum::INT)
     {
-        yyerror("Unary operator can only be applied to integers");
+        semantic_error("Unary operator '" + std::string(1, op) + "' can only be applied to integers, but found type '" + typeToString(expr->getTypeEnum()) + "'.");
     }
-    type = typeInteger;
+    else
+    {
+        type = typeInteger;
+    }
 }
-
 // BinOp Class Semantic Method Implementation
 
 void BinOp::sem()
@@ -166,17 +185,23 @@ void BinOp::sem()
     left->sem();
     right->sem();
 
-    if (!equalTypes(left->getTypeEnum(), right->getTypeEnum()))
+    TypeEnum tLeft = left->getTypeEnum();
+    TypeEnum tRight = right->getTypeEnum();
+
+    if (!equalTypes(tLeft, tRight))
     {
-        yyerror("Type mismatch in binary operation");
+        semantic_error("Type mismatch in binary operation '" + std::string(1, op) + "': left operand is '" + typeToString(tLeft) + "', right operand is '" + typeToString(tRight) + "'.");
     }
 
-    if (!equalTypes(left->getTypeEnum(), TypeEnum::INT) && !equalTypes(left->getTypeEnum(), TypeEnum::BYTE))
+    else if (!equalTypes(left->getTypeEnum(), TypeEnum::INT) && !equalTypes(left->getTypeEnum(), TypeEnum::BYTE))
     {
-        yyerror("Binary operator can only be applied to integers or bytes");
+        semantic_error("Binary operator '" + std::string(1, op) + "' can only be applied to integers or bytes, but found type '" + typeToString(left->getTypeEnum()) + "'.");
     }
 
-    type = left->getType();
+    else
+    {
+        type = left->getType();
+    }
 }
 
 // CondCompOp Class Semantic Method Implementation
@@ -185,15 +210,19 @@ void CondCompOp::sem()
 {
     left->sem();
     right->sem();
-    TypeEnum t = left->getTypeEnum();
-    if (!equalTypes(t, right->getTypeEnum()))
+    TypeEnum tLeft = left->getTypeEnum();
+    TypeEnum tRight = right->getTypeEnum();
+
+    if (!equalTypes(tLeft, tRight))
     {
-        yyerror("Type mismatch in comparison");
+        semantic_error("Type mismatch in comparison operation '" + compareToString(op) + "': left operand is '" + typeToString(tLeft) + "', right operand is '" + typeToString(tRight) + "'.");
     }
-    if (t != TypeEnum::INT && t != TypeEnum::BYTE)
+
+    else if (!equalTypes(left->getTypeEnum(), TypeEnum::INT) && !equalTypes(left->getTypeEnum(), TypeEnum::BYTE))
     {
-        yyerror("Comparison operator can only be applied to integers or bytes");
+        semantic_error("Comparison operator '" + compareToString(op) + "' can only be applied to integers or bytes, but found type '" + typeToString(left->getTypeEnum()) + "'.");
     }
+
 }
 
 // CondBoolOp Class Semantic Method Implementation
@@ -251,17 +280,19 @@ void Id::sem()
     Symbol *entry = st.findSymbol(*name);
     if (!entry)
     {
-        yyerror("Variable not declared");
+        semantic_error("Variable '" + *name + "' is not declared.");
     }
 
-    symbolType = entry->getSymbolType();
-
-    if (symbolType == SymbolType::FUNCTION)
+    else
     {
-        yyerror("Function cannot be used as a variable");
+        symbolType = entry->getSymbolType();
+        type = entry->getType();
+        if (symbolType == SymbolType::FUNCTION)
+        {
+            semantic_error("Function '" + *name + "' cannot be used as a variable.");
+        }
     }
 
-    type = entry->getType();
 }
 
 // ArrayAccess Class Semantic Method Implementation
@@ -269,28 +300,37 @@ void Id::sem()
 void ArrayAccess::sem()
 {
     indexExpr->sem();
+
     if (indexExpr->getTypeEnum() != TypeEnum::INT)
     {
-        yyerror("Array index must be an integer");
+        semantic_error("Array index must be an integer, but found type '" + typeToString(indexExpr->getTypeEnum()) + "'.");
     }
 
-    Symbol *entry = st.findSymbol(*name);
-    if (!entry)
+    else
     {
-        yyerror("Variable not declared");
-    }
-    if (entry->getSymbolType() == SymbolType::FUNCTION)
-    {
-        yyerror("Function cannot be used as a variable");
-    }
-    Type *t = entry->getType();
+        Symbol *entry = st.findSymbol(*name);
+        if (!entry)
+        {
+            semantic_error("Array '" + *name + "' is not declared.");
+        }
 
-    if (t->getType() != TypeEnum::ARRAY)
-    {
-        yyerror("Variable is not an array");
-    }
+        else if (entry->getSymbolType() == SymbolType::FUNCTION)
+        {
+            semantic_error("Variable '" + *name + "' is not an array.");
+        }
 
-    type = t->getBaseType();
+        else if (Type *t = entry->getType())
+        {
+            if (t->getType() != TypeEnum::ARRAY)
+            {
+                semantic_error("Variable '" + *name + "' is not an array.");
+            }
+            else
+            {
+                type = t->getBaseType();
+            }
+        }
+    }
 }
 
 // Let Class Semantic Method Implementation
@@ -300,11 +340,17 @@ void Let::sem()
     lexpr->sem();
     rexpr->sem();
 
-    if (!equalTypes(lexpr->getTypeEnum(), rexpr->getTypeEnum()))
+    TypeEnum leftType = lexpr->getTypeEnum();
+    TypeEnum rightType = rexpr->getTypeEnum();
+
+    if (!equalTypes(leftType, rightType))
     {
-        yyerror("Type mismatch in assignment");
+        semantic_error("Type mismatch in assignment: cannot assign type '" + typeToString(rightType) + "' to type '" + typeToString(leftType) + "'.");
     }
-    isReturn = false;
+    else
+    {
+        isReturn = false;
+    }
 }
 
 // FuncCall Class Semantic Method Implementation
@@ -314,74 +360,93 @@ void FuncCall::sem()
     Symbol *entry = st.findSymbol(*name);
     if (!entry)
     {
-        yyerror("Function not declared");
+        semantic_error("Function '" + *name + "' is not declared.");
     }
-
-    SymbolType symbolType = entry->getSymbolType();
-    if (symbolType != SymbolType::FUNCTION)
+    else
     {
-        yyerror("Variable cannot be used as a function");
-    }
+        SymbolType symbolType = entry->getSymbolType();
 
-    FunctionSymbol *func = static_cast<FunctionSymbol *>(entry);
-
-    if (exprs)
-    {
-        exprs->sem();
-        const std::vector<ParameterSymbol> &params = func->getParameters();
-
-        if (exprs->getExprs().size() != params.size())
+        if (symbolType != SymbolType::FUNCTION)
         {
-            yyerror("Number of parameters does not match the function signature");
+            semantic_error("Variable '" + *name + "' is not a function.");
         }
-
-        for (size_t i = 0; i < exprs->getExprs().size(); ++i)
-        {
-            TypeEnum exprType = exprs->getExprs()[i]->getTypeEnum();
-            TypeEnum paramType = params[i].getType()->getType();
-
-            if (exprType != paramType)
-            {
-                // // std::cout << exprType  << paramType << std::endl;
-                yyerror("Type mismatch in function call parameters");
-            }
-
-            if (params[i].getParameterType() == ParameterType::REFERENCE)
-            {
-                if (dynamic_cast<Lval *>(exprs->getExprs()[i]) == nullptr)
-                {
-                    yyerror("Only lvalues can be passed as reference parameters");
-                }
-            }
-
-            if (exprType == TypeEnum::ARRAY)
-            {
-                if (params[i].getType()->getBaseType()->getType() != exprs->getExprs()[i]->getType()->getBaseType()->getType())
-                {
-                    yyerror("Array type mismatch in function call");
-                }
-            }
-        }
-    }
-
-    type = func->getType();
-
-    for (auto &captured : func->getCapturedSymbols())
-    {
-        if (captured->getSymbolType() == SymbolType::VARIABLE)
-        {
-            capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType()));
-        }
-
         else
         {
-            capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType(), true, static_cast<ParameterSymbol *>(captured)->getParameterType()));
-        }
-    }
+            FunctionSymbol *func = static_cast<FunctionSymbol *>(entry);
+            const std::vector<ParameterSymbol> &params = func->getParameters();
+            size_t numParams = params.size();
 
-    if (func->getNestingLevel() > 1)
-    {
-        isNested = true;
+            if (exprs)
+            {
+                exprs->sem();
+                size_t numArgs = exprs->getExprs().size();
+
+                if (numParams != numArgs)
+                {
+                    semantic_error("Function '" + *name + "' expects " + std::to_string(numParams) + " parameters, but " + std::to_string(numArgs) + " were provided.");
+                }
+
+                else
+                {
+                    for (size_t i = 0; i < numArgs; ++i)
+                    {
+                        TypeEnum exprType = exprs->getExprs()[i] ? exprs->getExprs()[i]->getTypeEnum() : TypeEnum::ERROR;
+                        TypeEnum paramType = params[i].getType() ? params[i].getType()->getType() : TypeEnum::ERROR;
+
+                        if (exprType != paramType)
+                        {
+                            semantic_error("Type mismatch for parameter " + std::to_string(i + 1) + " in function call to '" + *name + "'. Expected '" + typeToString(paramType) + "', but found '" + typeToString(exprType) + "'.");
+                        }
+
+                        else if (params[i].getParameterType() == ParameterType::REFERENCE)
+                        {
+                            if (dynamic_cast<Lval *>(exprs->getExprs()[i]) == nullptr)
+                            {
+                                semantic_error("Reference parameter " + std::to_string(i + 1) + " in function call to '" + *name + "' must be an lvalue.");
+                            }
+                        }
+
+                        else if (exprType == TypeEnum::ARRAY)
+                        {
+                            TypeEnum paramBaseType = params[i].getType()->getBaseType()->getType();
+                            TypeEnum exprBaseType = exprs->getExprs()[i]->getType()->getBaseType()->getType();
+
+                            if (paramBaseType != exprBaseType)
+                            {
+                                semantic_error("Array type mismatch for parameter " + std::to_string(i + 1) + " in function call to '" + *name + "'. Expected base type '" + typeToString(paramBaseType) + "', but found '" + typeToString(exprBaseType) + "'.");
+                            }
+                        }
+                    }
+                }
+            }
+            else if (numParams != 0)
+            {
+                semantic_error("Function '" + *name + "' expects " + std::to_string(numParams) + " parameters, but none were provided.");
+            }
+
+            else
+            {
+                type = func->getType();
+
+                for (auto &captured : func->getCapturedSymbols())
+                {
+                    if (captured->getSymbolType() == SymbolType::VARIABLE)
+                    {
+                        capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType()));
+                    }
+
+                    else
+                    {
+                        capturedVars.push_back(new CapturedVar(captured->getName(), captured->getType(), true, static_cast<ParameterSymbol *>(captured)->getParameterType()));
+                    }
+                }
+
+                if (func->getNestingLevel() > 1)
+                {
+                    isNested = true;
+                }
+            }
+        }
     }
 }
 
@@ -428,27 +493,29 @@ void Return::sem()
     Type *expectedReturnType = st.getCurrentFunctionReturnType();
     if (!expectedReturnType)
     {
-        yyerror("Return statement not within any function scope.");
-        return;
+        semantic_error("Return statement not allowed outside of a function.");
     }
 
-    if (expr)
+    else if (expr)
     {
         expr->sem();
 
-        if (expr->getType()->getType() != expectedReturnType->getType())
+        if (expectedReturnType->getType() == TypeEnum::VOID)
         {
-            yyerror("Return type does not match the function's return type.");
+            semantic_error("Void function '" + st.getCurrentFunctionName() + "' should not return a value.");
+        }
+        else if (expr->getType() && expr->getType()->getType() != expectedReturnType->getType())
+        {
+            semantic_error("Return type does not match the function's return type.");
         }
     }
-    else
+    else if (expectedReturnType->getType() != TypeEnum::VOID)
     {
-        if (expectedReturnType->getType() != TypeEnum::VOID)
-        {
-            yyerror("Missing return value in function expected to return a non-void type.");
-        }
+        semantic_warning("Non-void function '" + st.getCurrentFunctionName() + "' should return a value.");
     }
 
     if (external)
+    {
         isReturn = true;
+    }
 }

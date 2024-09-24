@@ -2,6 +2,7 @@
 #define TYPES_HPP
 
 #include <iostream>
+#include <string>
 
 #define INT_SIZE 4
 #define BYTE_SIZE 1
@@ -11,7 +12,8 @@ enum class TypeEnum
     INT,
     BYTE,
     VOID,
-    ARRAY
+    ARRAY,
+    ERROR
 };
 
 // Base class for different types
@@ -94,7 +96,7 @@ inline bool equalTypes(TypeEnum t1, TypeEnum t2)
 {
     return t1 == t2;
 }
-
+std::string typeToString(TypeEnum type);
 extern Type *typeInteger;
 extern Type *typeByte;
 extern Type *typeVoid;

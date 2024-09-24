@@ -128,9 +128,20 @@ int syntax_errors = 0;
 extern int lexical_errors;
 std::vector<std::string> syntax_error_buffer;  
 
+int semantic_errors = 0;
+std::vector<std::string> semantic_error_buffer;
+
+int semantic_warnings = 0; 
+std::vector<std::string> semantic_warning_buffer; 
+
+
 // Global line and column tracking
 extern int lineno;
 extern int column;
+
+// Token position tracking
+extern int token_start_line;
+extern int token_start_column;
 
 void yyerror(const char *msg);  
 
@@ -159,7 +170,7 @@ Type *typeVoid = new VoidType();
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 29 "parser/parser.y"
+#line 40 "parser/parser.y"
 {
     ExprList *exprlist;
     LocalDefList *localdefs;
@@ -184,7 +195,7 @@ typedef union YYSTYPE
     FuncCall *fun;
 }
 /* Line 193 of yacc.c.  */
-#line 188 "parser/parser.cpp"
+#line 199 "parser/parser.cpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -197,7 +208,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 201 "parser/parser.cpp"
+#line 212 "parser/parser.cpp"
 
 #ifdef short
 # undef short
@@ -508,13 +519,13 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   101,   101,   111,   112,   115,   118,   119,   122,   123,
-     126,   127,   130,   131,   134,   135,   138,   139,   142,   143,
-     146,   147,   150,   151,   152,   153,   154,   155,   156,   157,
-     158,   161,   162,   165,   168,   169,   172,   175,   176,   177,
-     178,   179,   180,   181,   182,   183,   184,   185,   186,   189,
-     190,   193,   194,   195,   198,   199,   200,   201,   202,   203,
-     204,   205,   206,   207,   208,   209
+       0,   112,   112,   125,   126,   130,   134,   135,   139,   140,
+     144,   145,   149,   150,   154,   155,   159,   160,   164,   165,
+     169,   170,   174,   175,   176,   177,   178,   179,   180,   181,
+     182,   186,   187,   191,   195,   196,   200,   204,   205,   206,
+     207,   208,   209,   210,   211,   212,   213,   214,   215,   219,
+     220,   224,   225,   226,   230,   231,   232,   233,   234,   235,
+     236,   237,   238,   239,   240,   241
 };
 #endif
 
@@ -1518,334 +1529,337 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 101 "parser/parser.y"
+#line 112 "parser/parser.y"
     {   
         if (lexical_errors > 0 || syntax_errors > 0) {
             YYABORT; 
         }
         (yyvsp[(1) - (1)].funcdef)->sem();
+        if (semantic_errors > 0) {
+            YYABORT;
+        }
         (yyvsp[(1) - (1)].funcdef)->llvm_igen();
     ;}
     break;
 
   case 3:
-#line 111 "parser/parser.y"
+#line 125 "parser/parser.y"
     { (yyval.funcdef) = new FuncDef((yyvsp[(1) - (8)].str), (yyvsp[(6) - (8)].type), (yyvsp[(7) - (8)].localdefs), (yyvsp[(8) - (8)].stmtlist), (yyvsp[(3) - (8)].fparlist)); ;}
     break;
 
   case 4:
-#line 112 "parser/parser.y"
+#line 126 "parser/parser.y"
     { (yyval.funcdef) = new FuncDef((yyvsp[(1) - (7)].str), (yyvsp[(5) - (7)].type), (yyvsp[(6) - (7)].localdefs), (yyvsp[(7) - (7)].stmtlist)); ;}
     break;
 
   case 5:
-#line 115 "parser/parser.y"
+#line 130 "parser/parser.y"
     { (yyvsp[(2) - (2)].fparlist)->append((yyvsp[(1) - (2)].fpardef)); (yyval.fparlist) = (yyvsp[(2) - (2)].fparlist); ;}
     break;
 
   case 6:
-#line 118 "parser/parser.y"
+#line 134 "parser/parser.y"
     { (yyval.fpardef) = new Fpar((yyvsp[(1) - (4)].str), (yyvsp[(4) - (4)].type), ParameterType::REFERENCE); ;}
     break;
 
   case 7:
-#line 119 "parser/parser.y"
+#line 135 "parser/parser.y"
     { (yyval.fpardef) = new Fpar((yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].type), ParameterType::VALUE); ;}
     break;
 
   case 8:
-#line 122 "parser/parser.y"
+#line 139 "parser/parser.y"
     { (yyval.fparlist) = new FparList(); ;}
     break;
 
   case 9:
-#line 123 "parser/parser.y"
+#line 140 "parser/parser.y"
     { (yyvsp[(3) - (3)].fparlist)->append((yyvsp[(2) - (3)].fpardef)); (yyval.fparlist) = (yyvsp[(3) - (3)].fparlist); ;}
     break;
 
   case 10:
-#line 126 "parser/parser.y"
+#line 144 "parser/parser.y"
     { (yyval.type) = typeInteger; ;}
     break;
 
   case 11:
-#line 127 "parser/parser.y"
+#line 145 "parser/parser.y"
     { (yyval.type) = typeByte; ;}
     break;
 
   case 12:
-#line 130 "parser/parser.y"
+#line 149 "parser/parser.y"
     {  (yyval.type) = new ArrayType((yyvsp[(1) - (3)].type));;}
     break;
 
   case 13:
-#line 131 "parser/parser.y"
+#line 150 "parser/parser.y"
     { (yyval.type) = (yyvsp[(1) - (1)].type); ;}
     break;
 
   case 14:
-#line 134 "parser/parser.y"
+#line 154 "parser/parser.y"
     { (yyval.type) = (yyvsp[(1) - (1)].type); ;}
     break;
 
   case 15:
-#line 135 "parser/parser.y"
+#line 155 "parser/parser.y"
     { (yyval.type) = typeVoid; ;}
     break;
 
   case 16:
-#line 138 "parser/parser.y"
+#line 159 "parser/parser.y"
     { (yyval.localdef) = (yyvsp[(1) - (1)].funcdef); ;}
     break;
 
   case 17:
-#line 139 "parser/parser.y"
+#line 160 "parser/parser.y"
     { (yyval.localdef) = (yyvsp[(1) - (1)].vardef); ;}
     break;
 
   case 18:
-#line 142 "parser/parser.y"
+#line 164 "parser/parser.y"
     { (yyval.localdefs) = new LocalDefList(); ;}
     break;
 
   case 19:
-#line 143 "parser/parser.y"
+#line 165 "parser/parser.y"
     { (yyvsp[(2) - (2)].localdefs)->append((yyvsp[(1) - (2)].localdef)); (yyval.localdefs) = (yyvsp[(2) - (2)].localdefs); ;}
     break;
 
   case 20:
-#line 146 "parser/parser.y"
+#line 169 "parser/parser.y"
     { (yyval.vardef) = new VarDef((yyvsp[(1) - (7)].str), (yyvsp[(3) - (7)].type), true, (yyvsp[(5) - (7)].num)); ;}
     break;
 
   case 21:
-#line 147 "parser/parser.y"
+#line 170 "parser/parser.y"
     { (yyval.vardef) = new VarDef((yyvsp[(1) - (4)].str), (yyvsp[(3) - (4)].type), false); ;}
     break;
 
   case 22:
-#line 150 "parser/parser.y"
+#line 174 "parser/parser.y"
     { (yyval.stmt) = new Empty();;}
     break;
 
   case 23:
-#line 151 "parser/parser.y"
+#line 175 "parser/parser.y"
     { (yyval.stmt) = new Let((yyvsp[(1) - (4)].lvalue), (yyvsp[(3) - (4)].expr)); ;}
     break;
 
   case 24:
-#line 152 "parser/parser.y"
+#line 176 "parser/parser.y"
     { (yyval.stmt) = (yyvsp[(1) - (1)].stmtlist); ;}
     break;
 
   case 25:
-#line 153 "parser/parser.y"
+#line 177 "parser/parser.y"
     { (yyval.stmt) = new ProcCall((yyvsp[(1) - (2)].fun)); ;}
     break;
 
   case 26:
-#line 154 "parser/parser.y"
+#line 178 "parser/parser.y"
     { (yyval.stmt) = new If((yyvsp[(3) - (7)].cond), (yyvsp[(5) - (7)].stmt), (yyvsp[(7) - (7)].stmt)); ;}
     break;
 
   case 27:
-#line 155 "parser/parser.y"
+#line 179 "parser/parser.y"
     { (yyval.stmt) = new If((yyvsp[(3) - (5)].cond), (yyvsp[(5) - (5)].stmt)); ;}
     break;
 
   case 28:
-#line 156 "parser/parser.y"
+#line 180 "parser/parser.y"
     { (yyval.stmt) = new While((yyvsp[(3) - (5)].cond), (yyvsp[(5) - (5)].stmt)); ;}
     break;
 
   case 29:
-#line 157 "parser/parser.y"
+#line 181 "parser/parser.y"
     { (yyval.stmt) = new Return((yyvsp[(2) - (3)].expr)); ;}
     break;
 
   case 30:
-#line 158 "parser/parser.y"
+#line 182 "parser/parser.y"
     { (yyval.stmt) = new Return(); ;}
     break;
 
   case 31:
-#line 161 "parser/parser.y"
+#line 186 "parser/parser.y"
     { (yyval.stmtlist) = new StmtList(); ;}
     break;
 
   case 32:
-#line 162 "parser/parser.y"
+#line 187 "parser/parser.y"
     { (yyvsp[(2) - (2)].stmtlist)->append((yyvsp[(1) - (2)].stmt)); (yyval.stmtlist) = (yyvsp[(2) - (2)].stmtlist); ;}
     break;
 
   case 33:
-#line 165 "parser/parser.y"
+#line 191 "parser/parser.y"
     { (yyval.stmtlist) = (yyvsp[(2) - (3)].stmtlist); ;}
     break;
 
   case 34:
-#line 168 "parser/parser.y"
+#line 195 "parser/parser.y"
     { (yyval.fun) = new FuncCall((yyvsp[(1) - (4)].str), (yyvsp[(3) - (4)].exprlist));;}
     break;
 
   case 35:
-#line 169 "parser/parser.y"
+#line 196 "parser/parser.y"
     { (yyval.fun) = new FuncCall((yyvsp[(1) - (3)].str)); ;}
     break;
 
   case 36:
-#line 172 "parser/parser.y"
+#line 200 "parser/parser.y"
     { (yyvsp[(2) - (2)].exprlist)->append((yyvsp[(1) - (2)].expr)); (yyval.exprlist) = (yyvsp[(2) - (2)].exprlist); ;}
     break;
 
   case 37:
-#line 175 "parser/parser.y"
+#line 204 "parser/parser.y"
     { (yyval.expr) = new IntConst((yyvsp[(1) - (1)].num)); ;}
     break;
 
   case 38:
-#line 176 "parser/parser.y"
+#line 205 "parser/parser.y"
     { (yyval.expr) = new CharConst((yyvsp[(1) - (1)].chr)); ;}
     break;
 
   case 39:
-#line 177 "parser/parser.y"
+#line 206 "parser/parser.y"
     { (yyval.expr) = (yyvsp[(1) - (1)].lvalue);;}
     break;
 
   case 40:
-#line 178 "parser/parser.y"
+#line 207 "parser/parser.y"
     { (yyval.expr) = (yyvsp[(2) - (3)].expr);;}
     break;
 
   case 41:
-#line 179 "parser/parser.y"
+#line 208 "parser/parser.y"
     { (yyval.expr) = (yyvsp[(1) - (1)].fun);;}
     break;
 
   case 42:
-#line 180 "parser/parser.y"
+#line 209 "parser/parser.y"
     { (yyval.expr) = new UnOp((yyvsp[(1) - (2)].op), (yyvsp[(2) - (2)].expr)); ;}
     break;
 
   case 43:
-#line 181 "parser/parser.y"
+#line 210 "parser/parser.y"
     { (yyval.expr) = new UnOp((yyvsp[(1) - (2)].op), (yyvsp[(2) - (2)].expr)); ;}
     break;
 
   case 44:
-#line 182 "parser/parser.y"
+#line 211 "parser/parser.y"
     { (yyval.expr) = new BinOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].op), (yyvsp[(3) - (3)].expr)); ;}
     break;
 
   case 45:
-#line 183 "parser/parser.y"
+#line 212 "parser/parser.y"
     { (yyval.expr) = new BinOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].op), (yyvsp[(3) - (3)].expr));  ;}
     break;
 
   case 46:
-#line 184 "parser/parser.y"
+#line 213 "parser/parser.y"
     { (yyval.expr) = new BinOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].op), (yyvsp[(3) - (3)].expr));  ;}
     break;
 
   case 47:
-#line 185 "parser/parser.y"
+#line 214 "parser/parser.y"
     { (yyval.expr) = new BinOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].op), (yyvsp[(3) - (3)].expr)); ;}
     break;
 
   case 48:
-#line 186 "parser/parser.y"
+#line 215 "parser/parser.y"
     { (yyval.expr) = new BinOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].op), (yyvsp[(3) - (3)].expr));  ;}
     break;
 
   case 49:
-#line 189 "parser/parser.y"
+#line 219 "parser/parser.y"
     { (yyval.exprlist) = new ExprList(); ;}
     break;
 
   case 50:
-#line 190 "parser/parser.y"
+#line 220 "parser/parser.y"
     { (yyvsp[(3) - (3)].exprlist)->append((yyvsp[(2) - (3)].expr)); (yyval.exprlist) = (yyvsp[(3) - (3)].exprlist); ;}
     break;
 
   case 51:
-#line 193 "parser/parser.y"
+#line 224 "parser/parser.y"
     { (yyval.lvalue) = new ArrayAccess((yyvsp[(1) - (4)].str), (yyvsp[(3) - (4)].expr)); ;}
     break;
 
   case 52:
-#line 194 "parser/parser.y"
+#line 225 "parser/parser.y"
     { (yyval.lvalue) = new Id((yyvsp[(1) - (1)].str)); ;}
     break;
 
   case 53:
-#line 195 "parser/parser.y"
+#line 226 "parser/parser.y"
     { (yyval.lvalue) = new StringConst((yyvsp[(1) - (1)].str)); ;}
     break;
 
   case 54:
-#line 198 "parser/parser.y"
+#line 230 "parser/parser.y"
     { (yyval.cond) = new BoolConst(true); ;}
     break;
 
   case 55:
-#line 199 "parser/parser.y"
+#line 231 "parser/parser.y"
     { (yyval.cond) = new BoolConst(false);;}
     break;
 
   case 56:
-#line 200 "parser/parser.y"
+#line 232 "parser/parser.y"
     { (yyval.cond) = (yyvsp[(2) - (3)].cond); ;}
     break;
 
   case 57:
-#line 201 "parser/parser.y"
+#line 233 "parser/parser.y"
     { (yyval.cond) = new CondUnOp('!',(yyvsp[(2) - (2)].cond)); ;}
     break;
 
   case 58:
-#line 202 "parser/parser.y"
+#line 234 "parser/parser.y"
     { (yyval.cond) = new CondCompOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].comp), (yyvsp[(3) - (3)].expr)); ;}
     break;
 
   case 59:
-#line 203 "parser/parser.y"
+#line 235 "parser/parser.y"
     { (yyval.cond) = new CondCompOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].comp), (yyvsp[(3) - (3)].expr)); ;}
     break;
 
   case 60:
-#line 204 "parser/parser.y"
+#line 236 "parser/parser.y"
     { (yyval.cond) = new CondCompOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].comp), (yyvsp[(3) - (3)].expr)); ;}
     break;
 
   case 61:
-#line 205 "parser/parser.y"
+#line 237 "parser/parser.y"
     { (yyval.cond) = new CondCompOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].comp), (yyvsp[(3) - (3)].expr)); ;}
     break;
 
   case 62:
-#line 206 "parser/parser.y"
+#line 238 "parser/parser.y"
     { (yyval.cond) = new CondCompOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].comp), (yyvsp[(3) - (3)].expr)); ;}
     break;
 
   case 63:
-#line 207 "parser/parser.y"
+#line 239 "parser/parser.y"
     { (yyval.cond) = new CondCompOp((yyvsp[(1) - (3)].expr), (yyvsp[(2) - (3)].comp), (yyvsp[(3) - (3)].expr)); ;}
     break;
 
   case 64:
-#line 208 "parser/parser.y"
+#line 240 "parser/parser.y"
     { (yyval.cond) = new CondBoolOp((yyvsp[(1) - (3)].cond), (yyvsp[(2) - (3)].op), (yyvsp[(3) - (3)].cond)); ;}
     break;
 
   case 65:
-#line 209 "parser/parser.y"
+#line 241 "parser/parser.y"
     { (yyval.cond) = new CondBoolOp((yyvsp[(1) - (3)].cond), (yyvsp[(2) - (3)].op), (yyvsp[(3) - (3)].cond)); ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1849 "parser/parser.cpp"
+#line 1863 "parser/parser.cpp"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2059,13 +2073,12 @@ yyreturn:
 }
 
 
-#line 212 "parser/parser.y"
+#line 244 "parser/parser.y"
 
 
 int main() {
     int result = yyparse();
     
-    // Print lexical errors first
     if (lexical_errors > 0) {
         for (const std::string &error : error_buffer) {
             fprintf(stderr, "%s\n", error.c_str());
@@ -2073,23 +2086,65 @@ int main() {
         return 1;
     }
 
-    // Print syntax errors second
     if (syntax_errors > 0) {
         for (const std::string &error : syntax_error_buffer) {
             fprintf(stderr, "%s\n", error.c_str());
+        }
+        return 1;
+    }
+
+    if (semantic_errors > 0) {
+        for (const std::string &error : semantic_error_buffer) {
+            fprintf(stderr, "%s\n", error.c_str());
+        }
+        return 1;
+    }
+
+    if (semantic_warnings > 0) {
+        for (const std::string &warning : semantic_warning_buffer) {
+            fprintf(stderr, "%s\n", warning.c_str());
         }
     }
 
     return result;
 }
 
-// Custom yyerror function that provides specific syntax error messages
 void yyerror(const char *msg) {
     syntax_errors++;
 
-    std::string error_message = "Syntax Error at line " + std::to_string(lineno) +
-                                ", column " + std::to_string(column) + ": " + msg;
+    std::string processed_msg(msg);
+
+    size_t pos = processed_msg.find("$end");
+    if (pos != std::string::npos) {
+        processed_msg.replace(pos, 4, "end of input");
+    }
+
+    std::string error_message = "Error at line " + std::to_string(token_start_line) +
+                                ", column " + std::to_string(token_start_column) + ": " + processed_msg;
+    
 
     syntax_error_buffer.push_back(error_message);
 }
 
+void semantic_error(const std::string &msg) {
+    char error_message[512];
+
+    snprintf(error_message, sizeof(error_message),
+             "Semantic Error at line %d, column %d: %s",
+             token_start_line, token_start_column, msg.c_str());
+
+    semantic_error_buffer.push_back(error_message);
+    semantic_errors++;
+}
+
+
+void semantic_warning(const std::string &msg) {
+    char warning_message[512];
+
+    snprintf(warning_message, sizeof(warning_message),
+             "Semantic Warning at line %d, column %d: %s",
+             token_start_line, token_start_column, msg.c_str());
+
+    semantic_warning_buffer.push_back(warning_message);
+    semantic_warnings++;
+}
