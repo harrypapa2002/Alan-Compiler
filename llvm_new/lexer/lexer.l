@@ -7,8 +7,8 @@
 #include <ctype.h> 
 #include <vector>
 #include "../ast/ast.hpp"
-#include "lexer.hpp"
 #include "../parser/parser.hpp"
+#include "lexer.hpp"
 
 enum LexicalErrorType {
     ILLEGAL_CHARACTER,
@@ -25,10 +25,11 @@ void trackLexicalError(LexicalErrorType errorType);
 int comment_start_line = 0;
 int comment_start_column = 0;
 
-int token_start_line = 1;
-int token_start_column = 1;
-
-#define SET_TOKEN_POSITION token_start_line = lineno; token_start_column = column;
+#define SET_YYLLOC \
+    yylloc.first_line = lineno; \
+    yylloc.first_column = column; \
+    yylloc.last_line = lineno; \
+    yylloc.last_column = column + yyleng - 1;
 
 %}
 
@@ -42,54 +43,53 @@ ESC [ntr0\'\"\\]
 
 %%
 
-
  /* Keywords */
-"byte"    { SET_TOKEN_POSITION; column += yyleng; return T_byte; }
-"else"    { SET_TOKEN_POSITION; column += yyleng; return T_else; }
-"false"   { SET_TOKEN_POSITION; column += yyleng; return T_false; }
-"if"      { SET_TOKEN_POSITION; column += yyleng; return T_if; }
-"int"     { SET_TOKEN_POSITION; column += yyleng; return T_int; }
-"proc"    { SET_TOKEN_POSITION; column += yyleng; return T_proc; }
-"reference" { SET_TOKEN_POSITION; column += yyleng; return T_reference; }
-"return"  { SET_TOKEN_POSITION; column += yyleng; return T_return; }
-"while"   { SET_TOKEN_POSITION; column += yyleng; return T_while; }
-"true"    { SET_TOKEN_POSITION; column += yyleng; return T_true; }
+"byte"    { SET_YYLLOC; column += yyleng; return T_byte; }
+"else"    { SET_YYLLOC; column += yyleng; return T_else; }
+"false"   { SET_YYLLOC; column += yyleng; return T_false; }
+"if"      { SET_YYLLOC; column += yyleng; return T_if; }
+"int"     { SET_YYLLOC; column += yyleng; return T_int; }
+"proc"    { SET_YYLLOC; column += yyleng; return T_proc; }
+"reference" { SET_YYLLOC; column += yyleng; return T_reference; }
+"return"  { SET_YYLLOC; column += yyleng; return T_return; }
+"while"   { SET_YYLLOC; column += yyleng; return T_while; }
+"true"    { SET_YYLLOC; column += yyleng; return T_true; }
 
  /* Symbols */
 [\(\)\[\]\{\}\,\:\;\=\+\/\-\*\%\&\|\!] {
-    SET_TOKEN_POSITION;
+    SET_YYLLOC;
     column += yyleng; 
     yylval.op = yytext[0]; 
     return yytext[0]; 
 }
-\< { SET_TOKEN_POSITION; column += yyleng; yylval.comp = lt; return yytext[0]; }
-\> { SET_TOKEN_POSITION; column += yyleng; yylval.comp = gt; return yytext[0]; }
-"<=" { SET_TOKEN_POSITION; column += yyleng; yylval.comp = lte; return T_lte; }
-">=" { SET_TOKEN_POSITION; column += yyleng; yylval.comp = gte; return T_gte; }
-"==" { SET_TOKEN_POSITION; column += yyleng; yylval.comp = eq; return T_eq; }
-"!=" { SET_TOKEN_POSITION; column += yyleng; yylval.comp = neq; return T_neq; }
+\< { SET_YYLLOC; column += yyleng; yylval.comp = lt; return yytext[0]; }
+\> { SET_YYLLOC; column += yyleng; yylval.comp = gt; return yytext[0]; }
+"<=" { SET_YYLLOC; column += yyleng; yylval.comp = lte; return T_lte; }
+">=" { SET_YYLLOC; column += yyleng; yylval.comp = gte; return T_gte; }
+"==" { SET_YYLLOC; column += yyleng; yylval.comp = eq; return T_eq; }
+"!=" { SET_YYLLOC; column += yyleng; yylval.comp = neq; return T_neq; }
 
  /* Constants. Names. Chars. Strings. */
 {D}+ { 
-    SET_TOKEN_POSITION; 
+    SET_YYLLOC; 
     column += yyleng; 
     yylval.num = atoi(yytext); 
     return T_const; 
 }
 {L}({L}|{D}|_)* { 
-    SET_TOKEN_POSITION; 
+    SET_YYLLOC; 
     column += yyleng; 
     yylval.var = new std::string(yytext); 
     return T_id; 
 }
 \'([^\\\'\"]|\\({ESC}|x{H}{H}))\' { 
-    SET_TOKEN_POSITION; 
+    SET_YYLLOC; 
     column += yyleng; 
     yylval.chr = fixChar(yytext+1); 
     return T_char; 
 }
 \"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { 
-    SET_TOKEN_POSITION; 
+    SET_YYLLOC; 
     column += yyleng; 
     yylval.str = new std::string(fixString(yytext+1)); 
     return T_string; 
@@ -116,11 +116,11 @@ ESC [ntr0\'\"\\]
     is_balanced = 0; 
 }
 <COMMENT>"(*" { 
-    SET_TOKEN_POSITION; 
+    column += yyleng; 
     ++is_balanced; 
 }
 <COMMENT>"*)" { 
-    SET_TOKEN_POSITION; 
+    column += yyleng; 
     if(is_balanced) --is_balanced; 
     else { BEGIN(INITIAL); } 
 }
@@ -147,10 +147,10 @@ ESC [ntr0\'\"\\]
 
  /* Illegal characters */
 . { 
-    SET_TOKEN_POSITION;
+    SET_YYLLOC;
     trackLexicalError(ILLEGAL_CHARACTER); 
+    column += yyleng;
 }
-
 
 %%
 
@@ -178,14 +178,13 @@ void trackLexicalError(LexicalErrorType errorType) {
 
         default:
             snprintf(error_message, sizeof(error_message),
-                     "lexical error at line %d, column %d.", lineno, column);
+                     "Lexical error at line %d, column %d.", lineno, column);
             break;
     }
 
     error_buffer.push_back(error_message);
     lexical_errors++;
 }
-
 
 int findChar(char c) {
     if(c >= '0' && c <= '9') return c - '0';
@@ -208,7 +207,7 @@ unsigned char fixChar(char *s) {
             case 't': return '\t';
             case 'r': return '\r';
             case '0': return '\0';
-            case '\'': return '\'';
+            case '\'': return '\''; 
             case '\"': return '\"';
             case '\\': return '\\';
             default: return s[1];

@@ -8,7 +8,6 @@
 #include "../symbol/symbol.hpp"
 #include "../symbol/symbol_table.hpp"
 
-// Track error state
 int syntax_errors = 0;
 extern int lexical_errors;
 std::vector<std::string> syntax_error_buffer;  
@@ -19,15 +18,6 @@ std::vector<std::string> semantic_error_buffer;
 int semantic_warnings = 0; 
 std::vector<std::string> semantic_warning_buffer; 
 
-
-// Global line and column tracking
-extern int lineno;
-extern int column;
-
-// Token position tracking
-extern int token_start_line;
-extern int token_start_column;
-
 void yyerror(const char *msg);  
 
 Type *typeInteger = new IntType();
@@ -35,6 +25,7 @@ Type *typeByte = new ByteType();
 Type *typeVoid = new VoidType();
 %}
 
+%locations
 %error-verbose
 
 %union {
@@ -127,123 +118,249 @@ program :
 ;
 
 funcdef : 
-    T_id '(' fparlist ')' ':' rtype localdefs compoundstmt { $$ = new FuncDef($1, $6, $7, $8, $3); }
-|   T_id '(' ')' ':' rtype localdefs compoundstmt { $$ = new FuncDef($1, $5, $6, $7); }
+    T_id '(' fparlist ')' ':' rtype localdefs compoundstmt {
+        $$ = new FuncDef($1, $6, $7, $8, $3, @1.first_line, @1.first_column);
+    }
+|   T_id '(' ')' ':' rtype localdefs compoundstmt {
+        $$ = new FuncDef($1, $5, $6, $7, nullptr, @1.first_line, @1.first_column);
+    }
 ;
 
 fparlist : 
-    fpardef fpardefs { $2->append($1); $$ = $2; }
+    fpardef fpardefs {
+        $2->append($1); $$ = $2;
+    }
 ;
 
 fpardef : 
-    T_id ':' T_reference type { $$ = new Fpar($1, $4, ParameterType::REFERENCE); }
-|   T_id ':' type { $$ = new Fpar($1, $3, ParameterType::VALUE); }
+    T_id ':' T_reference type {
+        $$ = new Fpar($1, $4, ParameterType::REFERENCE, @1.first_line, @1.first_column);
+    }
+|   T_id ':' type {
+        $$ = new Fpar($1, $3, ParameterType::VALUE, @1.first_line, @1.first_column);
+    }
 ;
 
 fpardefs : 
-    /* nothing */ { $$ = new FparList(); }
-|   ',' fpardef fpardefs { $3->append($2); $$ = $3; }
+    /* nothing */ {
+        $$ = new FparList(@$.first_line, @$.first_column);
+    }
+|   ',' fpardef fpardefs {
+        $3->append($2); $$ = $3;
+    }
 ;
 
 datatype : 
-    T_int { $$ = typeInteger; }
-|   T_byte { $$ = typeByte; }
+    T_int {
+        $$ = typeInteger;
+    }
+|   T_byte {
+        $$ = typeByte;
+    }
 ; 
 
 type : 
-    datatype '[' ']' {  $$ = new ArrayType($1);}
-|   datatype { $$ = $1; }
+    datatype '[' ']' {
+        $$ = new ArrayType($1);
+    }
+|   datatype {
+        $$ = $1;
+    }
 ;
 
 rtype : 
-    datatype { $$ = $1; }
-|   T_proc { $$ = typeVoid; }
+    datatype {
+        $$ = $1;
+    }
+|   T_proc {
+        $$ = typeVoid;
+    }
 ;
 
 localdef :
-    funcdef { $$ = $1; }
-|   vardef { $$ = $1; }
+    funcdef {
+        $$ = $1;
+    }
+|   vardef {
+        $$ = $1;
+    }
 ;
 
 localdefs : 
-    /* nothing */ { $$ = new LocalDefList(); }
-|   localdef localdefs { $2->append($1); $$ = $2; }
+    /* nothing */ {
+        $$ = new LocalDefList(@$.first_line, @$.first_column);
+    }
+|   localdef localdefs {
+        $2->append($1); $$ = $2;
+    }
 ;
 
 vardef :
-    T_id ':' datatype '[' T_const ']' ';' { $$ = new VarDef($1, $3, true, $5); } 
-|   T_id ':' datatype  ';' { $$ = new VarDef($1, $3, false); }
+    T_id ':' datatype '[' T_const ']' ';' {
+        $$ = new VarDef($1, $3, true, $5, @1.first_line, @1.first_column);
+    } 
+|   T_id ':' datatype  ';' {
+        $$ = new VarDef($1, $3, false, -1, @1.first_line, @1.first_column);
+    }
 ;
 
 stmt :
-    ';' { $$ = new Empty();}
-|   lvalue  '=' expr ';' { $$ = new Let($1, $3); }
-|   compoundstmt  { $$ = $1; }
-|   funccall  ';' { $$ = new ProcCall($1); }
-|   T_if '(' cond ')' stmt T_else stmt { $$ = new If($3, $5, $7); }
-|   T_if '(' cond ')' stmt { $$ = new If($3, $5); }
-|   T_while '(' cond ')' stmt { $$ = new While($3, $5); }
-|   T_return expr ';' { $$ = new Return($2); }
-|   T_return ';' { $$ = new Return(); }
+    ';' {
+        $$ = new Empty(@1.first_line, @1.first_column);
+    }
+|   lvalue  '=' expr ';' {
+        $$ = new Let($1, $3, @2.first_line, @2.first_column);
+    }
+|   compoundstmt  {
+        $$ = $1;
+    }
+|   funccall  ';' {
+        $$ = new ProcCall($1, @2.first_line, @2.first_column);
+    }
+|   T_if '(' cond ')' stmt T_else stmt {
+        $$ = new If($3, $5, $7, @1.first_line, @1.first_column);
+    }
+|   T_if '(' cond ')' stmt {
+        $$ = new If($3, $5, nullptr, @1.first_line, @1.first_column);
+    }
+|   T_while '(' cond ')' stmt {
+        $$ = new While($3, $5, @1.first_line, @1.first_column);
+    }
+|   T_return expr ';' {
+        $$ = new Return($2, @1.first_line, @1.first_column);
+    }
+|   T_return ';' {
+        $$ = new Return(nullptr, @1.first_line, @1.first_column);
+    }
 ;
 
 stmts :
-    /* nothing */ { $$ = new StmtList(); }
-|   stmt stmts { $2->append($1); $$ = $2; }
+    /* nothing */ {
+        $$ = new StmtList(@$.first_line, @$.first_column);
+    }
+|   stmt stmts {
+        $2->append($1); $$ = $2;
+    }
 ;
 
 compoundstmt : 
-    '{' stmts '}' { $$ = $2; }
+    '{' stmts '}' {
+        $$ = $2;
+    }
 ;
 
 funccall : 
-    T_id '('  exprlist   ')' { $$ = new FuncCall($1, $3);}
-|   T_id '(' ')' { $$ = new FuncCall($1); }
+    T_id '('  exprlist   ')' {
+        $$ = new FuncCall($1, $3, @1.first_line, @1.first_column);
+    }
+|   T_id '(' ')' {
+        $$ = new FuncCall($1, nullptr, @1.first_line, @1.first_column);
+    }
 ;
 
 exprlist : 
-    expr exprs { $2->append($1); $$ = $2; }
+    expr exprs {
+        $2->append($1); $$ = $2;
+    }
 ;
 
 expr : 
-    T_const { $$ = new IntConst($1); }
-|   T_char  { $$ = new CharConst($1); }
-|   lvalue  { $$ = $1;}
-|   '(' expr ')' { $$ = $2;}
-|   funccall { $$ = $1;}
-|   '+' expr %prec UNOP { $$ = new UnOp($1, $2); }
-|   '-' expr %prec UNOP { $$ = new UnOp($1, $2); }
-|   expr '+' expr { $$ = new BinOp($1, $2, $3); }
-|   expr '-' expr  { $$ = new BinOp($1, $2, $3);  }
-|   expr '*' expr  { $$ = new BinOp($1, $2, $3);  }
-|   expr '/' expr  { $$ = new BinOp($1, $2, $3); }
-|   expr '%' expr { $$ = new BinOp($1, $2, $3);  }
+    T_const {
+        $$ = new IntConst($1, @1.first_line, @1.first_column);
+    }
+|   T_char  {
+        $$ = new CharConst($1, @1.first_line, @1.first_column);
+    }
+|   lvalue  {
+        $$ = $1;
+    }
+|   '(' expr ')' {
+        $$ = $2;
+    }
+|   funccall {
+        $$ = $1;
+    }
+|   '+' expr %prec UNOP {
+        $$ = new UnOp('+', $2, @1.first_line, @1.first_column);
+    }
+|   '-' expr %prec UNOP {
+        $$ = new UnOp('-', $2, @1.first_line, @1.first_column);
+    }
+|   expr '+' expr {
+        $$ = new BinOp($1, '+', $3, @2.first_line, @2.first_column);
+    }
+|   expr '-' expr  {
+        $$ = new BinOp($1, '-', $3, @2.first_line, @2.first_column);
+    }
+|   expr '*' expr  {
+        $$ = new BinOp($1, '*', $3, @2.first_line, @2.first_column);
+    }
+|   expr '/' expr  {
+        $$ = new BinOp($1, '/', $3, @2.first_line, @2.first_column);
+    }
+|   expr '%' expr {
+        $$ = new BinOp($1, '%', $3, @2.first_line, @2.first_column);
+    }
 ;
 
 exprs:
-    /* nothing */ { $$ = new ExprList(); }
-|   ',' expr exprs { $3->append($2); $$ = $3; }
+    /* nothing */ {
+        $$ = new ExprList(@$.first_line, @$.first_column);
+    }
+|   ',' expr exprs {
+        $3->append($2); $$ = $3;
+    }
 ;
 
 lvalue : 
-    T_id '[' expr ']' { $$ = new ArrayAccess($1, $3); }
-|   T_id { $$ = new Id($1); }
-|   T_string { $$ = new StringConst($1); }
+    T_id '[' expr ']' {
+        $$ = new ArrayAccess($1, $3, @1.first_line, @1.first_column);
+    }
+|   T_id {
+        $$ = new Id($1, @1.first_line, @1.first_column);
+    }
+|   T_string {
+        $$ = new StringConst($1, @1.first_line, @1.first_column);
+    }
 ;
 
 cond : 
-    T_true { $$ = new BoolConst(true); }
-|   T_false { $$ = new BoolConst(false);}
-|   '(' cond ')' { $$ = $2; }
-|   '!' cond %prec UNOP { $$ = new CondUnOp('!',$2); }
-|   expr T_eq expr { $$ = new CondCompOp($1, $2, $3); }
-|   expr T_neq expr { $$ = new CondCompOp($1, $2, $3); }
-|   expr '<' expr { $$ = new CondCompOp($1, $2, $3); }
-|   expr '>' expr { $$ = new CondCompOp($1, $2, $3); }
-|   expr T_lte expr { $$ = new CondCompOp($1, $2, $3); }
-|   expr T_gte expr { $$ = new CondCompOp($1, $2, $3); }
-|   cond '&' cond { $$ = new CondBoolOp($1, $2, $3); }
-|   cond '|' cond { $$ = new CondBoolOp($1, $2, $3); }
+    T_true {
+        $$ = new BoolConst(true, @1.first_line, @1.first_column);
+    }
+|   T_false {
+        $$ = new BoolConst(false, @1.first_line, @1.first_column);
+    }
+|   '(' cond ')' {
+        $$ = $2;
+    }
+|   '!' cond %prec UNOP {
+        $$ = new CondUnOp('!', $2, @1.first_line, @1.first_column);
+    }
+|   expr T_eq expr {
+        $$ = new CondCompOp($1, eq, $3, @2.first_line, @2.first_column);
+    }
+|   expr T_neq expr {
+        $$ = new CondCompOp($1, neq, $3, @2.first_line, @2.first_column);
+    }
+|   expr '<' expr {
+        $$ = new CondCompOp($1, lt, $3, @2.first_line, @2.first_column);
+    }
+|   expr '>' expr {
+        $$ = new CondCompOp($1, gt, $3, @2.first_line, @2.first_column);
+    }
+|   expr T_lte expr {
+        $$ = new CondCompOp($1, lte, $3, @2.first_line, @2.first_column);
+    }
+|   expr T_gte expr {
+        $$ = new CondCompOp($1, gte, $3, @2.first_line, @2.first_column);
+    }
+|   cond '&' cond {
+        $$ = new CondBoolOp($1, '&', $3, @2.first_line, @2.first_column);
+    }
+|   cond '|' cond {
+        $$ = new CondBoolOp($1, '|', $3, @2.first_line, @2.first_column);
+    }
 ;
 
 %%
@@ -285,30 +402,29 @@ void yyerror(const char *msg) {
         processed_msg.replace(pos, 4, "end of input");
     }
 
-    std::string error_message = "Error at line " + std::to_string(token_start_line) +
-                                ", column " + std::to_string(token_start_column) + ": " + processed_msg;
+    std::string error_message = "Error at line " + std::to_string(yylloc.first_line) +
+                                ", column " + std::to_string(yylloc.first_column) + ": " + processed_msg;
     
 
     syntax_error_buffer.push_back(error_message);
 }
 
-void semantic_error(const std::string &msg) {
+void semantic_error(int line, int column, const std::string &msg) {
     char error_message[512];
 
     snprintf(error_message, sizeof(error_message),
              "Semantic Error at line %d, column %d: %s",
-             token_start_line, token_start_column, msg.c_str());
+             line, column, msg.c_str());
 
     semantic_error_buffer.push_back(error_message);
     semantic_errors++;
 }
 
-
-void semantic_warning(const std::string &msg) {
+void semantic_warning(int line, int column, const std::string &msg) {
     char warning_message[512];
     snprintf(warning_message, sizeof(warning_message),
              "Semantic Warning at line %d, column %d: %s",
-             token_start_line, token_start_column, msg.c_str());
+             line, column, msg.c_str());
 
     semantic_warning_buffer.push_back(warning_message);
     semantic_warnings++;

@@ -31,6 +31,9 @@ std::string compareToString(compare op);
 class AST
 {
 public:
+    int line;
+    int column;
+    AST(int line, int column) : line(line), column(column) {}
     virtual ~AST() {}
     virtual void printOn(std::ostream &out) const = 0;
     virtual void sem() {}
@@ -61,6 +64,7 @@ std::ostream &operator<<(std::ostream &out, const AST &ast);
 class Expr : public AST
 {
 public:
+    Expr(int line, int column) : AST(line, column) {}
     virtual ~Expr() {}
     virtual void printOn(std::ostream &out) const override = 0;
     virtual void sem() override = 0;
@@ -77,6 +81,7 @@ protected:
 class Stmt : public AST
 {
 public:
+    Stmt(int line, int column) : AST(line, column), external(false), isReturn(false) {}
     virtual ~Stmt() {}
     virtual void printOn(std::ostream &out) const override = 0;
     virtual void sem() override = 0;
@@ -93,7 +98,7 @@ protected:
 class StmtList : public Stmt
 {
 public:
-    StmtList();
+    StmtList(int line, int column);
     ~StmtList();
     void append(Stmt *stmt);
     virtual void printOn(std::ostream &out) const override;
@@ -108,6 +113,7 @@ private:
 class LocalDef : public AST
 {
 public:
+    LocalDef(int line, int column) : AST(line, column) {}
     virtual ~LocalDef() {}
     virtual void printOn(std::ostream &out) const override = 0;
     virtual void sem() override = 0;
@@ -120,7 +126,7 @@ protected:
 class LocalDefList : public AST
 {
 public:
-    LocalDefList();
+    LocalDefList(int line, int column);
     ~LocalDefList();
     void append(LocalDef *def);
     virtual void printOn(std::ostream &out) const override;
@@ -136,7 +142,7 @@ private:
 class Fpar : public AST
 {
 public:
-    Fpar(std::string *n, Type *t, ParameterType p);
+    Fpar(std::string *n, Type *t, ParameterType p, int line, int column);
     ~Fpar();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -175,7 +181,7 @@ private:
 class FparList : public AST
 {
 public:
-    FparList();
+    FparList(int line, int column);
     ~FparList();
     void append(Fpar *f);
     virtual void printOn(std::ostream &out) const override;
@@ -190,7 +196,7 @@ private:
 class FuncDef : public LocalDef
 {
 public:
-    FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f = nullptr);
+    FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f, int line, int column);
     ~FuncDef();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -212,7 +218,7 @@ private:
 class VarDef : public LocalDef
 {
 public:
-    VarDef(std::string *n, Type *t, bool arr, int arraySize = -1);
+    VarDef(std::string *n, Type *t, bool arr, int arraySize, int line, int column);
     ~VarDef();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -229,7 +235,7 @@ private:
 class ExprList : public AST
 {
 public:
-    ExprList();
+    ExprList(int line, int column);
     ~ExprList();
     void append(Expr *expr);
     virtual void printOn(std::ostream &out) const override;
@@ -245,6 +251,7 @@ private:
 class Cond : public AST 
 {
 public:
+    Cond(int line, int column) : AST(line, column) {}
     virtual void printOn(std::ostream &out) const override = 0;
     virtual void sem() override = 0;
     virtual llvm::Value* igen() const override = 0;
@@ -254,7 +261,7 @@ public:
 class UnOp : public Expr 
 {
 public:
-    UnOp(char o, Expr *e);
+    UnOp(char o, Expr *e, int line, int column);
     ~UnOp();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -269,7 +276,7 @@ private:
 class BinOp : public Expr 
 {
 public:
-    BinOp(Expr *l, char o, Expr *r);
+    BinOp(Expr *l, char o, Expr *r, int line, int column);
     ~BinOp();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -285,7 +292,7 @@ private:
 class CondCompOp : public Cond 
 {
 public:
-    CondCompOp(Expr *l, compare o, Expr *r);
+    CondCompOp(Expr *l, compare o, Expr *r, int line, int column);
     ~CondCompOp();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -301,7 +308,7 @@ private:
 class CondBoolOp : public Cond
 {
 public:
-    CondBoolOp(Cond *l, char o, Cond *r);
+    CondBoolOp(Cond *l, char o, Cond *r, int line, int column);
     ~CondBoolOp();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -317,7 +324,7 @@ private:
 class CondUnOp : public Cond
 {
 public:
-    CondUnOp(char o, Cond *c);
+    CondUnOp(char o, Cond *c, int line, int column);
     ~CondUnOp();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -332,7 +339,7 @@ private:
 class IntConst : public Expr 
 {
 public:
-    IntConst(int v);
+    IntConst(int v, int line, int column);
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
     int getValue() const;
@@ -346,7 +353,7 @@ private:
 class CharConst : public Expr 
 {
 public:
-    CharConst(unsigned char c);
+    CharConst(unsigned char c, int line, int column);
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
     virtual llvm::Value* igen() const override;
@@ -359,6 +366,7 @@ private:
 class Lval : public Expr 
 {
 public:
+    Lval(int line, int column) : Expr(line, column) {}
     virtual ~Lval() {}
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -373,7 +381,7 @@ protected:
 class StringConst : public Lval 
 {
 public:
-    StringConst(std::string *v);
+    StringConst(std::string *v, int line, int column);
     ~StringConst();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -386,7 +394,7 @@ protected:
 class BoolConst : public Cond 
 {
 public:
-    BoolConst(bool v);
+    BoolConst(bool v, int line, int column);
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
     virtual llvm::Value* igen() const override;
@@ -399,7 +407,7 @@ private:
 class Id : public Lval 
 {
 public:
-    Id(std::string *n);
+    Id(std::string *n, int line, int column);
     ~Id();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -413,7 +421,7 @@ private:
 class ArrayAccess : public Lval 
 {
 public:
-    ArrayAccess(std::string *n, Expr *index);
+    ArrayAccess(std::string *n, Expr *index, int line, int column);
     ~ArrayAccess();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -428,7 +436,7 @@ private:
 class Let : public Stmt 
 {
 public:
-    Let(Lval *l, Expr *r);
+    Let(Lval *l, Expr *r, int line, int column);
     ~Let();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -443,7 +451,7 @@ private:
 class FuncCall : public Expr
 {
 public:
-    FuncCall(std::string *n, ExprList *e = nullptr);
+    FuncCall(std::string *n, ExprList *e, int line, int column);
     ~FuncCall();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -462,7 +470,7 @@ protected:
 class ProcCall : public Stmt 
 {
 public:
-    ProcCall(FuncCall *f);
+    ProcCall(FuncCall *f, int line, int column);
     ~ProcCall();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -476,7 +484,7 @@ private:
 class If : public Stmt 
 {
 public:
-    If(Cond *c, Stmt *t, Stmt *e = nullptr);
+    If(Cond *c, Stmt *t, Stmt *e, int line, int column);
     ~If();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -492,7 +500,7 @@ private:
 class While : public Stmt 
 {
 public:
-    While(Cond *c, Stmt *b);
+    While(Cond *c, Stmt *b, int line, int column);
     ~While();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -507,7 +515,7 @@ private:
 class Return : public Stmt
 {
 public:
-    Return(Expr *e = nullptr);
+    Return(Expr *e, int line, int column);
     ~Return();
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override;
@@ -521,6 +529,7 @@ private:
 class Empty : public Stmt
 {
 public:
+    Empty(int line, int column);
     virtual void printOn(std::ostream &out) const override;
     virtual void sem() override {}
     virtual llvm::Value* igen() const override;

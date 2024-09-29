@@ -1,7 +1,11 @@
-fo() : proc
-    pog : byte [10];
-    i : int; 
+main() : proc
+i: int;
+x: byte;
+j:int;
+
 {
-    readString(10, pog);
-    writeString(pog);
+    j = x;
+    if (j + 5 < 10) {
+        j = 10;
+    }
 }

@@ -112,7 +112,7 @@ bool Stmt::isReturnStatement() const
 
 // StmtList Class Method Implementations
 
-StmtList::StmtList() : stmts() {}
+StmtList::StmtList(int line, int column) : Stmt(line, column), stmts() {}
 
 StmtList::~StmtList()
 {
@@ -149,7 +149,7 @@ void StmtList::printOn(std::ostream &out) const
 
 // LocalDefList Class Method Implementations
 
-LocalDefList::LocalDefList() : defs() {}
+LocalDefList::LocalDefList(int line, int column) : AST(line, column), defs() {}
 
 LocalDefList::~LocalDefList()
 {
@@ -184,8 +184,8 @@ void LocalDefList::printOn(std::ostream &out) const
 
 // Fpar Class Method Implementations
 
-Fpar::Fpar(std::string *n, Type *t, ParameterType p)
-    : name(n), type(t), parameterType(p), parameterSymbol(nullptr)
+Fpar::Fpar(std::string *n, Type *t, ParameterType p, int line, int column)
+    : AST(line, column), name(n), type(t), parameterType(p), parameterSymbol(nullptr)
 {
 }
 
@@ -244,7 +244,7 @@ ParameterType CapturedVar::getParameterType() const {
 
 // FparList Class Method Implementations
 
-FparList::FparList() : fpar() {}
+FparList::FparList(int line, int column) : AST(line, column), fpar() {}
 
 FparList::~FparList()
 {
@@ -285,7 +285,8 @@ const std::vector<Fpar *> &FparList::getParameters() const
 
 // FuncDef Class Method Implementations
 
-FuncDef::FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f) : name(n), fpar(f), type(t), localDef(l), stmts(s), hasReturn(false)
+FuncDef::FuncDef(std::string *n, Type *t, LocalDefList *l, Stmt *s, FparList *f, int line, int column)
+    : LocalDef(line, column), name(n), fpar(f), type(t), localDef(l), stmts(s), hasReturn(false)
 {
     capturedVars = std::vector<CapturedVar*>();
 }
@@ -318,7 +319,8 @@ void FuncDef::setReturn () {
 
 // VarDef Class Method Implementations
 
-VarDef::VarDef(std::string *n, Type *t, bool arr, int arraySize) : name(n), type(t), size(arraySize), isArray(arr) {}
+VarDef::VarDef(std::string *n, Type *t, bool arr, int arraySize, int line, int column)
+    : LocalDef(line, column), name(n), type(t), size(arraySize), isArray(arr) {}
 
 VarDef::~VarDef()
 {
@@ -337,7 +339,7 @@ void VarDef::printOn(std::ostream &out) const
 
 // ExprList Class Method Implementations
 
-ExprList::ExprList() : exprs() {}
+ExprList::ExprList(int line, int column) : AST(line, column), exprs() {}
 
 ExprList::~ExprList()
 {
@@ -378,7 +380,7 @@ const std::vector<Expr *> &ExprList::getExprs() const
 
 // UnOp Class Method Implementations
 
-UnOp::UnOp(char o, Expr *e) : op(o), expr(e) {}
+UnOp::UnOp(char o, Expr *e, int line, int column) : Expr(line, column), op(o), expr(e) {}
 
 UnOp::~UnOp()
 {
@@ -392,7 +394,7 @@ void UnOp::printOn(std::ostream &out) const
 
 // BinOp Class Method Implementations
 
-BinOp::BinOp(Expr *l, char o, Expr *r) : op(o), left(l), right(r) {}
+BinOp::BinOp(Expr *l, char o, Expr *r, int line, int column) : Expr(line, column), op(o), left(l), right(r) {}
 
 BinOp::~BinOp()
 {
@@ -407,7 +409,8 @@ void BinOp::printOn(std::ostream &out) const
 
 // CondCompOp Class Method Implementations
 
-CondCompOp::CondCompOp(Expr *l, compare o, Expr *r) : op(o), left(l), right(r) {}
+CondCompOp::CondCompOp(Expr *l, compare o, Expr *r, int line, int column)
+    : Cond(line, column), op(o), left(l), right(r) {}
 
 CondCompOp::~CondCompOp()
 {
@@ -422,7 +425,8 @@ void CondCompOp::printOn(std::ostream &out) const
 
 // CondBoolOp Class Method Implementations
 
-CondBoolOp::CondBoolOp(Cond *l, char o, Cond *r) : op(o), left(l), right(r) {}
+CondBoolOp::CondBoolOp(Cond *l, char o, Cond *r, int line, int column)
+    : Cond(line, column), op(o), left(l), right(r) {}
 
 CondBoolOp::~CondBoolOp()
 {
@@ -437,7 +441,7 @@ void CondBoolOp::printOn(std::ostream &out) const
 
 // CondUnOp Class Method Implementations
 
-CondUnOp::CondUnOp(char o, Cond *c) : op(o), cond(c) {}
+CondUnOp::CondUnOp(char o, Cond *c, int line, int column) : Cond(line, column), op(o), cond(c) {}
 
 CondUnOp::~CondUnOp()
 {
@@ -451,7 +455,7 @@ void CondUnOp::printOn(std::ostream &out) const
 
 // IntConst Class Method Implementations
 
-IntConst::IntConst(int v) : val(v) {}
+IntConst::IntConst(int v, int line, int column) : Expr(line, column), val(v) {}
 
 void IntConst::printOn(std::ostream &out) const
 {
@@ -465,7 +469,7 @@ int IntConst::getValue() const
 
 // CharConst Class Method Implementations
 
-CharConst::CharConst(unsigned char c) : val(c) {}
+CharConst::CharConst(unsigned char c, int line, int column) : Expr(line, column), val(c) {}
 
 void CharConst::printOn(std::ostream &out) const
 {
@@ -490,7 +494,7 @@ std::string* Lval::getName() const{
 
 // StringConst Class Method Implementations
 
-StringConst::StringConst(std::string *v)
+StringConst::StringConst(std::string *v, int line, int column) : Lval(line, column)
 {
     name = v;
 }
@@ -507,7 +511,7 @@ void StringConst::printOn(std::ostream &out) const
 
 // BoolConst Class Method Implementations
 
-BoolConst::BoolConst(bool v) : val(v) {}
+BoolConst::BoolConst(bool v, int line, int column) : Cond(line, column), val(v) {}
 
 void BoolConst::printOn(std::ostream &out) const
 {
@@ -516,7 +520,7 @@ void BoolConst::printOn(std::ostream &out) const
 
 // Id Class Method Implementations
 
-Id::Id(std::string *n)
+Id::Id(std::string *n, int line, int column) : Lval(line, column)
 {
     name = n;
 }
@@ -533,7 +537,8 @@ void Id::printOn(std::ostream &out) const
 
 // ArrayAccess Class Method Implementations
 
-ArrayAccess::ArrayAccess(std::string *n, Expr *index) : indexExpr(index)
+ArrayAccess::ArrayAccess(std::string *n, Expr *index, int line, int column)
+    : Lval(line, column), indexExpr(index)
 {
     name = n;
 }
@@ -556,7 +561,7 @@ Expr* ArrayAccess::getIndexExpr() const
 
 // Let Class Method Implementations
 
-Let::Let(Lval *l, Expr *r) : lexpr(l), rexpr(r) {}
+Let::Let(Lval *l, Expr *r, int line, int column) : Stmt(line, column), lexpr(l), rexpr(r) {}
 
 Let::~Let()
 {
@@ -571,7 +576,8 @@ void Let::printOn(std::ostream &out) const
 
 // FuncCall Class Method Implementations
 
-FuncCall::FuncCall(std::string *n, ExprList *e) : name(n), exprs(e), isNested(false) {
+FuncCall::FuncCall(std::string *n, ExprList *e, int line, int column)
+    : Expr(line, column), name(n), exprs(e), isNested(false) {
     capturedVars = std::vector<CapturedVar*>();
 }
 
@@ -601,7 +607,7 @@ void FuncCall::printOn(std::ostream &out) const
 
 // ProcCall Class Method Implementations
 
-ProcCall::ProcCall(FuncCall *f) : funcCall(f) {}
+ProcCall::ProcCall(FuncCall *f, int line, int column) : Stmt(line, column), funcCall(f) {}
 
 ProcCall::~ProcCall()
 {
@@ -615,7 +621,7 @@ void ProcCall::printOn(std::ostream &out) const
 
 // If Class Method Implementations
 
-If::If(Cond *c, Stmt *t, Stmt *e) : cond(c), thenStmt(t), elseStmt(e) {}
+If::If(Cond *c, Stmt *t, Stmt *e, int line, int column) : Stmt(line, column), cond(c), thenStmt(t), elseStmt(e) {}
 
 If::~If()
 {
@@ -639,7 +645,7 @@ void If::printOn(std::ostream &out) const
 
 // While Class Method Implementations
 
-While::While(Cond *c, Stmt *b) : cond(c), body(b) {}
+While::While(Cond *c, Stmt *b, int line, int column) : Stmt(line, column), cond(c), body(b) {}
 
 While::~While()
 {
@@ -654,7 +660,7 @@ void While::printOn(std::ostream &out) const
 
 // Return Class Method Implementations
 
-Return::Return(Expr *e) : expr(e) {}
+Return::Return(Expr *e, int line, int column) : Stmt(line, column), expr(e) {}
 
 Return::~Return()
 {
@@ -672,6 +678,8 @@ void Return::printOn(std::ostream &out) const
 }
 
 // Empty Class Method Implementations
+
+Empty::Empty(int line, int column) : Stmt(line, column) {}
 
 void Empty::printOn(std::ostream &out) const
 {
