@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include "scope.hpp"
 
-// SymbolTable class to manage multiple scopes
 class SymbolTable {
 public:
     SymbolTable();
@@ -19,17 +18,17 @@ public:
 
     Type* getCurrentFunctionReturnType() const;
 
-    void addSymbol(std::string name, Symbol* symbol);
-    Symbol* findSymbol(std::string name);
-    Symbol* findSymbolInCurrentScope(std::string name);
+    void addSymbol(const std::string& name, Symbol* symbol);
+    Symbol* findSymbol(const std::string& name);
+    Symbol* findSymbolInCurrentScope(const std::string& name);
 
     void setReturnStatementFound();
     bool getReturnStatementFound() const;
 
-    std::string getCurrentFunctionName() const;
+    const std::string& getCurrentFunctionName() const;
 
 private:
-    Symbol* findGlobalSymbol(std::string name);
+    Symbol* findGlobalSymbol(const std::string& name);
 
     std::stack<Scope*> scopes;
     std::unordered_map<std::string, Symbol*> globalSymbols;

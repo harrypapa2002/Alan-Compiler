@@ -1,7 +1,7 @@
 #ifndef __LEXER_HPP__
 #define __LEXER_HPP__
 #include <string>
-
+#include <vector>
 
 int yylex();
 void yyerror(const char *s);

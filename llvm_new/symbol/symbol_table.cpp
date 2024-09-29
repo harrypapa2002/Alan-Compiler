@@ -2,10 +2,9 @@
 #include "../ast/ast.hpp"
 #include "../symbol/types.hpp"
 
-// Constructor for SymbolTable
 SymbolTable::SymbolTable() : currentFunctionNestingLevel(0) {
     enterScope();
-    // Adding predefined functions
+
     FunctionSymbol* writeInteger = new FunctionSymbol("writeInteger", typeVoid);
     writeInteger->addParameter(ParameterSymbol("n", typeInteger, ParameterType::VALUE));
     addSymbol("writeInteger", writeInteger);
@@ -112,7 +111,7 @@ Type* SymbolTable::getCurrentFunctionReturnType() const {
 }
 
 // Add a symbol to the current scope
-void SymbolTable::addSymbol(std::string name, Symbol* symbol) {
+void SymbolTable::addSymbol(const std::string& name, Symbol* symbol) {
     symbol->setNext(findGlobalSymbol(name));
     globalSymbols[name] = symbol;
     scopes.top()->addSymbol(name, symbol);
@@ -120,7 +119,7 @@ void SymbolTable::addSymbol(std::string name, Symbol* symbol) {
 }
 
 // Find a symbol in the global scope
-Symbol* SymbolTable::findSymbol(std::string name) {
+Symbol* SymbolTable::findSymbol(const std::string& name) {
     Symbol* symbol = findGlobalSymbol(name);
 
     if (symbol) {
@@ -149,7 +148,7 @@ Symbol* SymbolTable::findSymbol(std::string name) {
 }
 
 // Find a symbol in the current scope
-Symbol* SymbolTable::findSymbolInCurrentScope(std::string name) {
+Symbol* SymbolTable::findSymbolInCurrentScope(const std::string& name) {
     return scopes.top()->findSymbol(name);
 }
 
@@ -167,13 +166,13 @@ bool SymbolTable::getReturnStatementFound() const {
 }
 
 // Find a symbol in the global symbol map
-Symbol* SymbolTable::findGlobalSymbol(std::string name) {
+Symbol* SymbolTable::findGlobalSymbol(const std::string& name) {
     auto it = globalSymbols.find(name);
     if (it != globalSymbols.end()) return it->second;
     return nullptr;
 }
 
 // Get the name of the current function
-std::string SymbolTable::getCurrentFunctionName() const {
+const std::string& SymbolTable::getCurrentFunctionName() const {
     return currentFunctionContext.top()->getName();
 }

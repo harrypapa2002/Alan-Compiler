@@ -38,6 +38,11 @@ void Fpar::sem()
         semantic_error(this->line, this->column,
             "Parameter '" + *name + "' already declared in the scope of function '" + st.getCurrentFunctionName() + "'");
     }
+    else if(parameterType!=ParameterType::REFERENCE && type->getType() == TypeEnum::ARRAY)
+    {
+        semantic_error(this->line, this->column,
+            "Only array reference parameters are allowed.");
+    }
     else
     {
         parameterSymbol = new ParameterSymbol(*name, type, parameterType);

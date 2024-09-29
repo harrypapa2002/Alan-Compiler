@@ -37,8 +37,8 @@ public:
     void setFunc(llvm::Function* f);
     llvm::Function* getFunc();
 
-    void addAlloca(std::string name, llvm::AllocaInst* value);
-    llvm::AllocaInst* getAlloca(std::string name);
+    void addAlloca(const std::string& name, llvm::AllocaInst* value);
+    llvm::AllocaInst* getAlloca(const std::string& name);
 
     void setBlock(llvm::BasicBlock* b);
     llvm::BasicBlock* getBlock();
@@ -58,8 +58,8 @@ public:
     void openScope();
     void closeScope();
 
-    void addFunction(std::string name, llvm::Function* func);
-    llvm::Function* getFunction(std::string name);
+    void addFunction(const std::string& name, llvm::Function* func);
+    llvm::Function* getFunction(const std::string& name);
 };
 
 #endif // __CODEGEN_HPP__

@@ -9,16 +9,12 @@ Scope::~Scope() {
 }
 
 // Add a symbol to the scope
-void Scope::addSymbol(std::string name, Symbol* symbol) {
-    if (symbols.find(name) != symbols.end()) {
-        yyerror("Symbol already defined");
-        return;
-    }
+void Scope::addSymbol(const std::string& name, Symbol* symbol) {
     symbols[name] = symbol;
 }
 
 // Find a symbol in the scope
-Symbol* Scope::findSymbol(std::string name) {
+Symbol* Scope::findSymbol(const std::string& name) {
     auto it = symbols.find(name);
     if (it != symbols.end()) {
         return it->second;

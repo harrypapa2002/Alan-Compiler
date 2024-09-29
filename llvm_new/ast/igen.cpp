@@ -221,7 +221,6 @@ llvm::Value *CondCompOp::igen() const
     llvm::Value *result = nullptr;
     switch (op)
     {
-        // std::cout << "op switch\n";
     case lt:
         result = Builder.CreateICmpSLT(leftVal, rightVal, "lttmp");
         break;
@@ -244,7 +243,6 @@ llvm::Value *CondCompOp::igen() const
         return nullptr;
     }
 
-    // std::cout << "op done\n";
     return result;
 }
 
@@ -254,7 +252,6 @@ llvm::Value *CondBoolOp::igen() const
     llvm::Value *rightValue = right->igen();
 
     llvm::Value *result;
-    // std::cout << "switch start\n";
     switch (op)
     {
     case '&':
@@ -266,7 +263,6 @@ llvm::Value *CondBoolOp::igen() const
     default:
         return nullptr;
     }
-    // std::cout << "switch done\n";
 
     return result;
 }
@@ -353,11 +349,7 @@ llvm::Value *ArrayAccess::igen() const
         indexValue = Builder.CreateLoad(translateType(indexExpr->getType(), ParameterType::VALUE), indexValue, "load_index");
     }
 
-    // std::cout << "Generated code for index expression" << std::endl;
-
     llvm::Type *elementType = translateType(type, ParameterType::VALUE);
-
-    // std::cout << elementType->getTypeID() << std::endl;
 
     llvm::AllocaInst *arrayPtrAlloc = currentBlock->getAlloca(*name);
     llvm::Value *elementPtr = nullptr;
@@ -367,21 +359,18 @@ llvm::Value *ArrayAccess::igen() const
         llvm::Value *arrayLoad = Builder.CreateLoad(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, *name + "_arrayptr");
 
         elementPtr = Builder.CreateGEP(elementType, arrayLoad, indexValue, "elementptr");
-        //`std::cerr << "Generated GEP for element access" << std::endl;
     }
     else
     {
         elementPtr = Builder.CreateGEP(arrayPtrAlloc->getAllocatedType(), arrayPtrAlloc, std::vector<llvm::Value *>({c32(0), indexValue}), "elementptr");
     }
 
-    // std::cout << "Generated code for array access" << std::endl;
 
     return elementPtr;
 }
 
 llvm::Value *Let::igen() const
 {
-    // std::cout << "Let::igen()" << *lexpr << "\n"<< *rexpr << std::endl;
     llvm::Value *rValue = rexpr->igen();
 
     if (rValue->getType()->isPointerTy())
@@ -556,10 +545,8 @@ llvm::Value *While::igen() const
     return nullptr;
 }
 
-// TODO:: Remove "if" related to blockstack.empty()
 llvm::Value *Return::igen() const
 {
-    // std::cout << "Return::igen()" << std::endl;
     if (!expr)
     {
         Builder.CreateRetVoid();
@@ -569,14 +556,12 @@ llvm::Value *Return::igen() const
         llvm::Value *value = expr->igen();
         if (value->getType()->isPointerTy())
         {
-            // std::cout << "Return value is not a constant" << std::endl;
             value = Builder.CreateLoad(translateType(expr->getType(), ParameterType::VALUE), value, "ret_val");
         }
 
         Builder.CreateRet(value);
     }
 
-    // // std::cout << "Return::igen() done" << std::endl;
 
     return nullptr;
 }

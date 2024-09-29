@@ -9,10 +9,8 @@ llvm::Type* proc =  llvm::Type::getVoidTy(AST::TheContext);
 llvm::Type* translateType(Type* type, ParameterType pt) {
     llvm::Type* t = nullptr;
     if (type->getType() == TypeEnum::INT) {
-        //std::cout << "int" << std::endl;
         t = i32;
     } else if (type->getType() == TypeEnum::BYTE) {
-        //std::cout << "byte" << std::endl;
         t = i8;
     } else if (type->getType() == TypeEnum::VOID) {
         t = proc;
@@ -46,12 +44,12 @@ llvm::Function* GenBlock::getFunc() {
 }
 
 // Add value for GenBlock
-void GenBlock::addAlloca(std::string name, llvm::AllocaInst* value) {
+void GenBlock::addAlloca(const std::string& name, llvm::AllocaInst* value) {
     allocas[name] = value;
 }
 
 // Get value for GenBlock
-llvm::AllocaInst* GenBlock::getAlloca(std::string name) {
+llvm::AllocaInst* GenBlock::getAlloca(const std::string& name) {
     return allocas[name];
 }
 
@@ -88,20 +86,17 @@ void GenScope::openScope() {
 
 // Close the current scope in GenScope
 void GenScope::closeScope() {
-    if (functions.empty()) {
-        yyerror("No scope to close");
-        return;
-    }
+
     functions.pop();
 }
 
 // Add a function to the current scope in GenScope
-void GenScope::addFunction(std::string name, llvm::Function* func) {
+void GenScope::addFunction(const std::string& name, llvm::Function* func) {
     functions.top()[name] = func;
 }
 
 // Get a function from the scopes in GenScope
-llvm::Function* GenScope::getFunction(std::string name) {
+llvm::Function* GenScope::getFunction(const std::string& name) {
     std::stack<std::unordered_map<std::string, llvm::Function*>> temp = functions;
     while (!temp.empty()) {
         auto& scope = temp.top();

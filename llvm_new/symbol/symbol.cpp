@@ -2,7 +2,7 @@
 #include "../ast/ast.hpp"
 
 // Constructor for VariableSymbol
-VariableSymbol::VariableSymbol(std::string name, Type *type)
+VariableSymbol::VariableSymbol(const std::string& name, Type *type)
 {
     this->name = name;
     this->type = type;
@@ -10,23 +10,12 @@ VariableSymbol::VariableSymbol(std::string name, Type *type)
 }
 
 // Constructor for ParameterSymbol
-ParameterSymbol::ParameterSymbol(std::string name, Type *type, ParameterType parameterType)
+ParameterSymbol::ParameterSymbol(const std::string& name, Type *type, ParameterType parameterType)
 {
-    if (parameterType != ParameterType::REFERENCE && type->getType() == TypeEnum::ARRAY)
-    {
-        yyerror("Only array reference parameters are allowed");
-    }
     this->name = name;
     this->type = type;
     this->symbolType = SymbolType::PARAMETER;
     this->parameterType = parameterType;
-}
-
-// Method to print parameter symbol details
-void ParameterSymbol::printOn(std::ostream &out) const
-{
-    out << "Parameter: " << name << " " << *type;
-    out << " " << (parameterType == ParameterType::VALUE ? "value" : "reference");
 }
 
 // Get the parameter type
@@ -36,7 +25,7 @@ ParameterType ParameterSymbol::getParameterType() const
 }
 
 // Constructor for FunctionSymbol
-FunctionSymbol::FunctionSymbol(std::string name, Type *type) : parameters()
+FunctionSymbol::FunctionSymbol(const std::string& name, Type *type) : parameters()
 {
     this->name = name;
     this->type = type;

@@ -10,8 +10,8 @@ class Scope {
 public:
     ~Scope();
 
-    void addSymbol(std::string name, Symbol* symbol);
-    Symbol* findSymbol(std::string name);
+    void addSymbol(const std::string& name, Symbol* symbol);
+    Symbol* findSymbol(const std::string& name);
     const std::unordered_map<std::string, Symbol*>& getSymbols() const;
 
 private:
