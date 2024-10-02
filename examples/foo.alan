@@ -1,11 +1,8 @@
-main() : proc
-i: int;
-x: byte;
-j:int;
-
+main () : proc
+  foo (arr: reference byte []) : proc {
+    arr[0] = 'a';
+    writeString(arr);
+  }
 {
-    j = x;
-    if (j + 5 < 10) {
-        j = 10;
-    }
+  foo("fgh");
 }

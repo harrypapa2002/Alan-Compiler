@@ -32,7 +32,7 @@ public:
     virtual ~AST() {}
     virtual void sem() {}
     virtual llvm::Value* igen() const { return nullptr; } 
-    void llvm_igen(bool optimize = true);
+    void llvm_igen(bool optimize = false);
     static llvm::LLVMContext TheContext;
     void codegenLibs();
 protected:

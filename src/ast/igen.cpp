@@ -37,7 +37,6 @@ llvm::ConstantInt *AST::c32(int n)
     return llvm::ConstantInt::get(TheContext, llvm::APInt(32, n, true));
 }
 
-// TODO:: Remove "if" clauses lines 62-76
 void AST::llvm_igen(bool optimize)
 {
     TheModule = std::make_unique<llvm::Module>(filename, TheContext);
@@ -94,7 +93,6 @@ void AST::llvm_igen(bool optimize)
         std::exit(1);
     }
 
-    // Optimize the module
     TheFPM->run(*main);
 
     // Print the IR

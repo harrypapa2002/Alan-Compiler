@@ -23,6 +23,9 @@ void yyerror(const char *msg);
 Type *typeInteger = new IntType();
 Type *typeByte = new ByteType();
 Type *typeVoid = new VoidType();
+
+bool optimize = false;
+
 %}
 
 %locations
@@ -113,7 +116,7 @@ program :
                 fprintf(stderr, "%s\n", warning.c_str());
             }
         }
-        $1->llvm_igen();
+        $1->llvm_igen(optimize);
     }
 ;
 
@@ -365,7 +368,14 @@ cond :
 
 %%
 
-int main() {
+int main(int argc, char **argv) {
+
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "-O") == 0) {
+            optimize = true;
+        }
+    }
+
     int result = yyparse();
     
     if (lexical_errors > 0) {
