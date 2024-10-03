@@ -1,0 +1,140 @@
+
+@global_str = private unnamed_addr constant [39 x i8] c"Give a string with maximum length 30: \00", align 1
+@global_str.1 = private unnamed_addr constant [23 x i8] c"\0AIs not palindrome...\0A\00", align 1
+@global_str.2 = private unnamed_addr constant [19 x i8] c"\0AIs palindrome...\0A\00", align 1
+
+declare void @writeInteger(i32)
+
+declare void @writeByte(i8)
+
+declare void @writeChar(i8)
+
+declare void @writeString(ptr)
+
+declare i32 @readInteger()
+
+declare i8 @readByte()
+
+declare i8 @readChar()
+
+declare void @readString(i32, ptr)
+
+declare i32 @extend(i8)
+
+declare i8 @shrink(i32)
+
+declare i32 @strlen(ptr)
+
+declare i32 @strcmp(ptr, ptr)
+
+declare void @strcpy(ptr, ptr)
+
+declare void @strcat(ptr, ptr)
+
+define i32 @main() {
+entry:
+  call void @cancer()
+  ret i32 0
+}
+
+define void @cancer() {
+cancer_entry:
+  %n = alloca i32, align 4
+  store i32 0, ptr %n, align 4
+  %source1 = alloca [31 x i8], align 1
+  store [31 x i8] zeroinitializer, ptr %source1, align 1
+  call void @writeString(ptr @global_str)
+  call void @readString(i32 30, ptr %source1)
+  store i32 0, ptr %n, align 4
+  br label %cond
+
+cond:                                             ; preds = %loop, %cancer_entry
+  %load_index = load i32, ptr %n, align 4
+  %elementptr = getelementptr [31 x i8], ptr %source1, i32 0, i32 %load_index
+  %left_load = load i8, ptr %elementptr, align 1
+  %neqtmp = icmp ne i8 %left_load, 0
+  %0 = zext i1 %neqtmp to i32
+  %while_cond = icmp ne i32 %0, 0
+  br i1 %while_cond, label %loop, label %afterloop
+
+loop:                                             ; preds = %cond
+  %left_load1 = load i32, ptr %n, align 4
+  %addtmp = add i32 %left_load1, 1
+  store i32 %addtmp, ptr %n, align 4
+  br label %cond
+
+afterloop:                                        ; preds = %cond
+  %is_it_arg = load i32, ptr %n, align 4
+  %is_it_call = call i32 @is_it(i32 %is_it_arg, ptr %source1)
+  %eqtmp = icmp eq i32 %is_it_call, 1
+  %1 = zext i1 %eqtmp to i32
+  %if_cond = icmp ne i32 %1, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %afterloop
+  call void @writeString(ptr @global_str.1)
+  br label %ifcont
+
+else:                                             ; preds = %afterloop
+  call void @writeString(ptr @global_str.2)
+  br label %ifcont
+
+ifcont:                                           ; preds = %else, %then
+  ret void
+}
+
+define i32 @is_it(i32 %n, ptr %source) {
+is_it_entry:
+  %n1 = alloca i32, align 4
+  store i32 %n, ptr %n1, align 4
+  %source2 = alloca ptr, align 8
+  store ptr %source, ptr %source2, align 8
+  %i = alloca i32, align 4
+  store i32 0, ptr %i, align 4
+  %left_load = load i32, ptr %n1, align 4
+  %subtmp = sub i32 %left_load, 1
+  store i32 %subtmp, ptr %n1, align 4
+  store i32 0, ptr %i, align 4
+  br label %cond
+
+cond:                                             ; preds = %ifcont, %is_it_entry
+  %left_load3 = load i32, ptr %n1, align 4
+  %divtmp = sdiv i32 %left_load3, 2
+  %addtmp = add i32 %divtmp, 1
+  %left_load4 = load i32, ptr %i, align 4
+  %ltetmp = icmp sle i32 %left_load4, %addtmp
+  %0 = zext i1 %ltetmp to i32
+  %while_cond = icmp ne i32 %0, 0
+  br i1 %while_cond, label %loop, label %afterloop
+
+loop:                                             ; preds = %cond
+  %load_index = load i32, ptr %i, align 4
+  %source_arrayptr = load ptr, ptr %source2, align 8
+  %elementptr = getelementptr i8, ptr %source_arrayptr, i32 %load_index
+  %left_load5 = load i32, ptr %n1, align 4
+  %right_load = load i32, ptr %i, align 4
+  %subtmp6 = sub i32 %left_load5, %right_load
+  %source_arrayptr7 = load ptr, ptr %source2, align 8
+  %elementptr8 = getelementptr i8, ptr %source_arrayptr7, i32 %subtmp6
+  %left_load9 = load i8, ptr %elementptr, align 1
+  %right_load10 = load i8, ptr %elementptr8, align 1
+  %neqtmp = icmp ne i8 %left_load9, %right_load10
+  %1 = zext i1 %neqtmp to i32
+  %if_cond = icmp ne i32 %1, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %loop
+  ret i32 1
+
+else:                                             ; preds = %loop
+  br label %ifcont
+
+ifcont:                                           ; preds = %else
+  %left_load11 = load i32, ptr %i, align 4
+  %addtmp12 = add i32 %left_load11, 1
+  store i32 %addtmp12, ptr %i, align 4
+  br label %cond
+
+afterloop:                                        ; preds = %cond
+  ret i32 0
+}

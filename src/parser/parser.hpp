@@ -86,7 +86,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 34 "parser/parser.y"
+#line 31 "parser/parser.y"
 {
     ExprList *exprlist;
     LocalDefList *localdefs;

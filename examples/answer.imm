@@ -1,0 +1,57 @@
+
+@global_str = private unnamed_addr constant [82 x i8] c"The answer to the ultimate question of Life, the Universe, and Everything is 42.\0A\00", align 1
+@global_str.2 = private unnamed_addr constant [45 x i8] c"I'm sorry, I don't understand the question.\0A\00", align 1
+
+declare void @writeInteger(i32)
+
+declare void @writeByte(i8)
+
+declare void @writeChar(i8)
+
+declare void @writeString(ptr)
+
+declare i32 @readInteger()
+
+declare i8 @readByte()
+
+declare i8 @readChar()
+
+declare void @readString(i32, ptr)
+
+declare i32 @extend(i8)
+
+declare i8 @shrink(i32)
+
+declare i32 @strlen(ptr)
+
+declare i32 @strcmp(ptr, ptr)
+
+declare void @strcpy(ptr, ptr)
+
+declare void @strcat(ptr, ptr)
+
+define i32 @main() {
+entry:
+  call void @main.1()
+  ret i32 0
+}
+
+define void @main.1() {
+main_entry:
+  %readInteger_call = call i32 @readInteger()
+  %eqtmp = icmp eq i32 %readInteger_call, 42
+  %0 = zext i1 %eqtmp to i32
+  %if_cond = icmp ne i32 %0, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %main_entry
+  call void @writeString(ptr @global_str)
+  br label %ifcont
+
+else:                                             ; preds = %main_entry
+  call void @writeString(ptr @global_str.2)
+  br label %ifcont
+
+ifcont:                                           ; preds = %else, %then
+  ret void
+}

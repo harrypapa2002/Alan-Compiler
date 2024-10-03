@@ -1,0 +1,72 @@
+
+@global_str = private unnamed_addr constant [23 x i8] c"The factorial of 7 is \00", align 1
+@global_str.2 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
+
+declare void @writeInteger(i32)
+
+declare void @writeByte(i8)
+
+declare void @writeChar(i8)
+
+declare void @writeString(ptr)
+
+declare i32 @readInteger()
+
+declare i8 @readByte()
+
+declare i8 @readChar()
+
+declare void @readString(i32, ptr)
+
+declare i32 @extend(i8)
+
+declare i8 @shrink(i32)
+
+declare i32 @strlen(ptr)
+
+declare i32 @strcmp(ptr, ptr)
+
+declare void @strcpy(ptr, ptr)
+
+declare void @strcat(ptr, ptr)
+
+define i32 @main() {
+entry:
+  call void @factorial()
+  ret i32 0
+}
+
+define void @factorial() {
+factorial_entry:
+  %f = alloca i32, align 4
+  store i32 0, ptr %f, align 4
+  %factorial_call = call i32 @factorial.1(i32 7)
+  store i32 %factorial_call, ptr %f, align 4
+  call void @writeString(ptr @global_str)
+  %writeInteger_arg = load i32, ptr %f, align 4
+  call void @writeInteger(i32 %writeInteger_arg)
+  call void @writeString(ptr @global_str.2)
+  ret void
+}
+
+define i32 @factorial.1(i32 %n) {
+factorial_entry:
+  %n1 = alloca i32, align 4
+  store i32 %n, ptr %n1, align 4
+  %left_load = load i32, ptr %n1, align 4
+  %eqtmp = icmp eq i32 %left_load, 0
+  %0 = zext i1 %eqtmp to i32
+  %if_cond = icmp ne i32 %0, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %factorial_entry
+  ret i32 1
+
+else:                                             ; preds = %factorial_entry
+  %left_load2 = load i32, ptr %n1, align 4
+  %subtmp = sub i32 %left_load2, 1
+  %factorial_call = call i32 @factorial.1(i32 %subtmp)
+  %left_load3 = load i32, ptr %n1, align 4
+  %multmp = mul i32 %left_load3, %factorial_call
+  ret i32 %multmp
+}

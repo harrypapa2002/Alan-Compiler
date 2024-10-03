@@ -15,9 +15,6 @@ std::vector<std::string> syntax_error_buffer;
 int semantic_errors = 0;
 std::vector<std::string> semantic_error_buffer;
 
-int semantic_warnings = 0; 
-std::vector<std::string> semantic_warning_buffer; 
-
 void yyerror(const char *msg);  
 
 Type *typeInteger = new IntType();
@@ -111,11 +108,7 @@ program :
         if (semantic_errors > 0) {
             YYABORT;
         }
-        if (semantic_warnings > 0) {
-            for (const std::string &warning : semantic_warning_buffer) {
-                fprintf(stderr, "%s\n", warning.c_str());
-            }
-        }
+
         $1->llvm_igen(optimize);
     }
 ;
@@ -428,14 +421,4 @@ void semantic_error(int line, int column, const std::string &msg) {
 
     semantic_error_buffer.push_back(error_message);
     semantic_errors++;
-}
-
-void semantic_warning(int line, int column, const std::string &msg) {
-    char warning_message[512];
-    snprintf(warning_message, sizeof(warning_message),
-             "Semantic Warning at line %d, column %d: %s",
-             line, column, msg.c_str());
-
-    semantic_warning_buffer.push_back(warning_message);
-    semantic_warnings++;
 }

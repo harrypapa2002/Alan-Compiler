@@ -1,7 +1,5 @@
-# Makefile for compiling a static library from lib.c
-
 # Compiler
-CC = gcc
+CC = clang
 
 # Compiler flags
 CFLAGS = -c -O2
@@ -26,9 +24,12 @@ $(OBJ): $(SRC)
 $(TARGET): $(OBJ)
 	ar rcs $@ $^
 
-# Clean up the object files and the library
+# Clean up the object files only
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f $(OBJ)
 
-.PHONY: all clean
+# Clean up the object files and the static library
+distclean: clean
+	rm -f $(TARGET)
 
+.PHONY: all clean distclean

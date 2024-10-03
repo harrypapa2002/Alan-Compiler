@@ -108,7 +108,7 @@ void FuncDef::sem()
 
         if (funcSymbol->getNeedsReturn())
         {
-            semantic_warning(this->line, this->column,
+            semantic_error(this->line, this->column,
                 "Non-void function '" + *name + "' does not have a return statement.");
         }
 
@@ -547,11 +547,6 @@ void Return::sem()
             semantic_error(this->line, this->column,
                 "Return type does not match the function's return type.");
         }
-    }
-    else if (expectedReturnType->getType() != TypeEnum::VOID)
-    {
-        semantic_warning(this->line, this->column,
-            "Non-void function '" + st.getCurrentFunctionName() + "' should return a value.");
     }
 
     if (external)

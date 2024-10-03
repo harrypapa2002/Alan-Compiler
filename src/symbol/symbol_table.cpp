@@ -31,8 +31,8 @@ SymbolTable::SymbolTable() : currentFunctionNestingLevel(0) {
     addSymbol("readChar", readChar);
 
     FunctionSymbol* readString = new FunctionSymbol("readString", typeVoid);
-    readString->addParameter(new ParameterSymbol("s", new ArrayType(typeByte), ParameterType::REFERENCE));
     readString->addParameter(new ParameterSymbol("n", typeInteger, ParameterType::VALUE));
+    readString->addParameter(new ParameterSymbol("s", new ArrayType(typeByte), ParameterType::REFERENCE));
     addSymbol("readString", readString);
 
     FunctionSymbol* extend = new FunctionSymbol("extend", typeInteger);
@@ -48,19 +48,19 @@ SymbolTable::SymbolTable() : currentFunctionNestingLevel(0) {
     addSymbol("strlen", strlen);
 
     FunctionSymbol* strcmp = new FunctionSymbol("strcmp", typeInteger);
-    strcmp->addParameter(new ParameterSymbol("s2", new ArrayType(typeByte), ParameterType::REFERENCE));
     strcmp->addParameter(new ParameterSymbol("s1", new ArrayType(typeByte), ParameterType::REFERENCE));
+    strcmp->addParameter(new ParameterSymbol("s2", new ArrayType(typeByte), ParameterType::REFERENCE));
 
     addSymbol("strcmp", strcmp);
 
     FunctionSymbol* strcpy = new FunctionSymbol("strcpy", typeVoid);
-    strcpy->addParameter(new ParameterSymbol("src", new ArrayType(typeByte), ParameterType::REFERENCE));
     strcpy->addParameter(new ParameterSymbol("trg", new ArrayType(typeByte), ParameterType::REFERENCE));
+    strcpy->addParameter(new ParameterSymbol("src", new ArrayType(typeByte), ParameterType::REFERENCE));
     addSymbol("strcpy", strcpy);
 
     FunctionSymbol* strcat = new FunctionSymbol("strcat", typeVoid);
-    strcat->addParameter(new ParameterSymbol("src", new ArrayType(typeByte), ParameterType::REFERENCE));
     strcat->addParameter(new ParameterSymbol("trg", new ArrayType(typeByte), ParameterType::REFERENCE));
+    strcat->addParameter(new ParameterSymbol("src", new ArrayType(typeByte), ParameterType::REFERENCE));
 
     addSymbol("strcat", strcat);
 }

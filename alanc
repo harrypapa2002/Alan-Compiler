@@ -98,9 +98,9 @@ ASM_FILE="$DIRNAME/$BASENAME.asm"
 
 # Compile the Alan source file into LLVM IR, pass the optimize flag
 if $OPTIMIZATION; then
-    ./alanc -O < "$SRC_FILE" > "$IMM_FILE"
+    ./src/alanc -O < "$SRC_FILE" > "$IMM_FILE"
 else
-    ./alanc < "$SRC_FILE" > "$IMM_FILE"
+    ./src/alanc < "$SRC_FILE" > "$IMM_FILE"
 fi
 compiler_status=$?
 
