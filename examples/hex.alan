@@ -1,6 +1,7 @@
 solve () : proc
 h : byte;
 { -- solve
-    h = '\xfa';
-    writeChar(h);
+    h = '\xff';
+    writeByte(h);
+    
 } -- solve

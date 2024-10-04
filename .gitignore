@@ -1,3 +1,4 @@
-llvm_new/a.ll
-llvm_new/a.out
-llvm_new/a.s
+examples/*.imm
+examples/*.asm
+src/**/*.o
+lib/lib.o

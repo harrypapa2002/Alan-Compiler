@@ -545,8 +545,14 @@ void Return::sem()
         else if (expr->getType() && expr->getType()->getType() != expectedReturnType->getType())
         {
             semantic_error(this->line, this->column,
-                "Return type does not match the function's return type.");
+                "Return type mismatch in function '" + st.getCurrentFunctionName() + "': expected '" + typeToString(expectedReturnType->getType()) + "', but found '" + typeToString(expr->getType()->getType()) + "'.");
         }
+    }
+
+    else if (expectedReturnType->getType() != TypeEnum::VOID)
+    {
+        semantic_error(this->line, this->column,
+            "Non-void function '" + st.getCurrentFunctionName() + "' should return a value of type '" + typeToString(expectedReturnType->getType()) + "'.");
     }
 
     if (external)

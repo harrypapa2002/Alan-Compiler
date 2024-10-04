@@ -25,10 +25,10 @@ _solve:                                 ; @solve
 	stp	x29, x30, [sp, #16]             ; 16-byte Folded Spill
 	.cfi_offset w30, -8
 	.cfi_offset w29, -16
-	mov	w8, #250
-	mov	w0, #250
+	mov	w8, #255
+	mov	w0, #255
 	strb	w8, [sp, #15]
-	bl	_writeChar
+	bl	_writeByte
 	ldp	x29, x30, [sp, #16]             ; 16-byte Folded Reload
 	add	sp, sp, #32
 	ret

@@ -37,8 +37,8 @@ define void @solve() {
 solve_entry:
   %h = alloca i8, align 1
   store i8 0, ptr %h, align 1
-  store i8 -6, ptr %h, align 1
-  %writeChar_arg = load i8, ptr %h, align 1
-  call void @writeChar(i8 %writeChar_arg)
+  store i8 -1, ptr %h, align 1
+  %writeByte_arg = load i8, ptr %h, align 1
+  call void @writeByte(i8 %writeByte_arg)
   ret void
 }
