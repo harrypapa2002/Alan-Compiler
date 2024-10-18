@@ -95,12 +95,13 @@ BASENAME=$(basename "$SRC_FILE" .alan)
 DIRNAME=$(dirname "$SRC_FILE")
 IMM_FILE="$DIRNAME/$BASENAME.imm"
 ASM_FILE="$DIRNAME/$BASENAME.asm"
+TEMP_IMM_FILE=$(mktemp /tmp/alan_imm.XXXXXX)  # Temporary file for LLVM IR
 
 # Compile the Alan source file into LLVM IR, pass the optimize flag
 if $OPTIMIZATION; then
-    ./src/alanc -O < "$SRC_FILE" > "$IMM_FILE"
+    ./src/alanc -O < "$SRC_FILE" > "$TEMP_IMM_FILE"
 else
-    ./src/alanc < "$SRC_FILE" > "$IMM_FILE"
+    ./src/alanc < "$SRC_FILE" > "$TEMP_IMM_FILE"
 fi
 compiler_status=$?
 
@@ -108,8 +109,12 @@ compiler_status=$?
 if [ $compiler_status -ne 0 ]; then
     echo "Compilation failed."
     [ $TEMP_FILE_CREATED = true ] && rm -f "$SRC_FILE"  # Remove the temp file if created
+    rm -f "$TEMP_IMM_FILE"  # Remove the temp LLVM IR file
     exit $compiler_status
 fi
+
+# Move the temporary .imm file to the final location
+mv "$TEMP_IMM_FILE" "$IMM_FILE"
 
 # If intermediate (LLVM IR) output is requested, print and exit
 if $OUTPUT_IR; then
@@ -127,6 +132,7 @@ llc_status=$?
 if [ $llc_status -ne 0 ]; then
     echo "LLVM compilation failed."
     [ $TEMP_FILE_CREATED = true ] && rm -f "$SRC_FILE"  
+    rm -f "$IMM_FILE"  # Remove the .imm file if compilation fails
     exit $llc_status
 fi
 

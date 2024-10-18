@@ -431,6 +431,19 @@ void FuncCall::sem()
                                 " in function call to '" + *name + "'. Expected '" +
                                 typeToString(paramType) + "', but found '" + typeToString(exprType) + "'.");
                         }
+                        else if(exprType == TypeEnum::ARRAY)
+                        {
+                            TypeEnum exprBaseType = exprs->getExprs()[i]->getType()->getBaseType()->getType();
+                            TypeEnum paramBaseType = params[paramIndex]->getType()->getBaseType()->getType();
+
+                            if (exprBaseType != paramBaseType)
+                            {
+                                semantic_error(this->line, this->column,
+                                    "Array type mismatch for parameter " + std::to_string(paramIndex + 1) +
+                                    " in function call to '" + *name + "'. Expected base type '" +
+                                    typeToString(paramBaseType) + "', but found '" + typeToString(exprBaseType) + "'.");
+                            }
+                        }
                         else if (params[paramIndex]->getParameterType() == ParameterType::REFERENCE)
                         {
                             if (dynamic_cast<Lval *>(exprs->getExprs()[i]) == nullptr)

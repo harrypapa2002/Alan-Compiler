@@ -2,3 +2,5 @@ examples/*.imm
 examples/*.asm
 src/**/*.o
 lib/lib.o
+lib/lib.a
+src/alanc

@@ -22,13 +22,12 @@ The project has two main directories:
     - `lexer.hpp`: Header file for the lexer.
   - **lib/**: Contains the Alan runtime library.
     - `lib.c`: C source file for standard runtime functions (input/output, string handling).
-    - `lib.a`: Compiled static library used during linking.
   - **parser/**: Syntax analysis using Bison.
     - `parser.y`: Bison specification for the Alan parser.
   - **symbol/**: Symbol table, type, and scope management.
     - `symbol_table.cpp`, `symbol_table.hpp`, `scope.cpp`, `scope.hpp`, `types.cpp`, `types.hpp`: Implements the symbol table, type system, and scope management for Alan.
   - **Other files**:
-    - `alanc`: Script for compiling and running Alan programs.
+    - `alanc`: Script for compiling and running Alan programs (located inside project's root folder).
     - `Makefile`: Located inside the `src/` folder, it defines the build process for the compiler.
   
 - `lib/`: Contains the runtime library source code and its corresponding Makefile.
@@ -78,7 +77,7 @@ Once built, the compiler can be run using the `alanc` script located in the proj
 ```bash
 ./alanc <source_file.alan>
 ```
-This will generate the intermediate LLVM code in `<source_file.imm>` and the final assembly in `<source_file.asm>` both located in the same folder as the Alan source file (`<source_file.alan>`). The resulting assembly can be compiled into an executable using Clang and the static runtime library (`lib.a`). 
+This will generate the intermediate LLVM code in `<source_file.imm>` and the final assembly in `<source_file.asm>`, both located in the same folder as the Alan source file (`<source_file.alan>`). The resulting assembly can be compiled into an executable using Clang and the static runtime library (`lib.a`).
 
 ### Options
 - `-O`: Enable code optimization.
@@ -96,19 +95,100 @@ This will produce an executable named `hello`.
 ## Limitations and Known Issues
 
 ## Assumptions
+- **Type Sizes**: 
+   - The `int` type is 4 bytes (32 bits).
+   - The `byte` type is 1 byte (8 bits).
+  
+- **Main Function**: 
+   - The outer function can have any name but must be specified as `proc`. However, it is handled in code generation as a function returning an `int`, indicating whether the program executed successfully. 
+   - In the LLVM IR, the main function returns `0` (32-bit integer) upon successful execution or a different value upon error.
 
-## Bugs
+- **Nested Functions**:
+   - Nested functions can use parameters and variables declared in their outer functions. Any changes made to these variables within the nested functions are reflected back to the outer functions where they were declared.
+   - It is possible to have nested procedures with the same name as an outer one. However, **static scoping** rules apply to procedure calls, meaning the closest (most recently declared) scope will be used for resolving names.
 
-## Running the Compiler Script (`alanc`)
+- **Non-Proc Functions**: 
+   - Non-`proc` functions must always return a value consistent with the declared return type. Failing to return a value matching the return type will result in an error, not just a warning.
 
-The `alanc` script simplifies the usage of the compiler by handling intermediate and final code generation. It takes care of:
-- Invoking `alanc` for generating LLVM IR.
-- Compiling the LLVM IR to assembly using `llc`.
-- Linking the generated assembly with the static library (`lib.a`) using Clang.
+## Library Documentation
 
-You can specify the output executable name using the `-o` option. For example:
-```bash
-./alanc -o my_program examples/hello.alan
+The Alan runtime library provides the following functions for input/output, string manipulation, and type conversion.
+
+### I/O Functions
+
+```alan
+writeInteger (n : int) : proc
 ```
+- Prints an integer.
 
-This will generate an executable named `my_program`.
+```alan
+writeByte (b : byte) : proc
+```
+- Prints a byte as an integer (arithmetic value).
+
+```alan
+writeChar (b : byte) : proc
+```
+- Prints a character corresponding to the ASCII code of the byte.
+
+```alan
+writeString (s : reference byte []) : proc
+```
+- Prints a string of bytes.
+
+```alan
+readInteger () : int
+```
+- Reads and returns an integer from input.
+
+```alan
+readByte () : byte
+```
+- Reads and returns a byte (interpreted as an integer).
+
+```alan
+readChar () : byte
+```
+- Reads and returns a single character (as a byte).
+
+```alan
+readString (n : int, s : reference byte []) : proc
+```
+- Reads up to `n` characters into the byte array `s`.
+
+### Type Conversion Functions
+
+```alan
+extend (b : byte) : int
+```
+- Converts a byte to an integer (extension).
+
+```alan
+shrink (i : int) : byte
+```
+- Converts an integer to a byte (shrinking).
+
+### String Functions
+
+```alan
+strlen (s : reference byte []) : int
+```
+- Returns the length of the string `s`.
+
+```alan
+strcmp (s1 : reference byte [], s2 : reference byte []) : int
+```
+- Compares two strings lexicographically:
+  - Returns `0` if they are equal.
+  - Returns `-1` if `s1` is lexicographically smaller than `s2`.
+  - Returns `1` if `s1` is lexicographically larger than `s2`.
+
+```alan
+strcpy (trg : reference byte [], src : reference byte []) : proc
+```
+- Copies the string from `src` to `trg`.
+
+```alan
+strcat (trg : reference byte [], src : reference byte []) : proc
+```
+- Concatenates the string `src` to `trg`.
