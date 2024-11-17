@@ -2,7 +2,7 @@
 CC = clang
 
 # Compiler flags
-CFLAGS = -c -O2
+CFLAGS = -c -O2 -fno-builtin
 
 # Target library name
 TARGET = lib.a

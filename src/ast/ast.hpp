@@ -71,28 +71,29 @@ protected:
 class Stmt : public AST
 {
 public:
-    Stmt(int line, int column) : AST(line, column), external(false), isReturn(false) {}
+    Stmt(int line, int column) : AST(line, column), external(false), isReturn(false), fromIf(false) {}
     virtual ~Stmt() {}
     virtual void sem() override = 0;
     virtual llvm::Value* igen() const override = 0;
     void setExternal(bool e);
+    bool getExternal() const;
     bool isReturnStatement() const;
-
+    void setFromIf(bool fromIf);
 protected:
     bool external;
     bool isReturn;
+    bool fromIf;
 };
 
 // StmtList Class
 class StmtList : public Stmt
 {
 public:
-    StmtList(int line, int column);
+    StmtList(int line, int column);  
     ~StmtList();
     void append(Stmt *stmt);
     virtual void sem() override;
     virtual llvm::Value* igen() const override;
-
 private:
     std::vector<Stmt *> stmts;
 };

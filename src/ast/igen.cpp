@@ -246,18 +246,68 @@ llvm::Value *CondCompOp::igen() const
 
 llvm::Value *CondBoolOp::igen() const
 {
-    llvm::Value *leftValue = left->igen();
-    llvm::Value *rightValue = right->igen();
+    llvm::Value *leftValue = left->igen(); // Generate code for the left operand
 
-    llvm::Value *result;
+    // Short-circuiting requires conditional branching
+    llvm::Function *function = Builder.GetInsertBlock()->getParent();
+    llvm::BasicBlock *trueBlock = llvm::BasicBlock::Create(TheContext, "trueBlock", function);
+    llvm::BasicBlock *falseBlock = llvm::BasicBlock::Create(TheContext, "falseBlock");
+    llvm::BasicBlock *mergeBlock = llvm::BasicBlock::Create(TheContext, "mergeBlock");
+
+    llvm::Value *result = nullptr;
+
     switch (op)
     {
-    case '&':
-        result = Builder.CreateAnd(leftValue, rightValue, "andtmp");
+    case '&': {
+        // Short-circuiting AND: If left is false, go to falseBlock
+        Builder.CreateCondBr(leftValue, trueBlock, falseBlock);
+
+        // True block: Evaluate the right operand
+        Builder.SetInsertPoint(trueBlock);
+        llvm::Value *rightValue = right->igen();
+        Builder.CreateBr(mergeBlock);
+
+        // Append trueBlock and falseBlock to the function
+        trueBlock = Builder.GetInsertBlock(); // Update after rightValue generation
+
+        function->getBasicBlockList().push_back(falseBlock);
+        Builder.SetInsertPoint(falseBlock);
+        llvm::Value *falseValue = llvm::ConstantInt::getFalse(TheContext);
+        Builder.CreateBr(mergeBlock);
+
+        // Merge block: PHI node to merge true and false values
+        function->getBasicBlockList().push_back(mergeBlock);
+        Builder.SetInsertPoint(mergeBlock);
+        llvm::PHINode *phiNode = Builder.CreatePHI(llvm::Type::getInt1Ty(TheContext), 2, "andtmp");
+        phiNode->addIncoming(rightValue, trueBlock);
+        phiNode->addIncoming(falseValue, falseBlock);
+        result = phiNode;
         break;
-    case '|':
-        result = Builder.CreateOr(leftValue, rightValue, "ortmp");
+    }
+    case '|': {
+        // Short-circuiting OR: If left is true, go to trueBlock
+        Builder.CreateCondBr(leftValue, trueBlock, falseBlock);
+
+        // True block: Short-circuit with true value
+        Builder.SetInsertPoint(trueBlock);
+        llvm::Value *trueValue = llvm::ConstantInt::getTrue(TheContext);
+        Builder.CreateBr(mergeBlock);
+
+        // False block: Evaluate the right operand
+        function->getBasicBlockList().push_back(falseBlock);
+        Builder.SetInsertPoint(falseBlock);
+        llvm::Value *rightValue = right->igen();
+        Builder.CreateBr(mergeBlock);
+
+        // Merge block: PHI node to merge true and false values
+        function->getBasicBlockList().push_back(mergeBlock);
+        Builder.SetInsertPoint(mergeBlock);
+        llvm::PHINode *phiNode = Builder.CreatePHI(llvm::Type::getInt1Ty(TheContext), 2, "ortmp");
+        phiNode->addIncoming(trueValue, trueBlock);
+        phiNode->addIncoming(rightValue, falseBlock);
+        result = phiNode;
         break;
+    }
     default:
         return nullptr;
     }

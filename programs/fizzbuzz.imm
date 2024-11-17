@@ -1,0 +1,137 @@
+
+@global_str = private unnamed_addr constant [9 x i8] c"FizzBuzz\00", align 1
+@global_str.2 = private unnamed_addr constant [5 x i8] c"Fizz\00", align 1
+@global_str.3 = private unnamed_addr constant [5 x i8] c"Buzz\00", align 1
+
+declare void @writeInteger(i32)
+
+declare void @writeByte(i8)
+
+declare void @writeChar(i8)
+
+declare void @writeString(ptr)
+
+declare i32 @readInteger()
+
+declare i8 @readByte()
+
+declare i8 @readChar()
+
+declare void @readString(i32, ptr)
+
+declare i32 @extend(i8)
+
+declare i8 @shrink(i32)
+
+declare i32 @strlen(ptr)
+
+declare i32 @strcmp(ptr, ptr)
+
+declare void @strcpy(ptr, ptr)
+
+declare void @strcat(ptr, ptr)
+
+define i32 @main() {
+entry:
+  call void @main.1()
+  ret i32 0
+}
+
+define void @main.1() {
+main_entry:
+  %i = alloca i32, align 4
+  store i32 0, ptr %i, align 4
+  store i32 0, ptr %i, align 4
+  br label %cond
+
+cond:                                             ; preds = %ifcont24, %main_entry
+  %left_load = load i32, ptr %i, align 4
+  %lttmp = icmp slt i32 %left_load, 100
+  %0 = zext i1 %lttmp to i32
+  %while_cond = icmp ne i32 %0, 0
+  br i1 %while_cond, label %loop, label %afterloop
+
+loop:                                             ; preds = %cond
+  %left_load1 = load i32, ptr %i, align 4
+  %addtmp = add i32 %left_load1, 1
+  store i32 %addtmp, ptr %i, align 4
+  %left_load2 = load i32, ptr %i, align 4
+  %modtmp = srem i32 %left_load2, 3
+  %eqtmp = icmp eq i32 %modtmp, 0
+  br i1 %eqtmp, label %trueBlock, label %falseBlock
+
+trueBlock:                                        ; preds = %loop
+  %left_load3 = load i32, ptr %i, align 4
+  %modtmp4 = srem i32 %left_load3, 5
+  %eqtmp5 = icmp eq i32 %modtmp4, 0
+  br label %mergeBlock
+
+falseBlock:                                       ; preds = %loop
+  br label %mergeBlock
+
+mergeBlock:                                       ; preds = %falseBlock, %trueBlock
+  %andtmp = phi i1 [ %eqtmp5, %trueBlock ], [ false, %falseBlock ]
+  %1 = zext i1 %andtmp to i32
+  %if_cond = icmp ne i32 %1, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %mergeBlock
+  call void @writeString(ptr @global_str)
+  br label %ifcont19
+
+else:                                             ; preds = %mergeBlock
+  %left_load6 = load i32, ptr %i, align 4
+  %modtmp7 = srem i32 %left_load6, 3
+  %eqtmp8 = icmp eq i32 %modtmp7, 0
+  %2 = zext i1 %eqtmp8 to i32
+  %if_cond10 = icmp ne i32 %2, 0
+  br i1 %if_cond10, label %then9, label %else11
+
+then9:                                            ; preds = %else
+  call void @writeString(ptr @global_str.2)
+  br label %ifcont18
+
+else11:                                           ; preds = %else
+  %left_load12 = load i32, ptr %i, align 4
+  %modtmp13 = srem i32 %left_load12, 5
+  %eqtmp14 = icmp eq i32 %modtmp13, 0
+  %3 = zext i1 %eqtmp14 to i32
+  %if_cond16 = icmp ne i32 %3, 0
+  br i1 %if_cond16, label %then15, label %else17
+
+then15:                                           ; preds = %else11
+  call void @writeString(ptr @global_str.3)
+  br label %ifcont
+
+else17:                                           ; preds = %else11
+  %writeInteger_arg = load i32, ptr %i, align 4
+  call void @writeInteger(i32 %writeInteger_arg)
+  br label %ifcont
+
+ifcont:                                           ; preds = %else17, %then15
+  br label %ifcont18
+
+ifcont18:                                         ; preds = %ifcont, %then9
+  br label %ifcont19
+
+ifcont19:                                         ; preds = %ifcont18, %then
+  %left_load20 = load i32, ptr %i, align 4
+  %neqtmp = icmp ne i32 %left_load20, 100
+  %4 = zext i1 %neqtmp to i32
+  %if_cond22 = icmp ne i32 %4, 0
+  br i1 %if_cond22, label %then21, label %else23
+
+then21:                                           ; preds = %ifcont19
+  call void @writeChar(i8 32)
+  br label %ifcont24
+
+else23:                                           ; preds = %ifcont19
+  br label %ifcont24
+
+ifcont24:                                         ; preds = %else23, %then21
+  br label %cond
+
+afterloop:                                        ; preds = %cond
+  call void @writeChar(i8 10)
+  ret void
+}

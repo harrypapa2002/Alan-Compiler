@@ -12,10 +12,13 @@ void StmtList::sem()
         auto stmt = *it;
         stmt->setExternal(external);
         stmt->sem();
-        if (stmt->isReturnStatement())
-            st.setReturnStatementFound();
+        if(stmt->isReturnStatement()) {
+            isReturn = true;
+            if (!fromIf){
+                st.setReturnStatementFound();     
+            }
+        }
     }
-    isReturn = false;
 }
 
 // LocalDefList Class Semantic Method Implementation
@@ -363,15 +366,17 @@ void Let::sem()
     TypeEnum leftType = lexpr->getTypeEnum();
     TypeEnum rightType = rexpr->getTypeEnum();
 
+    if (dynamic_cast<StringConst *>(lexpr))
+    {
+        semantic_error(this->line, this->column,
+            "Left side of assignment cannot be a constant string.");
+    }
+
     if (!equalTypes(leftType, rightType))
     {
         semantic_error(this->line, this->column,
             "Type mismatch in assignment: cannot assign type '" + typeToString(rightType) +
             "' to type '" + typeToString(leftType) + "'.");
-    }
-    else
-    {
-        isReturn = false;
     }
 }
 
@@ -513,16 +518,20 @@ void If::sem()
 {
     cond->sem();
     thenStmt->setExternal(elseStmt && external);
+    if (dynamic_cast<StmtList*>(thenStmt)){
+        thenStmt->setFromIf(true);
+    }
     thenStmt->sem();
-
     if (elseStmt)
     {
         elseStmt->setExternal(external);
+        if (dynamic_cast<StmtList*>(elseStmt)){
+            elseStmt->setFromIf(true);
+        }
         elseStmt->sem();
-
         if (thenStmt->isReturnStatement() && elseStmt->isReturnStatement())
         {
-            st.setReturnStatementFound();
+            isReturn = true;
         }
     }
 }

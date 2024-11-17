@@ -1,0 +1,334 @@
+
+%aux_closure = type { ptr, ptr, ptr }
+
+declare void @writeInteger(i32)
+
+declare void @writeByte(i8)
+
+declare void @writeChar(i8)
+
+declare void @writeString(ptr)
+
+declare i32 @readInteger()
+
+declare i8 @readByte()
+
+declare i8 @readChar()
+
+declare void @readString(i32, ptr)
+
+declare i32 @extend(i8)
+
+declare i8 @shrink(i32)
+
+declare i32 @strlen(ptr)
+
+declare i32 @strcmp(ptr, ptr)
+
+declare void @strcpy(ptr, ptr)
+
+declare void @strcat(ptr, ptr)
+
+define i32 @main() {
+entry:
+  call void @main.1()
+  ret i32 0
+}
+
+define void @main.1() {
+main_entry:
+  %x = alloca [10000 x i32], align 4
+  store [10000 x i32] zeroinitializer, ptr %x, align 4
+  %n = alloca i32, align 4
+  store i32 0, ptr %n, align 4
+  %i = alloca i32, align 4
+  store i32 0, ptr %i, align 4
+  %readInteger_call = call i32 @readInteger()
+  store i32 %readInteger_call, ptr %n, align 4
+  %left_load = load i32, ptr %n, align 4
+  %ltetmp = icmp sle i32 %left_load, 0
+  %0 = zext i1 %ltetmp to i32
+  %if_cond = icmp ne i32 %0, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %main_entry
+  ret void
+
+else:                                             ; preds = %main_entry
+  br label %ifcont
+
+ifcont:                                           ; preds = %else
+  store i32 0, ptr %i, align 4
+  br label %cond
+
+cond:                                             ; preds = %loop, %ifcont
+  %left_load1 = load i32, ptr %i, align 4
+  %right_load = load i32, ptr %n, align 4
+  %lttmp = icmp slt i32 %left_load1, %right_load
+  %1 = zext i1 %lttmp to i32
+  %while_cond = icmp ne i32 %1, 0
+  br i1 %while_cond, label %loop, label %afterloop
+
+loop:                                             ; preds = %cond
+  %readInteger_call2 = call i32 @readInteger()
+  %load_index = load i32, ptr %i, align 4
+  %elementptr = getelementptr [10000 x i32], ptr %x, i32 0, i32 %load_index
+  store i32 %readInteger_call2, ptr %elementptr, align 4
+  %left_load3 = load i32, ptr %i, align 4
+  %addtmp = add i32 %left_load3, 1
+  store i32 %addtmp, ptr %i, align 4
+  br label %cond
+
+afterloop:                                        ; preds = %cond
+  %mergeSort_arg = load i32, ptr %n, align 4
+  call void @mergeSort(ptr %x, i32 0, i32 %mergeSort_arg)
+  %elementptr4 = getelementptr [10000 x i32], ptr %x, i32 0, i32 0
+  %writeInteger_arg = load i32, ptr %elementptr4, align 4
+  call void @writeInteger(i32 %writeInteger_arg)
+  store i32 1, ptr %i, align 4
+  br label %cond5
+
+cond5:                                            ; preds = %loop10, %afterloop
+  %left_load6 = load i32, ptr %i, align 4
+  %right_load7 = load i32, ptr %n, align 4
+  %lttmp8 = icmp slt i32 %left_load6, %right_load7
+  %2 = zext i1 %lttmp8 to i32
+  %while_cond9 = icmp ne i32 %2, 0
+  br i1 %while_cond9, label %loop10, label %afterloop16
+
+loop10:                                           ; preds = %cond5
+  call void @writeChar(i8 32)
+  %load_index11 = load i32, ptr %i, align 4
+  %elementptr12 = getelementptr [10000 x i32], ptr %x, i32 0, i32 %load_index11
+  %writeInteger_arg13 = load i32, ptr %elementptr12, align 4
+  call void @writeInteger(i32 %writeInteger_arg13)
+  %left_load14 = load i32, ptr %i, align 4
+  %addtmp15 = add i32 %left_load14, 1
+  store i32 %addtmp15, ptr %i, align 4
+  br label %cond5
+
+afterloop16:                                      ; preds = %cond5
+  call void @writeChar(i8 10)
+  ret void
+}
+
+define void @mergeSort(ptr %x, i32 %l, i32 %r) {
+mergeSort_entry:
+  %x1 = alloca ptr, align 8
+  store ptr %x, ptr %x1, align 8
+  %l2 = alloca i32, align 4
+  store i32 %l, ptr %l2, align 4
+  %r3 = alloca i32, align 4
+  store i32 %r, ptr %r3, align 4
+  %left_load = load i32, ptr %r3, align 4
+  %subtmp = sub i32 %left_load, 1
+  %left_load4 = load i32, ptr %l2, align 4
+  %eqtmp = icmp eq i32 %left_load4, %subtmp
+  %0 = zext i1 %eqtmp to i32
+  %if_cond = icmp ne i32 %0, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %mergeSort_entry
+  ret void
+
+else:                                             ; preds = %mergeSort_entry
+  br label %ifcont
+
+ifcont:                                           ; preds = %else
+  %x_load = load ptr, ptr %x1, align 8
+  %mergeSort_arg = load i32, ptr %l2, align 4
+  %left_load5 = load i32, ptr %l2, align 4
+  %right_load = load i32, ptr %r3, align 4
+  %addtmp = add i32 %left_load5, %right_load
+  %divtmp = sdiv i32 %addtmp, 2
+  call void @mergeSort(ptr %x_load, i32 %mergeSort_arg, i32 %divtmp)
+  %x_load6 = load ptr, ptr %x1, align 8
+  %left_load7 = load i32, ptr %l2, align 4
+  %right_load8 = load i32, ptr %r3, align 4
+  %addtmp9 = add i32 %left_load7, %right_load8
+  %divtmp10 = sdiv i32 %addtmp9, 2
+  %mergeSort_arg11 = load i32, ptr %r3, align 4
+  call void @mergeSort(ptr %x_load6, i32 %divtmp10, i32 %mergeSort_arg11)
+  %x_load12 = load ptr, ptr %x1, align 8
+  %merge_arg = load i32, ptr %l2, align 4
+  %left_load13 = load i32, ptr %l2, align 4
+  %right_load14 = load i32, ptr %r3, align 4
+  %addtmp15 = add i32 %left_load13, %right_load14
+  %divtmp16 = sdiv i32 %addtmp15, 2
+  %merge_arg17 = load i32, ptr %r3, align 4
+  call void @merge(ptr %x_load12, i32 %merge_arg, i32 %divtmp16, i32 %merge_arg17)
+  ret void
+}
+
+define void @merge(ptr %x, i32 %start, i32 %mid, i32 %end) {
+merge_entry:
+  %x1 = alloca ptr, align 8
+  store ptr %x, ptr %x1, align 8
+  %start2 = alloca i32, align 4
+  store i32 %start, ptr %start2, align 4
+  %mid3 = alloca i32, align 4
+  store i32 %mid, ptr %mid3, align 4
+  %end4 = alloca i32, align 4
+  store i32 %end, ptr %end4, align 4
+  %aux_closure_instance = alloca %aux_closure, align 8
+  %x_ptr = getelementptr inbounds %aux_closure, ptr %aux_closure_instance, i32 0, i32 0
+  %x_load = load ptr, ptr %x1, align 8
+  store ptr %x_load, ptr %x_ptr, align 8
+  %mid_ptr = getelementptr inbounds %aux_closure, ptr %aux_closure_instance, i32 0, i32 1
+  store ptr %mid3, ptr %mid_ptr, align 8
+  %end_ptr = getelementptr inbounds %aux_closure, ptr %aux_closure_instance, i32 0, i32 2
+  store ptr %end4, ptr %end_ptr, align 8
+  %aux_arg = load i32, ptr %start2, align 4
+  %aux_arg5 = load i32, ptr %start2, align 4
+  %aux_arg6 = load i32, ptr %mid3, align 4
+  call void @aux(ptr %aux_closure_instance, i32 %aux_arg, i32 %aux_arg5, i32 %aux_arg6)
+  ret void
+}
+
+define void @aux(ptr %closure, i32 %x_itr, i32 %l, i32 %r) {
+aux_entry:
+  %x_ptr = getelementptr inbounds %aux_closure, ptr %closure, i32 0, i32 0
+  %x = load ptr, ptr %x_ptr, align 8
+  %x1 = alloca ptr, align 8
+  store ptr %x, ptr %x1, align 8
+  %mid_ptr = getelementptr inbounds %aux_closure, ptr %closure, i32 0, i32 1
+  %mid = load ptr, ptr %mid_ptr, align 8
+  %mid2 = alloca ptr, align 8
+  store ptr %mid, ptr %mid2, align 8
+  %end_ptr = getelementptr inbounds %aux_closure, ptr %closure, i32 0, i32 2
+  %end = load ptr, ptr %end_ptr, align 8
+  %end3 = alloca ptr, align 8
+  store ptr %end, ptr %end3, align 8
+  %x_itr4 = alloca i32, align 4
+  store i32 %x_itr, ptr %x_itr4, align 4
+  %l5 = alloca i32, align 4
+  store i32 %l, ptr %l5, align 4
+  %r6 = alloca i32, align 4
+  store i32 %r, ptr %r6, align 4
+  %cur = alloca i32, align 4
+  store i32 0, ptr %cur, align 4
+  %end_load = load ptr, ptr %end3, align 8
+  %left_load = load i32, ptr %x_itr4, align 4
+  %right_load = load i32, ptr %end_load, align 4
+  %gtetmp = icmp sge i32 %left_load, %right_load
+  %0 = zext i1 %gtetmp to i32
+  %if_cond = icmp ne i32 %0, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %aux_entry
+  ret void
+
+else:                                             ; preds = %aux_entry
+  br label %ifcont
+
+ifcont:                                           ; preds = %else
+  %mid_load = load ptr, ptr %mid2, align 8
+  %left_load7 = load i32, ptr %l5, align 4
+  %right_load8 = load i32, ptr %mid_load, align 4
+  %lttmp = icmp slt i32 %left_load7, %right_load8
+  br i1 %lttmp, label %trueBlock, label %falseBlock
+
+trueBlock:                                        ; preds = %ifcont
+  %end_load9 = load ptr, ptr %end3, align 8
+  %left_load10 = load i32, ptr %r6, align 4
+  %right_load11 = load i32, ptr %end_load9, align 4
+  %lttmp12 = icmp slt i32 %left_load10, %right_load11
+  br label %mergeBlock
+
+falseBlock:                                       ; preds = %ifcont
+  br label %mergeBlock
+
+mergeBlock:                                       ; preds = %falseBlock, %trueBlock
+  %andtmp = phi i1 [ %lttmp12, %trueBlock ], [ false, %falseBlock ]
+  %1 = zext i1 %andtmp to i32
+  %if_cond14 = icmp ne i32 %1, 0
+  br i1 %if_cond14, label %then13, label %else35
+
+then13:                                           ; preds = %mergeBlock
+  %load_index = load i32, ptr %l5, align 4
+  %x_arrayptr = load ptr, ptr %x1, align 8
+  %elementptr = getelementptr i32, ptr %x_arrayptr, i32 %load_index
+  %load_index15 = load i32, ptr %r6, align 4
+  %x_arrayptr16 = load ptr, ptr %x1, align 8
+  %elementptr17 = getelementptr i32, ptr %x_arrayptr16, i32 %load_index15
+  %left_load18 = load i32, ptr %elementptr, align 4
+  %right_load19 = load i32, ptr %elementptr17, align 4
+  %lttmp20 = icmp slt i32 %left_load18, %right_load19
+  %2 = zext i1 %lttmp20 to i32
+  %if_cond22 = icmp ne i32 %2, 0
+  br i1 %if_cond22, label %then21, label %else27
+
+then21:                                           ; preds = %then13
+  %load_index23 = load i32, ptr %l5, align 4
+  %x_arrayptr24 = load ptr, ptr %x1, align 8
+  %elementptr25 = getelementptr i32, ptr %x_arrayptr24, i32 %load_index23
+  %load_rvalue = load i32, ptr %elementptr25, align 4
+  store i32 %load_rvalue, ptr %cur, align 4
+  %left_load26 = load i32, ptr %l5, align 4
+  %addtmp = add i32 %left_load26, 1
+  store i32 %addtmp, ptr %l5, align 4
+  br label %ifcont34
+
+else27:                                           ; preds = %then13
+  %load_index28 = load i32, ptr %r6, align 4
+  %x_arrayptr29 = load ptr, ptr %x1, align 8
+  %elementptr30 = getelementptr i32, ptr %x_arrayptr29, i32 %load_index28
+  %load_rvalue31 = load i32, ptr %elementptr30, align 4
+  store i32 %load_rvalue31, ptr %cur, align 4
+  %left_load32 = load i32, ptr %r6, align 4
+  %addtmp33 = add i32 %left_load32, 1
+  store i32 %addtmp33, ptr %r6, align 4
+  br label %ifcont34
+
+ifcont34:                                         ; preds = %else27, %then21
+  br label %ifcont50
+
+else35:                                           ; preds = %mergeBlock
+  %mid_load36 = load ptr, ptr %mid2, align 8
+  %left_load37 = load i32, ptr %l5, align 4
+  %right_load38 = load i32, ptr %mid_load36, align 4
+  %lttmp39 = icmp slt i32 %left_load37, %right_load38
+  %3 = zext i1 %lttmp39 to i32
+  %if_cond41 = icmp ne i32 %3, 0
+  br i1 %if_cond41, label %then40, label %else48
+
+then40:                                           ; preds = %else35
+  %load_index42 = load i32, ptr %l5, align 4
+  %x_arrayptr43 = load ptr, ptr %x1, align 8
+  %elementptr44 = getelementptr i32, ptr %x_arrayptr43, i32 %load_index42
+  %load_rvalue45 = load i32, ptr %elementptr44, align 4
+  store i32 %load_rvalue45, ptr %cur, align 4
+  %left_load46 = load i32, ptr %l5, align 4
+  %addtmp47 = add i32 %left_load46, 1
+  store i32 %addtmp47, ptr %l5, align 4
+  br label %ifcont49
+
+else48:                                           ; preds = %else35
+  ret void
+
+ifcont49:                                         ; preds = %then40
+  br label %ifcont50
+
+ifcont50:                                         ; preds = %ifcont49, %ifcont34
+  %aux_closure_instance = alloca %aux_closure, align 8
+  %x_ptr51 = getelementptr inbounds %aux_closure, ptr %aux_closure_instance, i32 0, i32 0
+  %x_load = load ptr, ptr %x1, align 8
+  store ptr %x_load, ptr %x_ptr51, align 8
+  %mid_ptr52 = getelementptr inbounds %aux_closure, ptr %aux_closure_instance, i32 0, i32 1
+  %mid_load53 = load ptr, ptr %mid2, align 8
+  store ptr %mid_load53, ptr %mid_ptr52, align 8
+  %end_ptr54 = getelementptr inbounds %aux_closure, ptr %aux_closure_instance, i32 0, i32 2
+  %end_load55 = load ptr, ptr %end3, align 8
+  store ptr %end_load55, ptr %end_ptr54, align 8
+  %left_load56 = load i32, ptr %x_itr4, align 4
+  %addtmp57 = add i32 %left_load56, 1
+  %aux_arg = load i32, ptr %l5, align 4
+  %aux_arg58 = load i32, ptr %r6, align 4
+  call void @aux(ptr %aux_closure_instance, i32 %addtmp57, i32 %aux_arg, i32 %aux_arg58)
+  %load_rvalue59 = load i32, ptr %cur, align 4
+  %load_index60 = load i32, ptr %x_itr4, align 4
+  %x_arrayptr61 = load ptr, ptr %x1, align 8
+  %elementptr62 = getelementptr i32, ptr %x_arrayptr61, i32 %load_index60
+  store i32 %load_rvalue59, ptr %elementptr62, align 4
+  ret void
+}

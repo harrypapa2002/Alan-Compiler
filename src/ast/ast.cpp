@@ -31,9 +31,19 @@ void Stmt::setExternal(bool e)
     external = e;
 }
 
+bool Stmt::getExternal() const
+{
+    return external;
+}
+
 bool Stmt::isReturnStatement() const
 {
     return isReturn;
+}
+
+void Stmt::setFromIf(bool fromIf)
+{
+    this->fromIf = fromIf;
 }
 
 // StmtList Class Method Implementations

@@ -1,0 +1,170 @@
+
+declare void @writeInteger(i32)
+
+declare void @writeByte(i8)
+
+declare void @writeChar(i8)
+
+declare void @writeString(ptr)
+
+declare i32 @readInteger()
+
+declare i8 @readByte()
+
+declare i8 @readChar()
+
+declare void @readString(i32, ptr)
+
+declare i32 @extend(i8)
+
+declare i8 @shrink(i32)
+
+declare i32 @strlen(ptr)
+
+declare i32 @strcmp(ptr, ptr)
+
+declare void @strcpy(ptr, ptr)
+
+declare void @strcat(ptr, ptr)
+
+define i32 @main() {
+entry:
+  call void @main.1()
+  ret i32 0
+}
+
+define void @main.1() {
+main_entry:
+  %n = alloca i32, align 4
+  store i32 0, ptr %n, align 4
+  %i = alloca i32, align 4
+  store i32 0, ptr %i, align 4
+  %j = alloca i32, align 4
+  store i32 0, ptr %j, align 4
+  %primes = alloca [100 x i8], align 1
+  store [100 x i8] zeroinitializer, ptr %primes, align 1
+  store i32 100, ptr %n, align 4
+  store i32 0, ptr %i, align 4
+  br label %cond
+
+cond:                                             ; preds = %loop, %main_entry
+  %left_load = load i32, ptr %i, align 4
+  %right_load = load i32, ptr %n, align 4
+  %lttmp = icmp slt i32 %left_load, %right_load
+  %0 = zext i1 %lttmp to i32
+  %while_cond = icmp ne i32 %0, 0
+  br i1 %while_cond, label %loop, label %afterloop
+
+loop:                                             ; preds = %cond
+  %shrink_call = call i8 @shrink(i32 1)
+  %load_index = load i32, ptr %i, align 4
+  %elementptr = getelementptr [100 x i8], ptr %primes, i32 0, i32 %load_index
+  store i8 %shrink_call, ptr %elementptr, align 1
+  %left_load1 = load i32, ptr %i, align 4
+  %addtmp = add i32 %left_load1, 1
+  store i32 %addtmp, ptr %i, align 4
+  br label %cond
+
+afterloop:                                        ; preds = %cond
+  store i32 2, ptr %i, align 4
+  br label %cond2
+
+cond2:                                            ; preds = %ifcont, %afterloop
+  %left_load3 = load i32, ptr %i, align 4
+  %right_load4 = load i32, ptr %i, align 4
+  %multmp = mul i32 %left_load3, %right_load4
+  %right_load5 = load i32, ptr %n, align 4
+  %ltetmp = icmp sle i32 %multmp, %right_load5
+  %1 = zext i1 %ltetmp to i32
+  %while_cond6 = icmp ne i32 %1, 0
+  br i1 %while_cond6, label %loop7, label %afterloop30
+
+loop7:                                            ; preds = %cond2
+  %load_index8 = load i32, ptr %i, align 4
+  %elementptr9 = getelementptr [100 x i8], ptr %primes, i32 0, i32 %load_index8
+  %shrink_call10 = call i8 @shrink(i32 1)
+  %left_load11 = load i8, ptr %elementptr9, align 1
+  %eqtmp = icmp eq i8 %left_load11, %shrink_call10
+  %2 = zext i1 %eqtmp to i32
+  %if_cond = icmp ne i32 %2, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %loop7
+  %left_load12 = load i32, ptr %i, align 4
+  %right_load13 = load i32, ptr %i, align 4
+  %multmp14 = mul i32 %left_load12, %right_load13
+  store i32 %multmp14, ptr %j, align 4
+  br label %cond15
+
+cond15:                                           ; preds = %loop20, %then
+  %left_load16 = load i32, ptr %j, align 4
+  %right_load17 = load i32, ptr %n, align 4
+  %lttmp18 = icmp slt i32 %left_load16, %right_load17
+  %3 = zext i1 %lttmp18 to i32
+  %while_cond19 = icmp ne i32 %3, 0
+  br i1 %while_cond19, label %loop20, label %afterloop27
+
+loop20:                                           ; preds = %cond15
+  %shrink_call21 = call i8 @shrink(i32 0)
+  %load_index22 = load i32, ptr %j, align 4
+  %elementptr23 = getelementptr [100 x i8], ptr %primes, i32 0, i32 %load_index22
+  store i8 %shrink_call21, ptr %elementptr23, align 1
+  %left_load24 = load i32, ptr %j, align 4
+  %right_load25 = load i32, ptr %i, align 4
+  %addtmp26 = add i32 %left_load24, %right_load25
+  store i32 %addtmp26, ptr %j, align 4
+  br label %cond15
+
+afterloop27:                                      ; preds = %cond15
+  br label %ifcont
+
+else:                                             ; preds = %loop7
+  br label %ifcont
+
+ifcont:                                           ; preds = %else, %afterloop27
+  %left_load28 = load i32, ptr %i, align 4
+  %addtmp29 = add i32 %left_load28, 1
+  store i32 %addtmp29, ptr %i, align 4
+  br label %cond2
+
+afterloop30:                                      ; preds = %cond2
+  store i32 2, ptr %i, align 4
+  br label %cond31
+
+cond31:                                           ; preds = %ifcont45, %afterloop30
+  %left_load32 = load i32, ptr %i, align 4
+  %right_load33 = load i32, ptr %n, align 4
+  %lttmp34 = icmp slt i32 %left_load32, %right_load33
+  %4 = zext i1 %lttmp34 to i32
+  %while_cond35 = icmp ne i32 %4, 0
+  br i1 %while_cond35, label %loop36, label %afterloop48
+
+loop36:                                           ; preds = %cond31
+  %load_index37 = load i32, ptr %i, align 4
+  %elementptr38 = getelementptr [100 x i8], ptr %primes, i32 0, i32 %load_index37
+  %shrink_call39 = call i8 @shrink(i32 1)
+  %left_load40 = load i8, ptr %elementptr38, align 1
+  %eqtmp41 = icmp eq i8 %left_load40, %shrink_call39
+  %5 = zext i1 %eqtmp41 to i32
+  %if_cond43 = icmp ne i32 %5, 0
+  br i1 %if_cond43, label %then42, label %else44
+
+then42:                                           ; preds = %loop36
+  %writeInteger_arg = load i32, ptr %i, align 4
+  call void @writeInteger(i32 %writeInteger_arg)
+  call void @writeChar(i8 32)
+  br label %ifcont45
+
+else44:                                           ; preds = %loop36
+  br label %ifcont45
+
+ifcont45:                                         ; preds = %else44, %then42
+  %left_load46 = load i32, ptr %i, align 4
+  %addtmp47 = add i32 %left_load46, 1
+  store i32 %addtmp47, ptr %i, align 4
+  br label %cond31
+
+afterloop48:                                      ; preds = %cond31
+  call void @writeChar(i8 10)
+  ret void
+}

@@ -154,6 +154,8 @@ Symbol* SymbolTable::findSymbolInCurrentScope(const std::string& name) {
 
 // Mark the current function's return statement as found
 void SymbolTable::setReturnStatementFound() {
+    // std::cout << currentFunctionContext.top()->getName() << std::endl;
+    // std::cout << "here" << std::endl;
     if (!currentFunctionContext.empty()) {
         currentFunctionContext.top()->setNeedsReturn(false);
         currentFunctionContext.top()->setReturnStatementFound();

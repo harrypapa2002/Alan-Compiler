@@ -1,0 +1,122 @@
+
+declare void @writeInteger(i32)
+
+declare void @writeByte(i8)
+
+declare void @writeChar(i8)
+
+declare void @writeString(ptr)
+
+declare i32 @readInteger()
+
+declare i8 @readByte()
+
+declare i8 @readChar()
+
+declare void @readString(i32, ptr)
+
+declare i32 @extend(i8)
+
+declare i8 @shrink(i32)
+
+declare i32 @strlen(ptr)
+
+declare i32 @strcmp(ptr, ptr)
+
+declare void @strcpy(ptr, ptr)
+
+declare void @strcat(ptr, ptr)
+
+define i32 @main() {
+entry:
+  call void @main.1()
+  ret i32 0
+}
+
+define void @main.1() {
+main_entry:
+  %b = alloca i32, align 4
+  store i32 0, ptr %b, align 4
+  %e = alloca i32, align 4
+  store i32 0, ptr %e, align 4
+  %m = alloca i32, align 4
+  store i32 0, ptr %m, align 4
+  %res = alloca i32, align 4
+  store i32 0, ptr %res, align 4
+  %readInteger_call = call i32 @readInteger()
+  store i32 %readInteger_call, ptr %b, align 4
+  %readInteger_call1 = call i32 @readInteger()
+  store i32 %readInteger_call1, ptr %e, align 4
+  %readInteger_call2 = call i32 @readInteger()
+  store i32 %readInteger_call2, ptr %m, align 4
+  %powint_arg = load i32, ptr %b, align 4
+  %powint_arg3 = load i32, ptr %e, align 4
+  %powint_arg4 = load i32, ptr %m, align 4
+  %powint_call = call i32 @powint(i32 %powint_arg, i32 %powint_arg3, i32 %powint_arg4)
+  store i32 %powint_call, ptr %res, align 4
+  %writeInteger_arg = load i32, ptr %res, align 4
+  call void @writeInteger(i32 %writeInteger_arg)
+  call void @writeChar(i8 10)
+  ret void
+}
+
+define i32 @powint(i32 %base, i32 %expon, i32 %mod) {
+powint_entry:
+  %base1 = alloca i32, align 4
+  store i32 %base, ptr %base1, align 4
+  %expon2 = alloca i32, align 4
+  store i32 %expon, ptr %expon2, align 4
+  %mod3 = alloca i32, align 4
+  store i32 %mod, ptr %mod3, align 4
+  %res = alloca i32, align 4
+  store i32 0, ptr %res, align 4
+  %left_load = load i32, ptr %base1, align 4
+  %right_load = load i32, ptr %mod3, align 4
+  %modtmp = srem i32 %left_load, %right_load
+  store i32 %modtmp, ptr %base1, align 4
+  store i32 1, ptr %res, align 4
+  br label %cond
+
+cond:                                             ; preds = %ifcont, %powint_entry
+  %left_load4 = load i32, ptr %expon2, align 4
+  %gttmp = icmp sgt i32 %left_load4, 0
+  %0 = zext i1 %gttmp to i32
+  %while_cond = icmp ne i32 %0, 0
+  br i1 %while_cond, label %loop, label %afterloop
+
+loop:                                             ; preds = %cond
+  %left_load5 = load i32, ptr %expon2, align 4
+  %modtmp6 = srem i32 %left_load5, 2
+  %eqtmp = icmp eq i32 %modtmp6, 1
+  %1 = zext i1 %eqtmp to i32
+  %if_cond = icmp ne i32 %1, 0
+  br i1 %if_cond, label %then, label %else
+
+then:                                             ; preds = %loop
+  %left_load7 = load i32, ptr %res, align 4
+  %right_load8 = load i32, ptr %base1, align 4
+  %multmp = mul i32 %left_load7, %right_load8
+  %right_load9 = load i32, ptr %mod3, align 4
+  %modtmp10 = srem i32 %multmp, %right_load9
+  store i32 %modtmp10, ptr %res, align 4
+  br label %ifcont
+
+else:                                             ; preds = %loop
+  br label %ifcont
+
+ifcont:                                           ; preds = %else, %then
+  %left_load11 = load i32, ptr %base1, align 4
+  %right_load12 = load i32, ptr %base1, align 4
+  %multmp13 = mul i32 %left_load11, %right_load12
+  %right_load14 = load i32, ptr %mod3, align 4
+  %modtmp15 = srem i32 %multmp13, %right_load14
+  store i32 %modtmp15, ptr %base1, align 4
+  %left_load16 = load i32, ptr %expon2, align 4
+  %divtmp = sdiv i32 %left_load16, 2
+  store i32 %divtmp, ptr %expon2, align 4
+  br label %cond
+
+afterloop:                                        ; preds = %cond
+  %ret_val = load i32, ptr %res, align 4
+  ret i32 %ret_val
+}
