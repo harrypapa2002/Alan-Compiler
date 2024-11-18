@@ -1,5 +1,7 @@
 examples/*.imm
 examples/*.asm
+programs/*.imm
+programs/*.asm
 src/**/*.o
 lib/lib.o
 lib/lib.a
