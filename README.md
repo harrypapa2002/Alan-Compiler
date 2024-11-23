@@ -69,6 +69,31 @@ The project has two main directories:
     make clean
     ```
 
+### Adding the Compiler to Your PATH
+
+To make the `alanc` compiler available system-wide, add the project's directory to your `PATH` environment variable. You can do this by modifying your shell configuration file (e.g., `~/.zshrc` or `~/.bashrc`).
+
+1. Open your shell configuration file in a text editor:
+    ```bash
+    vim ~/.zshrc
+    ```
+
+2. Add the following line at the end of the file:
+    ```bash
+    export PATH="/path/to/compilers:$PATH"
+    ```
+
+3. Save the file and reload the shell configuration:
+    ```bash
+    source ~/.zshrc
+    ```
+
+4. Verify that the `alanc` compiler is accessible:
+    ```bash
+    which alanc
+    ```
+   This should output the path to the `alanc` binary.
+
 ## Usage
 
 Once built, the compiler can be run using the `alanc` script located in the project's main folder. The compiler accepts Alan source files and produces both intermediate code (LLVM IR) and final assembly code.
