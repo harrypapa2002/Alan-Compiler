@@ -1,6 +1,6 @@
 .PHONY: clean distclean default
 
-LLVM-CONFIG = llvm-config-15
+LLVM-CONFIG = $(shell command -v llvm-config-15 || command -v llvm-config)
 
 CXX = clang++
 CXXFLAGS = `$(LLVM-CONFIG) --cxxflags`
@@ -32,7 +32,7 @@ CODEGEN_OBJS = $(CODEGEN_SRS:$(CODEGEN_DIR)/%.cpp=$(CODEGEN_DIR)/%.o)
 OBJS = $(LEXER_OBJS) $(PARSER_OBJS) $(AST_OBJS) $(SYMBOL_OBJS) $(CODEGEN_OBJS)
 
 # Default target
-default: alanc
+default: compiler
 
 # Generate lexer.cpp from lexer.l using Flex
 $(LEXER_DIR)/lexer.cpp: $(LEXER_DIR)/lexer.l
@@ -63,7 +63,7 @@ $(CODEGEN_DIR)/%.o: $(CODEGEN_DIR)/%.cpp $(CODEGEN_DIR)/codegen.hpp $(AST_DIR)/a
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Link all object files to create the final executable
-alanc: $(OBJS)
+compiler: $(OBJS)
 	$(CXX) -o $@ $(OBJS) $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
 
 # Clean up intermediate files
@@ -71,4 +71,4 @@ clean:
 	$(RM) $(LEXER_DIR)/*.cpp $(LEXER_DIR)/*.o $(PARSER_DIR)/*.cpp $(PARSER_DIR)/*.hpp $(PARSER_DIR)/*.output $(PARSER_DIR)/*.o $(AST_DIR)/*.o $(SYMBOL_DIR)/*.o $(CODEGEN_DIR)/*.o
 # Clean up everything including the executable
 distclean: clean
-	$(RM) alanc
+	$(RM) compiler

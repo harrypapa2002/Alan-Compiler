@@ -1,4 +1,0 @@
-test () : proc {
-
-    writeString("\x66\n");
-}

@@ -39,15 +39,17 @@ void Fpar::sem()
     if (st.findSymbolInCurrentScope(*name))
     {
         semantic_error(this->line, this->column,
-            "Parameter '" + *name + "' already declared in the scope of function '" + st.getCurrentFunctionName() + "'");
-    }
-    else if(parameterType!=ParameterType::REFERENCE && type->getType() == TypeEnum::ARRAY)
-    {
-        semantic_error(this->line, this->column,
-            "Only array reference parameters are allowed.");
+            "Parameter with name: '" + *name + "' already declared in the scope of function '" + st.getCurrentFunctionName() + "'");
     }
     else
     {
+
+        if(parameterType!=ParameterType::REFERENCE && type->getType() == TypeEnum::ARRAY)
+        {
+            semantic_error(this->line, this->column,
+                "Only array reference parameters are allowed.");
+        }
+
         ParameterSymbol *parameterSymbol = new ParameterSymbol(*name, type, parameterType);
         st.addSymbol(*name, parameterSymbol);
         st.getCurrentFunctionContext()->addParameter(parameterSymbol);
@@ -144,7 +146,7 @@ void VarDef::sem()
     if (st.findSymbolInCurrentScope(*name))
     {
         semantic_error(this->line, this->column,
-            "Variable name '" + *name + "' is already declared in the current scope.");
+            "Variable name '" + *name + "' is already declared in the same scope.");
     }
     else if (isArray)
     {
@@ -153,11 +155,10 @@ void VarDef::sem()
             semantic_error(this->line, this->column,
                 "Array size for variable '" + *name + "' must be greater than 0.");
         }
-        else
-        {
-            type = new ArrayType(type, size);
-            st.addSymbol(*name, new VariableSymbol(*name, type));
-        }
+        
+        type = new ArrayType(type, size);
+        st.addSymbol(*name, new VariableSymbol(*name, type));
+        
     }
     else
     {
@@ -371,8 +372,13 @@ void Let::sem()
         semantic_error(this->line, this->column,
             "Left side of assignment cannot be a constant string.");
     }
-
-    if (!equalTypes(leftType, rightType))
+    else if(rightType == TypeEnum::ARRAY)
+    {
+        semantic_error(this->line, this->column,
+            "Cannot assign an array to a variable.");
+        
+    }
+    else if (!equalTypes(leftType, rightType))
     {
         semantic_error(this->line, this->column,
             "Type mismatch in assignment: cannot assign type '" + typeToString(rightType) +
@@ -414,7 +420,7 @@ void FuncCall::sem()
                 {
                     semantic_error(this->line, this->column,
                         "Function '" + *name + "' expects " + std::to_string(numParams) +
-                        " parameters, but " + std::to_string(numArgs) + " were provided.");
+                        " parameter(s), but found " + std::to_string(numArgs) + ".");
                 }
                 else
                 {
@@ -422,51 +428,51 @@ void FuncCall::sem()
                     {
                         size_t paramIndex = numParams - i - 1; 
 
-                        TypeEnum exprType = exprs->getExprs()[i]
-                                                ? exprs->getExprs()[i]->getTypeEnum()
+                        TypeEnum exprType = exprs->getExprs()[paramIndex]
+                                                ? exprs->getExprs()[paramIndex]->getTypeEnum()
                                                 : TypeEnum::ERROR;
-                        TypeEnum paramType = params[paramIndex]->getType()
-                                                 ? params[paramIndex]->getType()->getType()
+                        TypeEnum paramType = params[i]->getType()
+                                                 ? params[i]->getType()->getType()
                                                  : TypeEnum::ERROR;
 
                         if (exprType != paramType)
                         {
                             semantic_error(this->line, this->column,
-                                "Type mismatch for parameter " + std::to_string(paramIndex + 1) +
+                                "Type mismatch for parameter " + std::to_string(i + 1) +
                                 " in function call to '" + *name + "'. Expected '" +
                                 typeToString(paramType) + "', but found '" + typeToString(exprType) + "'.");
                         }
                         else if(exprType == TypeEnum::ARRAY)
                         {
-                            TypeEnum exprBaseType = exprs->getExprs()[i]->getType()->getBaseType()->getType();
-                            TypeEnum paramBaseType = params[paramIndex]->getType()->getBaseType()->getType();
+                            TypeEnum exprBaseType = exprs->getExprs()[paramIndex]->getType()->getBaseType()->getType();
+                            TypeEnum paramBaseType = params[i]->getType()->getBaseType()->getType();
 
                             if (exprBaseType != paramBaseType)
                             {
                                 semantic_error(this->line, this->column,
-                                    "Array type mismatch for parameter " + std::to_string(paramIndex + 1) +
+                                    "Array type mismatch for parameter " + std::to_string(i + 1) +
                                     " in function call to '" + *name + "'. Expected base type '" +
                                     typeToString(paramBaseType) + "', but found '" + typeToString(exprBaseType) + "'.");
                             }
                         }
-                        else if (params[paramIndex]->getParameterType() == ParameterType::REFERENCE)
+                        else if (params[i]->getParameterType() == ParameterType::REFERENCE)
                         {
-                            if (dynamic_cast<Lval *>(exprs->getExprs()[i]) == nullptr)
+                            if (dynamic_cast<Lval *>(exprs->getExprs()[paramIndex]) == nullptr)
                             {
                                 semantic_error(this->line, this->column,
-                                    "Reference parameter " + std::to_string(paramIndex + 1) +
+                                    "Reference parameter " + std::to_string(i + 1) +
                                     " in function call to '" + *name + "' must be an lvalue.");
                             }
                         }
                         else if (exprType == TypeEnum::ARRAY)
                         {
-                            TypeEnum paramBaseType = params[paramIndex]->getType()->getBaseType()->getType();
-                            TypeEnum exprBaseType = exprs->getExprs()[i]->getType()->getBaseType()->getType();
+                            TypeEnum paramBaseType = params[i]->getType()->getBaseType()->getType();
+                            TypeEnum exprBaseType = exprs->getExprs()[paramIndex]->getType()->getBaseType()->getType();
 
                             if (paramBaseType != exprBaseType)
                             {
                                 semantic_error(this->line, this->column,
-                                    "Array type mismatch for parameter " + std::to_string(paramIndex + 1) +
+                                    "Array type mismatch for parameter " + std::to_string(i + 1) +
                                     " in function call to '" + *name + "'. Expected base type '" +
                                     typeToString(paramBaseType) + "', but found '" + typeToString(exprBaseType) + "'.");
                             }
@@ -478,7 +484,7 @@ void FuncCall::sem()
             {
                 semantic_error(this->line, this->column,
                     "Function '" + *name + "' expects " + std::to_string(numParams) +
-                    " parameters, but none were provided.");
+                    " parameters, but found 0.");
             }
 
             type = func->getType();
@@ -550,12 +556,8 @@ void While::sem()
 void Return::sem()
 {
     Type *expectedReturnType = st.getCurrentFunctionReturnType();
-    if (!expectedReturnType)
-    {
-        semantic_error(this->line, this->column,
-            "Return statement not allowed outside of a function.");
-    }
-    else if (expr)
+   
+    if (expr)
     {
         expr->sem();
 

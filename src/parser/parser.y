@@ -103,6 +103,7 @@ program :
     funcdef {   
         if (lexical_errors > 0 || syntax_errors > 0) {
             YYABORT; 
+            return 1;
         }
         $1->sem();
         if (semantic_errors > 0) {
@@ -375,14 +376,12 @@ int main(int argc, char **argv) {
         for (const std::string &error : error_buffer) {
             fprintf(stderr, "%s\n", error.c_str());
         }
-        return 1;
     }
 
     if (syntax_errors > 0) {
         for (const std::string &error : syntax_error_buffer) {
             fprintf(stderr, "%s\n", error.c_str());
         }
-        return 1;
     }
 
     if (semantic_errors > 0) {

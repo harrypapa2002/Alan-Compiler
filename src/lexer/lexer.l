@@ -12,7 +12,9 @@
 
 enum LexicalErrorType {
     ILLEGAL_CHARACTER,
-    UNFINISHED_COMMENT
+    UNFINISHED_COMMENT,
+    MULTILINE_STRING,
+    ILLEGAL_STRING_CHARACTER
 };
 
 int lineno = 1;       
@@ -40,6 +42,8 @@ W [ \t\r]
 ESC [ntr0\'\"\\] 
 
 %x COMMENT
+%x STRING
+
 
 %%
 
@@ -88,11 +92,44 @@ ESC [ntr0\'\"\\]
     yylval.chr = fixChar(yytext+1); 
     return T_char; 
 }
-\"(\\({ESC}|x{H}{H})|[^\\\'\"\n])*\"  { 
-    SET_YYLLOC; 
+
+\" { 
+    SET_YYLLOC;
     column += yyleng; 
-    yylval.str = new std::string(fixString(yytext+1)); 
+    BEGIN(STRING); 
+    yylval.str = new std::string(""); 
+}
+
+<STRING>(\\({ESC}|x{H}{H})|[^\\\'\"\n]) { 
+    column += yyleng; 
+    *(yylval.str) += fixString(yytext); 
+}
+
+<STRING>\" { 
+    SET_YYLLOC;
+    column += yyleng; 
+    BEGIN(INITIAL); 
     return T_string; 
+}
+
+<STRING>\n { 
+    SET_YYLLOC;
+    trackLexicalError(MULTILINE_STRING); 
+    lineno++; 
+    column = 1; 
+    BEGIN(INITIAL); 
+}
+
+<STRING>. { 
+    SET_YYLLOC;
+    trackLexicalError(ILLEGAL_STRING_CHARACTER); 
+    column += yyleng; 
+}
+
+<STRING><<EOF>> { 
+    SET_YYLLOC;
+    trackLexicalError(MULTILINE_STRING); 
+    BEGIN(INITIAL); 
 }
 
  /* WhiteSpace */
@@ -174,6 +211,24 @@ void trackLexicalError(LexicalErrorType errorType) {
             snprintf(error_message, sizeof(error_message),
                      "Unfinished comment starting at line %d, column %d. Make sure all comments are properly closed.",
                      comment_start_line, comment_start_column);
+            break;
+
+        case MULTILINE_STRING:
+            snprintf(error_message, sizeof(error_message),
+                     "Unfinished string starting at line %d, column %d. Make sure all strings are properly closed and do not span multiple lines.",
+                     lineno, column);
+            break;
+
+        case ILLEGAL_STRING_CHARACTER:
+            if (isprint(yytext[0])) {
+                snprintf(error_message, sizeof(error_message),
+                         "Illegal character '%s' encountered in string at line %d, column %d.",
+                         yytext, lineno, column);
+            } else {
+                snprintf(error_message, sizeof(error_message),
+                         "Illegal non-printable character (ASCII code %d) encountered in string at line %d, column %d.",
+                         (int)yytext[0], lineno, column);
+            }
             break;
 
         default:

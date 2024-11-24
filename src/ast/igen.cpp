@@ -11,7 +11,6 @@
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/Utils.h>
 
-// Initialize static members
 llvm::LLVMContext AST::TheContext;
 llvm::IRBuilder<> AST::Builder(AST::TheContext);
 std::unique_ptr<llvm::Module> AST::TheModule;
@@ -59,10 +58,8 @@ void AST::llvm_igen(bool optimize)
     llvm::Function *main = llvm::Function::Create(main_type, llvm::Function::ExternalLinkage, "main", TheModule.get());
     llvm::BasicBlock *BB = llvm::BasicBlock::Create(TheContext, "entry", main);
 
-    // Codegen the AST
     this->igen();
 
-    // Invoke the main function of the source program
     FuncDef *mainFuncDef = dynamic_cast<FuncDef *>(this);
     if (mainFuncDef)
     {
@@ -78,13 +75,10 @@ void AST::llvm_igen(bool optimize)
         }
     }
 
-    // Return 0 from the LLVM main function
     Builder.CreateRet(c32(0));
 
-    // Close the global scope
     scopes.closeScope();
 
-    // Verify the IR
     bool bad = llvm::verifyModule(*TheModule, &llvm::errs());
     if (bad)
     {
@@ -93,9 +87,11 @@ void AST::llvm_igen(bool optimize)
         std::exit(1);
     }
 
-    TheFPM->run(*main);
-
-    // Print the IR
+    for (auto &func : TheModule->functions())
+    {
+        TheFPM->run(func);
+    }
+    
     TheModule->print(llvm::outs(), nullptr);
 }
 
@@ -246,9 +242,8 @@ llvm::Value *CondCompOp::igen() const
 
 llvm::Value *CondBoolOp::igen() const
 {
-    llvm::Value *leftValue = left->igen(); // Generate code for the left operand
+    llvm::Value *leftValue = left->igen();
 
-    // Short-circuiting requires conditional branching
     llvm::Function *function = Builder.GetInsertBlock()->getParent();
     llvm::BasicBlock *trueBlock = llvm::BasicBlock::Create(TheContext, "trueBlock", function);
     llvm::BasicBlock *falseBlock = llvm::BasicBlock::Create(TheContext, "falseBlock");
@@ -259,23 +254,19 @@ llvm::Value *CondBoolOp::igen() const
     switch (op)
     {
     case '&': {
-        // Short-circuiting AND: If left is false, go to falseBlock
         Builder.CreateCondBr(leftValue, trueBlock, falseBlock);
 
-        // True block: Evaluate the right operand
         Builder.SetInsertPoint(trueBlock);
         llvm::Value *rightValue = right->igen();
         Builder.CreateBr(mergeBlock);
 
-        // Append trueBlock and falseBlock to the function
-        trueBlock = Builder.GetInsertBlock(); // Update after rightValue generation
+        trueBlock = Builder.GetInsertBlock(); 
 
         function->getBasicBlockList().push_back(falseBlock);
         Builder.SetInsertPoint(falseBlock);
         llvm::Value *falseValue = llvm::ConstantInt::getFalse(TheContext);
         Builder.CreateBr(mergeBlock);
 
-        // Merge block: PHI node to merge true and false values
         function->getBasicBlockList().push_back(mergeBlock);
         Builder.SetInsertPoint(mergeBlock);
         llvm::PHINode *phiNode = Builder.CreatePHI(llvm::Type::getInt1Ty(TheContext), 2, "andtmp");
@@ -285,21 +276,17 @@ llvm::Value *CondBoolOp::igen() const
         break;
     }
     case '|': {
-        // Short-circuiting OR: If left is true, go to trueBlock
         Builder.CreateCondBr(leftValue, trueBlock, falseBlock);
 
-        // True block: Short-circuit with true value
         Builder.SetInsertPoint(trueBlock);
         llvm::Value *trueValue = llvm::ConstantInt::getTrue(TheContext);
         Builder.CreateBr(mergeBlock);
 
-        // False block: Evaluate the right operand
         function->getBasicBlockList().push_back(falseBlock);
         Builder.SetInsertPoint(falseBlock);
         llvm::Value *rightValue = right->igen();
         Builder.CreateBr(mergeBlock);
 
-        // Merge block: PHI node to merge true and false values
         function->getBasicBlockList().push_back(mergeBlock);
         Builder.SetInsertPoint(mergeBlock);
         llvm::PHINode *phiNode = Builder.CreatePHI(llvm::Type::getInt1Ty(TheContext), 2, "ortmp");
@@ -323,7 +310,6 @@ llvm::Value *CondUnOp::igen() const
     return result;
 }
 
-// TODO: Remove addLocal
 llvm::Value *VarDef::igen() const
 {
     llvm::Type *t = nullptr;
@@ -479,12 +465,10 @@ llvm::Value *FuncCall::igen() const
 
             if (arg.getType()->isPointerTy())
             {
-                // If the function argument expects a pointer, pass the alloca directly (handles references)
                 args.push_back(argAlloc);
             }
             else
             {
-                // If the function argument expects a value, load the value from the alloca
                 if (argAlloc->getType()->isPointerTy())
                 {
                     llvm::Value *loadedValue = Builder.CreateLoad(arg.getType(), argAlloc, *name + "_arg");

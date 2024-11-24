@@ -1,9 +1,0 @@
-solve () : proc
-foo () : int 
-{
-    if(true) return 69;
-    else { while(true) {} return 3; }
-}
-{ -- solve
-
-} -- solve

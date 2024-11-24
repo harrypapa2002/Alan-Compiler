@@ -37,14 +37,14 @@ char readChar() {
 
 void readString(int n, char* s) {
     
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n-1; i++) {
         s[i] = getchar();
         if (s[i] == '\n' || s[i] == EOF) {
             s[i] = '\0';
             return;
         }
     }
-    s[n] = '\0';
+    s[n-1] = '\0';
     return;    
 }
 

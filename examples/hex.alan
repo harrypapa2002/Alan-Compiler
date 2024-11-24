@@ -1,7 +1,0 @@
-solve () : proc
-h : byte;
-{ -- solve
-    h = '\xff';
-    writeByte(h);
-    
-} -- solve

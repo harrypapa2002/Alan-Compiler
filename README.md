@@ -33,7 +33,9 @@ The project has two main directories:
 - `lib/`: Contains the runtime library source code and its corresponding Makefile.
     - `Makefile`: Located inside the `lib/` folder, it defines the build process for creating the `lib.a` static library.
 
-- `examples/`: Contains example programs written in the Alan language.
+- `programs/`: Contains example programs written in the Alan language.
+
+- `tests/`: Contains a python script to execute test programs written in the Alan language.
 
 ## Installation
 
@@ -59,7 +61,7 @@ The project has two main directories:
     cd ../lib
     make
     ```
-   This will compile the compiler (`alanc`) inside `src/` and create the static library (`lib.a`) inside `lib/`.
+   This will compile the compiler (`compiler`) inside `src/` and create the static library (`lib.a`) inside `lib/`.
 
 4. Clean build artifacts (optional):
     ```bash
@@ -100,7 +102,7 @@ Once built, the compiler can be run using the `alanc` script located in the proj
 
 ### Basic Usage
 ```bash
-./alanc <source_file.alan>
+alanc <source_file.alan>
 ```
 This will generate the intermediate LLVM code in `<source_file.imm>` and the final assembly in `<source_file.asm>`, both located in the same folder as the Alan source file (`<source_file.alan>`). The resulting assembly can be compiled into an executable using Clang and the static runtime library (`lib.a`).
 
@@ -113,7 +115,7 @@ This will generate the intermediate LLVM code in `<source_file.imm>` and the fin
 ### Example
 You can find example programs in the `examples/` directory. To compile the `hello.alan` example and specify the output executable name:
 ```bash
-./alanc -o hello examples/hello.alan
+alanc -o hello examples/hello.alan
 ```
 This will produce an executable named `hello`.
 
@@ -134,6 +136,9 @@ This will produce an executable named `hello`.
 
 - **Non-Proc Functions**: 
    - Non-`proc` functions must always return a value consistent with the declared return type. Failing to return a value matching the return type will result in an error, not just a warning.
+
+- **Escape Sequences inside Strings**:
+  - Characters such as `'` need to be escaped inside Strings, otherwise it is considered a lexical error. 
 
 ## Library Documentation
 
@@ -205,8 +210,8 @@ strcmp (s1 : reference byte [], s2 : reference byte []) : int
 ```
 - Compares two strings lexicographically:
   - Returns `0` if they are equal.
-  - Returns `-1` if `s1` is lexicographically smaller than `s2`.
-  - Returns `1` if `s1` is lexicographically larger than `s2`.
+  - Returns a negative value if s1 is lexicographically smaller than s2.
+  - Returns a positive value if s1 is lexicographically larger than s2.
 
 ```alan
 strcpy (trg : reference byte [], src : reference byte []) : proc

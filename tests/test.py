@@ -26,11 +26,13 @@ def extension(lang):
     elif lang == "llama":
         return '.lla'
     
-def run_test(language, compiler_path, test_dir):
+def run_test(language, compiler_path, test_dir, optimize):
     total = 0
     ok = 0
     failed = 0
     ext = extension(language)
+    optimize_flag = "-O" if optimize else ""  # Set optimization flag
+    
     # Iterate over each file in the test directory
     for file in os.listdir(test_dir):
         if file.endswith(ext):
@@ -39,9 +41,13 @@ def run_test(language, compiler_path, test_dir):
             src_file = os.path.join(test_dir, file)
             result_file = os.path.join(test_dir, basename + '.result')
 
-            # Compile the .grc file
-            print(f"Compiling {basename}", end=" ... ")
-            compile_process = subprocess.run([compiler_path, src_file], text=True, capture_output=True)
+            # Compile the source file
+            print(f"Compiling {basename} (Optimization {'Enabled' if optimize else 'Disabled'})", end=" ... ")
+            compile_command = [compiler_path]
+            if optimize_flag:
+                compile_command.append(optimize_flag)
+            compile_command.append(src_file)
+            compile_process = subprocess.run(compile_command, text=True, capture_output=True)
 
             # Check if the compile process had an error
             if compile_process.returncode == 0:
@@ -95,6 +101,8 @@ if __name__ == "__main__":
     parser.add_argument('language', help='Currently one of: \'alan\', \'grace\' or \'llama\'.')
     parser.add_argument('compiler_path', help='The path to the compiler executable.')
     parser.add_argument('test_dir', help='The directory containing the test programs, .result outputs expected for each program and .input files to be used as stdin for each program if needed.')
+    parser.add_argument('--optimize', action='store_true', help='Enable optimization during compilation.')
+
     args = parser.parse_args()
 
-    run_test(args.language, args.compiler_path, args.test_dir)
+    run_test(args.language, args.compiler_path, args.test_dir, args.optimize)

@@ -101,9 +101,9 @@ TEMP_IMM_FILE=$(mktemp /tmp/alan_imm.XXXXXX)  # Temporary file for LLVM IR
 
 # Compile the Alan source file into LLVM IR, pass the optimize flag
 if $OPTIMIZATION; then
-    "$SCRIPT_DIR/src/alanc" -O < "$SRC_FILE" > "$TEMP_IMM_FILE"
+    "$SCRIPT_DIR/src/compiler" -O < "$SRC_FILE" > "$TEMP_IMM_FILE"
 else
-    "$SCRIPT_DIR/src/alanc" < "$SRC_FILE" > "$TEMP_IMM_FILE"
+    "$SCRIPT_DIR/src/compiler" < "$SRC_FILE" > "$TEMP_IMM_FILE"
 fi
 compiler_status=$?
 
@@ -147,7 +147,11 @@ if $OUTPUT_ASM; then
 fi
 
 # Link the assembly with the static library to produce the executable
-clang -o "$EXECUTABLE" "$ASM_FILE" "$SCRIPT_DIR/lib/lib.a" -no-pie
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    clang -o "$EXECUTABLE" "$ASM_FILE" "$SCRIPT_DIR/lib/lib.a"
+else
+    clang -o "$EXECUTABLE" "$ASM_FILE" "$SCRIPT_DIR/lib/lib.a" -no-pie
+fi
 clang_status=$?
 
 # Check if clang succeeded
