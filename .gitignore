@@ -4,8 +4,8 @@ src/**/*.o
 lib/lib.o
 lib/lib.a
 src/compiler
-src/parser.cpp
-src/parser.hpp
-src/parser.output
-src/lexer.cpp
+src/parser/parser.cpp
+src/parser/parser.hpp
+src/parser/parser.output
+src/lexer/lexer.cpp
 a.out
