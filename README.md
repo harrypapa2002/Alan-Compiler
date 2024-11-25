@@ -137,9 +137,6 @@ This will produce an executable named `hello`.
 - **Non-Proc Functions**: 
    - Non-`proc` functions must always return a value consistent with the declared return type. Failing to return a value matching the return type will result in an error, not just a warning.
 
-- **Escape Sequences inside Strings**:
-  - Characters such as `'` need to be escaped inside Strings, otherwise it is considered a lexical error. 
-
 ## Library Documentation
 
 The Alan runtime library provides the following functions for input/output, string manipulation, and type conversion.

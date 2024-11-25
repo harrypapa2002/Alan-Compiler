@@ -100,7 +100,7 @@ ESC [ntr0\'\"\\]
     yylval.str = new std::string(""); 
 }
 
-<STRING>(\\({ESC}|x{H}{H})|[^\\\'\"\n]) { 
+<STRING>(\\({ESC}|x{H}{H})|[^\"\n]) { 
     column += yyleng; 
     *(yylval.str) += fixString(yytext); 
 }
