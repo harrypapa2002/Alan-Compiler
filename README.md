@@ -48,11 +48,11 @@ The project has two main directories:
 ### Steps
 1. Clone the repository:
     ```bash
-    git clone git@github.com:kostiscpp/compilers.git
+    git clone git@github.com:kostiscpp/alan_compiler.git
     ```
 2. Navigate to the project directory:
     ```bash
-    cd compilers
+    cd alan_compiler
     ```
 3. Build the compiler and the library using `make`:
     ```bash
@@ -82,7 +82,7 @@ To make the `alanc` compiler available system-wide, add the project's directory 
 
 2. Add the following line at the end of the file:
     ```bash
-    export PATH="/path/to/compilers:$PATH"
+    export PATH="/path/to/alan_compiler:$PATH"
     ```
 
 3. Save the file and reload the shell configuration:
